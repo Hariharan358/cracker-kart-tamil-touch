@@ -1,7 +1,13 @@
 // Mock data for KM Crackers
+// Category images
+import sparklerImg from '../assets/categories/sparkler.jpg';
+import flowerPotsImg from '../assets/categories/flower-pots.jpg';
+import chakkarsImg from '../assets/categories/chakkars.jpg';
+import atomBombImg from '../assets/categories/atom-bomb.jpg';
+
 export const categories = [
   "SPARKLER ITEMS",
-  "FLOWER POTS", 
+  "FLOWER POTS",
   "CHAKKARS",
   "TWINKLING",
   "COLOUR FOUNTAIN WINDOW BIG",
@@ -30,6 +36,16 @@ export const categories = [
   "GUNS",
   "NATTU VEDI"
 ];
+
+// Category images mapping
+export const categoryImages: Record<string, string> = {
+  "SPARKLER ITEMS": sparklerImg,
+  "FLOWER POTS": flowerPotsImg,
+  "CHAKKARS": chakkarsImg,
+  "ATOM BOMB": atomBombImg,
+  "GUJARATH FLOWER POTS": flowerPotsImg,
+  // Add more mappings as needed, defaulting to sparkler for now
+};
 
 export interface Product {
   id: string;

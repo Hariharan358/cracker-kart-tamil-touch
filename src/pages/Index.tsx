@@ -3,12 +3,15 @@ import { Sparkles, Zap, Gift } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { CategoryCard } from "../components/CategoryCard";
 import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
 import { useCart } from "../hooks/useCart";
+import { useLanguage } from "../contexts/LanguageContext";
 import { getCategoriesWithCount } from "../data/mockData";
 import heroImage from "../assets/hero-fireworks.jpg";
 
 const Index = () => {
   const { getTotalItems } = useCart();
+  const { t } = useLanguage();
   const categories = getCategoriesWithCount();
 
   return (
@@ -116,6 +119,21 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Secret Admin Button */}
+      <div className="fixed bottom-4 right-4">
+        <Link to="/admin">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="opacity-20 hover:opacity-100 transition-opacity"
+          >
+            🔐
+          </Button>
+        </Link>
+      </div>
+
+      <Footer />
     </div>
   );
 };

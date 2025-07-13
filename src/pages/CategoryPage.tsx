@@ -2,8 +2,10 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { ProductCard } from "../components/ProductCard";
+import { Footer } from "../components/Footer";
 import { Button } from "../components/ui/button";
 import { useCart } from "../hooks/useCart";
+import { useLanguage } from "../contexts/LanguageContext";
 import { getProductsByCategory } from "../data/mockData";
 import { useToast } from "../hooks/use-toast";
 
@@ -11,6 +13,7 @@ const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
   const { getTotalItems, addToCart } = useCart();
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const decodedCategory = decodeURIComponent(category || "");
   const products = getProductsByCategory(decodedCategory);
@@ -75,6 +78,8 @@ const CategoryPage = () => {
           </div>
         )}
       </div>
+      
+      <Footer />
     </div>
   );
 };

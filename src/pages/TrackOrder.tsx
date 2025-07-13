@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CheckCircle, Package, Truck, MapPin } from "lucide-react";
 import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { useCart } from "../hooks/useCart";
+import { useLanguage } from "../contexts/LanguageContext";
 import { useToast } from "../hooks/use-toast";
 
 interface OrderStatus {
@@ -32,6 +34,7 @@ const orderStatuses: OrderStatus[] = [
 const TrackOrder = () => {
   const { getTotalItems } = useCart();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   
   const [orderId, setOrderId] = useState(searchParams.get("orderId") || "");

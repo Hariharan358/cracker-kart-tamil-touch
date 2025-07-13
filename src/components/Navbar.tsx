@@ -2,12 +2,16 @@ import { Link } from "react-router-dom";
 import { ShoppingCart, Sparkles, Search } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { LanguageToggle } from "./LanguageToggle";
+import { useLanguage } from "../contexts/LanguageContext";
 
 interface NavbarProps {
   cartCount: number;
 }
 
 export const Navbar = ({ cartCount }: NavbarProps) => {
+  const { t } = useLanguage();
+
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="container mx-auto px-4 py-3">
@@ -36,24 +40,25 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
               to="/" 
               className="text-foreground hover:text-primary transition-colors font-medium"
             >
-              Home
+              {t('home')}
             </Link>
             <Link 
               to="/categories" 
               className="text-foreground hover:text-primary transition-colors font-medium"
             >
-              Categories
+              {t('categories')}
             </Link>
             <Link 
               to="/track" 
               className="text-foreground hover:text-primary transition-colors font-medium"
             >
-              Track Order
+              {t('trackOrder')}
             </Link>
           </div>
 
-          {/* Search and Cart */}
+          {/* Language Toggle, Search and Cart */}
           <div className="flex items-center space-x-3">
+            <LanguageToggle />
             <Button variant="ghost" size="icon" className="hidden md:flex">
               <Search className="h-5 w-5" />
             </Button>

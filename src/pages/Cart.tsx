@@ -1,13 +1,16 @@
 import { Link } from "react-router-dom";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
 import { Button } from "../components/ui/button";
 import { useCart } from "../hooks/useCart";
+import { useLanguage } from "../contexts/LanguageContext";
 import { useToast } from "../hooks/use-toast";
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, getTotalItems, getTotalPrice } = useCart();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
     updateQuantity(productId, newQuantity);
@@ -153,6 +156,8 @@ const Cart = () => {
           </div>
         )}
       </div>
+      
+      <Footer />
     </div>
   );
 };

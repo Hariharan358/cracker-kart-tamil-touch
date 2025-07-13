@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { useCart } from "../hooks/useCart";
 import { useToast } from "../hooks/use-toast";
+import { useLanguage } from "../contexts/LanguageContext";
 
 interface CheckoutForm {
   fullName: string;
   mobile: string;
+  email: string;
   address: string;
   pincode: string;
 }
@@ -18,12 +21,14 @@ interface CheckoutForm {
 const Checkout = () => {
   const { cartItems, getTotalItems, getTotalPrice, clearCart } = useCart();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState<CheckoutForm>({
     fullName: "",
     mobile: "",
+    email: "",
     address: "",
     pincode: "",
   });
@@ -35,7 +40,7 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!form.fullName || !form.mobile || !form.address || !form.pincode) {
+    if (!form.fullName || !form.mobile || !form.email || !form.address || !form.pincode) {
       toast({
         title: "Please fill all fields",
         description: "All fields are required to place your order.",
@@ -118,13 +123,25 @@ const Checkout = () => {
               </div>
 
               <div>
-                <Label htmlFor="mobile">Mobile Number *</Label>
+                <Label htmlFor="mobile">{t('mobileNumber')} *</Label>
                 <Input
                   id="mobile"
                   type="tel"
                   value={form.mobile}
                   onChange={(e) => handleInputChange("mobile", e.target.value)}
                   placeholder="Enter your mobile number"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="email">{t('email')} *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  placeholder="Enter your email address"
                   required
                 />
               </div>
@@ -205,6 +222,8 @@ const Checkout = () => {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 };

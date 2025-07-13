@@ -1,11 +1,14 @@
 import { Navbar } from "../components/Navbar";
 import { CategoryCard } from "../components/CategoryCard";
+import { Footer } from "../components/Footer";
 import { useCart } from "../hooks/useCart";
+import { useLanguage } from "../contexts/LanguageContext";
 import { getCategoriesWithCount } from "../data/mockData";
 import { Sparkles } from "lucide-react";
 
 const Categories = () => {
   const { getTotalItems } = useCart();
+  const { t } = useLanguage();
   const categories = getCategoriesWithCount();
 
   return (
@@ -36,6 +39,8 @@ const Categories = () => {
           ))}
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 };

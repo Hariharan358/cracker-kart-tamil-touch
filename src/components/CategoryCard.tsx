@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
+import { categoryImages } from "../data/mockData";
+import sparklerImg from '../assets/categories/sparkler.jpg';
 
 interface CategoryCardProps {
   category: string;
@@ -16,11 +18,13 @@ export const CategoryCard = ({ category, productCount }: CategoryCardProps) => {
         </div>
         
         <div className="flex flex-col items-center text-center space-y-3">
-          {/* Category Icon Placeholder */}
-          <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center group-hover:animate-bounce-gentle">
-            <span className="text-2xl font-bold text-primary-foreground">
-              {category.charAt(0)}
-            </span>
+          {/* Category Image */}
+          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary group-hover:animate-bounce-gentle">
+            <img 
+              src={categoryImages[category] || sparklerImg}
+              alt={category}
+              className="w-full h-full object-cover"
+            />
           </div>
           
           {/* Category Name */}

@@ -128,7 +128,7 @@ const Admin = () => {
         <div className="text-center mb-8">
           <div className="flex justify-center items-center mb-4">
             <ShieldCheck className="h-8 w-8 text-primary animate-sparkle mr-2" />
-            <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text">
               {t("adminPanel")}
             </h1>
           </div>

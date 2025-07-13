@@ -18,12 +18,37 @@ interface CheckoutForm {
   pincode: string;
 }
 
+// Generate formatted date as ddmmyyyy
+const getFormattedDate = (): string => {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = String(now.getFullYear());
+  return `${day}${month}${year}`;
+};
+
+// Generate unique order ID per day
+const generateOrderId = (): string => {
+  const today = getFormattedDate();
+  const storedDate = localStorage.getItem("order_date");
+  let counter = parseInt(localStorage.getItem("order_counter") || "1");
+
+  if (storedDate !== today) {
+    counter = 1;
+  }
+
+  localStorage.setItem("order_date", today);
+  localStorage.setItem("order_counter", (counter + 1).toString());
+
+  return `${today}${String(counter).padStart(2, "0")}`;
+};
+
 const Checkout = () => {
   const { cartItems, getTotalItems, getTotalPrice, clearCart } = useCart();
   const { toast } = useToast();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState<CheckoutForm>({
     fullName: "",
@@ -39,7 +64,7 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!form.fullName || !form.mobile || !form.email || !form.address || !form.pincode) {
       toast({
         title: "Please fill all fields",
@@ -50,12 +75,11 @@ const Checkout = () => {
     }
 
     setIsSubmitting(true);
-    
+
     // Simulate API call
     setTimeout(() => {
-      const orderId = `KM${Date.now()}`;
-      
-      // Store order details
+      const orderId = generateOrderId();
+
       const orderDetails = {
         orderId,
         items: cartItems,
@@ -64,18 +88,16 @@ const Checkout = () => {
         status: "confirmed",
         createdAt: new Date().toISOString(),
       };
-      
+
       localStorage.setItem(`order_${orderId}`, JSON.stringify(orderDetails));
-      
-      // Clear cart
       clearCart();
-      
+
       toast({
         title: "Order placed successfully!",
         description: `Your order ID is ${orderId}. You can track your order status.`,
         duration: 5000,
       });
-      
+
       setIsSubmitting(false);
       navigate(`/track?orderId=${orderId}&mobile=${form.mobile}`);
     }, 2000);
@@ -98,7 +120,7 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
-      
+
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">
           <span className="bg-gradient-primary bg-clip-text text-transparent">Checkout</span>
@@ -108,7 +130,7 @@ const Checkout = () => {
           {/* Checkout Form */}
           <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
             <h2 className="text-xl font-semibold mb-6">Delivery Information</h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="fullName">Full Name *</Label>
@@ -191,7 +213,7 @@ const Checkout = () => {
           {/* Order Summary */}
           <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border h-fit">
             <h2 className="text-xl font-semibold mb-6">Order Summary</h2>
-            
+
             <div className="space-y-3 mb-6">
               {cartItems.map((item) => (
                 <div key={item.id} className="flex justify-between items-center">
@@ -204,7 +226,7 @@ const Checkout = () => {
                 </div>
               ))}
             </div>
-            
+
             <div className="border-t border-border pt-4 space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal ({getTotalItems()} items):</span>
@@ -222,7 +244,7 @@ const Checkout = () => {
           </div>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );

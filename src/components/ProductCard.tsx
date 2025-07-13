@@ -11,6 +11,7 @@ interface Product {
   category: string;
 }
 
+
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;

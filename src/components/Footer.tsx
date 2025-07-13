@@ -11,8 +11,8 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Company Info */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              KM Crackers
+            <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text ">
+              MK Crackers
             </h3>
             <p className="text-muted-foreground text-sm">
               Premium quality fireworks and crackers for all your celebrations. 

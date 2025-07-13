@@ -1,8 +1,9 @@
 // Mock data for KM Crackers
 // Category images
 import sparklerImg from '../assets/categories/sparkler.jpg';
-import flowerPotsImg from '../assets/categories/flower-pots.jpg';
-import chakkarsImg from '../assets/categories/chakkars.jpg';
+import flowerPotsImg from '../assets/image/flowerpot.jpg';
+import chakkarsImg from '../assets/image/chakkaras.jpeg';
+import fountainImg from '../assets/image/fountain.jpg';
 import atomBombImg from '../assets/categories/atom-bomb.jpg';
 
 export const categories = [
@@ -41,6 +42,8 @@ export const categories = [
 export const categoryImages: Record<string, string> = {
   "SPARKLER ITEMS": sparklerImg,
   "FLOWER POTS": flowerPotsImg,
+  "COLOUR FOUNTAIN WINDOW BIG": fountainImg,
+  "Color Window Fountain 3 Inch": fountainImg,
   "CHAKKARS": chakkarsImg,
   "ATOM BOMB": atomBombImg,
   "GUJARATH FLOWER POTS": flowerPotsImg,

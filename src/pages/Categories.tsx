@@ -20,7 +20,7 @@ const Categories = () => {
           <div className="flex items-center justify-center mb-4">
             <Sparkles className="h-8 w-8 text-primary animate-sparkle mr-2" />
             <h1 className="text-4xl font-bold">
-              All <span className="bg-gradient-primary bg-clip-text text-transparent">Categories</span>
+              All <span className="bg-gradient-primary bg-clip-text ">Categories</span>
             </h1>
             <Sparkles className="h-8 w-8 text-primary animate-sparkle ml-2" />
           </div>

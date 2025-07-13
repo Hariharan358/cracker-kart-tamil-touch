@@ -35,8 +35,8 @@ const Index = () => {
             </div>
             
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              <span className="bg-gradient-primary bg-clip-text text-transparent">
-                KM Crackers
+              <span className="bg-gradient-primary bg-clip-text ">
+                MK Crackers
               </span>
             </h1>
             
@@ -93,7 +93,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Explore Our <span className="bg-gradient-primary bg-clip-text text-transparent">Categories</span>
+              Explore Our <span className="bg-gradient-primary bg-clip-text ">Categories</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Discover our wide range of premium fireworks for every celebration

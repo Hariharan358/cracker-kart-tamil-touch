@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Navbar } from "../components/Navbar";
@@ -6,19 +7,58 @@ import { Footer } from "../components/Footer";
 import { Button } from "../components/ui/button";
 import { useCart } from "../hooks/useCart";
 import { useLanguage } from "../contexts/LanguageContext";
-import { getProductsByCategory } from "../data/mockData";
+import { getProductsByCategory, Product as BackendProduct } from "../data/api"; // 👈 backend product type
 import { useToast } from "../hooks/use-toast";
+
+// 👇 Define frontend product type matching ProductCardProps
+type FrontendProduct = {
+  id: string;
+  name_en: string;
+  name_ta: string;
+  price: number;
+  image_url: string;
+  category: string;
+};
 
 const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
   const { getTotalItems, addToCart } = useCart();
   const { toast } = useToast();
   const { t } = useLanguage();
-  
-  const decodedCategory = decodeURIComponent(category || "");
-  const products = getProductsByCategory(decodedCategory);
 
-  const handleAddToCart = (product: any) => {
+  const decodedCategory = decodeURIComponent(category || "");
+
+  const [products, setProducts] = useState<FrontendProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ Fetch products from backend
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data: BackendProduct[] = await getProductsByCategory(decodedCategory);
+
+        // 🔁 Convert backend product (_id, imageUrl) to frontend type
+        const transformed: FrontendProduct[] = data.map((product) => ({
+          id: product._id,
+          name_en: product.name_en,
+          name_ta: product.name_ta,
+          price: product.price,
+          image_url: product.imageUrl,
+          category: product.category,
+        }));
+
+        setProducts(transformed);
+      } catch (error) {
+        console.error("❌ Error fetching products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [decodedCategory]);
+
+  const handleAddToCart = (product: FrontendProduct) => {
     addToCart(product);
     toast({
       title: "Added to cart!",
@@ -27,10 +67,18 @@ const CategoryPage = () => {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-xl text-muted-foreground">Loading products...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center space-x-2 mb-8">
@@ -78,7 +126,7 @@ const CategoryPage = () => {
           </div>
         )}
       </div>
-      
+
       <Footer />
     </div>
   );

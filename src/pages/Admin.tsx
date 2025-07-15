@@ -69,7 +69,7 @@ const Admin = () => {
       if (searchDate.trim()) queryParams.append("date", searchDate);
       if (searchOrderId.trim()) queryParams.append("orderId", searchOrderId);
 
-      const res = await fetch(`http://localhost:5000/api/orders?${queryParams.toString()}`);
+      const res = await fetch(`https://km-crackers.onrender.com/api/orders?${queryParams.toString()}`);
       const data = await res.json();
 
       if (res.ok) {
@@ -92,7 +92,7 @@ const Admin = () => {
 
   const fetchAnalytics = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/analytics");
+      const res = await fetch("https://km-crackers.onrender.com/api/analytics");
       const data = await res.json();
       if (res.ok) setAnalytics(data);
     } catch (error) {
@@ -123,7 +123,7 @@ const Admin = () => {
     if (productForm.image) formData.append("image", productForm.image);
 
     try {
-      const res = await fetch("http://localhost:5000/api/products", {
+      const res = await fetch("https://km-crackers.onrender.com/api/products", {
         method: "POST",
         body: formData,
       });
@@ -148,7 +148,7 @@ const Admin = () => {
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/update-status/${orderId}`, {
+      const res = await fetch(`https://km-crackers.onrender.com/api/orders/update-status/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),

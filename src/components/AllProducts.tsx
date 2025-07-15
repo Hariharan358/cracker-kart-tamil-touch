@@ -22,7 +22,7 @@ export const CategoryProducts = () => {
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/products/category/${encodeURIComponent(category!)}`);
+        const res = await axios.get(`https://km-crackers.onrender.com/api/products/category/${encodeURIComponent(category!)}`);
         setProducts(res.data);
       } catch (err) {
         console.error("❌ Error fetching products:", err);

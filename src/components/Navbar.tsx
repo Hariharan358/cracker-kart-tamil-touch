@@ -4,6 +4,9 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { LanguageToggle } from "./LanguageToggle";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useTheme } from "next-themes";
+import { Switch } from "./ui/switch";
+import { Moon, Sun } from "lucide-react";
 
 interface NavbarProps {
   cartCount: number;
@@ -11,6 +14,7 @@ interface NavbarProps {
 
 export const Navbar = ({ cartCount }: NavbarProps) => {
   const { t } = useLanguage();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
@@ -26,7 +30,7 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
             </div>
             <div className="flex flex-col">
               <span className="text-xl font-bold bg-gradient-primary bg-clip-text ">
-                MK Crackers
+                KM Crackers
               </span>
               <span className="text-xs text-muted-foreground -mt-1">
                 Festival Fireworks
@@ -56,8 +60,18 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
             </Link>
           </div>
 
-          {/* Language Toggle, Search and Cart */}
-          <div className="flex items-center space-x-3">
+          {/* Language Toggle, Theme Switch, Search and Cart */}
+          <div className="hidden md:flex items-center space-x-4">
+            {/* Theme Switcher */}
+            <div className="flex items-center space-x-2">
+              <Sun className="h-4 w-4 text-yellow-500" />
+              <Switch
+                checked={resolvedTheme === "dark"}
+                onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                aria-label="Toggle dark mode"
+              />
+              <Moon className="h-4 w-4 text-blue-900 dark:text-yellow-300" />
+            </div>
             <LanguageToggle />
             <Button variant="ghost" size="icon" className="hidden md:flex">
               <Search className="h-5 w-5" />
@@ -76,6 +90,17 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                 )}
               </Button>
             </Link>
+          </div>
+          <div className="flex md:hidden items-center space-x-2 mt-2">
+            {/* Theme Switcher for mobile */}
+            <Sun className="h-4 w-4 text-yellow-500" />
+            <Switch
+              checked={resolvedTheme === "dark"}
+              onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+              aria-label="Toggle dark mode"
+            />
+            <Moon className="h-4 w-4 text-blue-900 dark:text-yellow-300" />
+            <LanguageToggle />
           </div>
         </div>
       </div>

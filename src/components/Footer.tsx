@@ -12,7 +12,7 @@ export const Footer = () => {
           {/* Company Info */}
           <div className="space-y-4">
             <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text ">
-              MK Crackers
+              KM Crackers
             </h3>
             <p className="text-muted-foreground text-sm">
               Premium quality fireworks and crackers for all your celebrations. 
@@ -57,7 +57,7 @@ export const Footer = () => {
               <a href="#" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Return Policy
               </a>
-             <Link to="/admin"> <a href="#" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+             <Link to="/adminlogin"> <a href="#" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Safety Guidelines
               </a> </Link>
             </nav>

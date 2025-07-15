@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CheckCircle, Package, Truck, MapPin } from "lucide-react";
+import { CheckCircle, Package, Truck, MapPin, XCircle } from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { Button } from "../components/ui/button";
@@ -42,7 +42,7 @@ const TrackOrder = () => {
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleTrackOrder = () => {
+  const handleTrackOrder = async () => {
     if (!orderId || !mobile) {
       toast({
         title: "Please fill all fields",
@@ -53,35 +53,51 @@ const TrackOrder = () => {
     }
 
     setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const storedOrder = localStorage.getItem(`order_${orderId}`);
-      
-      if (storedOrder) {
-        const order = JSON.parse(storedOrder);
-        if (order.customerDetails.mobile === mobile) {
-          setOrderDetails(order);
-        } else {
-          toast({
-            title: "Order not found",
-            description: "Please check your order ID and mobile number.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        toast({
-          title: "Order not found",
-          description: "Please check your order ID and mobile number.",
-          variant: "destructive",
-        });
+    try {
+      const response = await fetch(`http://localhost:5000/api/orders/track?orderId=${orderId}&mobile=${mobile}`);
+      if (!response.ok) {
+        throw new Error("Order not found");
       }
-      
+      const data = await response.json();
+      setOrderDetails(data);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to track order.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  // Auto-track if URL params are present
+  const cancelOrder = async () => {
+    if (!orderId) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/orders/cancel/${orderId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast({
+          title: "Order Cancelled",
+          description: `Order ${orderId} has been successfully cancelled.`,
+        });
+        setOrderDetails(null);
+        setOrderId("");
+        setMobile("");
+      } else {
+        throw new Error(data.error || "Failed to cancel order");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Cancellation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     if (orderId && mobile) {
       handleTrackOrder();
@@ -90,16 +106,11 @@ const TrackOrder = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "confirmed":
-        return <CheckCircle className="h-5 w-5" />;
-      case "packed":
-        return <Package className="h-5 w-5" />;
-      case "shipped":
-        return <Truck className="h-5 w-5" />;
-      case "delivered":
-        return <MapPin className="h-5 w-5" />;
-      default:
-        return <CheckCircle className="h-5 w-5" />;
+      case "confirmed": return <CheckCircle className="h-5 w-5" />;
+      case "packed": return <Package className="h-5 w-5" />;
+      case "shipped": return <Truck className="h-5 w-5" />;
+      case "delivered": return <MapPin className="h-5 w-5" />;
+      default: return <CheckCircle className="h-5 w-5" />;
     }
   };
 
@@ -110,125 +121,82 @@ const TrackOrder = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
-      
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">
           <span className="bg-gradient-primary bg-clip-text text-transparent">Track Your Order</span>
         </h1>
 
-        {/* Track Order Form */}
+        {/* Search Form */}
         <div className="max-w-md mx-auto mb-8 bg-gradient-card rounded-lg p-6 shadow-card border border-border">
           <div className="space-y-4">
             <div>
               <Label htmlFor="orderId">Order ID</Label>
-              <Input
-                id="orderId"
-                type="text"
-                value={orderId}
-                onChange={(e) => setOrderId(e.target.value)}
-                placeholder="Enter your order ID"
-              />
+              <Input id="orderId" type="text" value={orderId} onChange={(e) => setOrderId(e.target.value)} />
             </div>
-            
             <div>
               <Label htmlFor="mobile">Mobile Number</Label>
-              <Input
-                id="mobile"
-                type="tel"
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                placeholder="Enter your mobile number"
-              />
+              <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} />
             </div>
-            
-            <Button
-              variant="festive"
-              className="w-full"
-              onClick={handleTrackOrder}
-              disabled={isLoading}
-            >
+            <Button variant="festive" className="w-full" onClick={handleTrackOrder} disabled={isLoading}>
               {isLoading ? "Tracking..." : "Track Order"}
             </Button>
           </div>
         </div>
 
-        {/* Order Details */}
+        {/* Order Info */}
         {orderDetails && (
           <div className="max-w-4xl mx-auto space-y-8">
-            {/* Order Info */}
             <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
-              <h2 className="text-xl font-semibold mb-4">Order Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Order ID</p>
-                  <p className="font-semibold">{orderDetails.orderId}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Order Date</p>
-                  <p className="font-semibold">
-                    {new Date(orderDetails.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Amount</p>
-                  <p className="font-semibold text-primary">₹{orderDetails.total}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Payment Method</p>
-                  <p className="font-semibold">Cash on Delivery</p>
-                </div>
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Order Information</h2>
+                {orderDetails.status !== "delivered" && (
+                  <Button variant="destructive" size="sm" onClick={cancelOrder}>
+                    <XCircle className="w-4 h-4 mr-1" />
+                    Cancel Order
+                  </Button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div><p className="text-sm text-muted-foreground">Order ID</p><p className="font-semibold">{orderDetails.orderId}</p></div>
+                <div><p className="text-sm text-muted-foreground">Order Date</p><p className="font-semibold">{new Date(orderDetails.createdAt).toLocaleDateString()}</p></div>
+                <div><p className="text-sm text-muted-foreground">Total Amount</p><p className="font-semibold text-primary">₹{orderDetails.total}</p></div>
+                <div><p className="text-sm text-muted-foreground">Payment</p><p className="font-semibold">Cash on Delivery</p></div>
               </div>
             </div>
 
-            {/* Order Status */}
+            {/* Status Steps */}
             <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
               <h2 className="text-xl font-semibold mb-6">Order Status</h2>
-              
               <div className="space-y-4">
                 {orderStatuses.map((status, index) => {
                   const isCompleted = index <= getCurrentStatusIndex(orderDetails.status);
                   const isCurrent = index === getCurrentStatusIndex(orderDetails.status);
-                  
                   return (
                     <div key={status.status} className="flex items-center space-x-4">
-                      <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                        isCompleted 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted text-muted-foreground'
-                      } ${isCurrent ? 'animate-pulse' : ''}`}>
+                      <div className={`w-10 h-10 flex items-center justify-center rounded-full ${isCompleted ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'} ${isCurrent ? 'animate-pulse' : ''}`}>
                         {getStatusIcon(status.status)}
                       </div>
-                      
                       <div className="flex-1">
-                        <p className={`font-medium ${
-                          isCompleted ? 'text-foreground' : 'text-muted-foreground'
-                        }`}>
-                          {status.timestamp}
-                        </p>
-                        {isCurrent && (
-                          <p className="text-sm text-primary">Current Status</p>
-                        )}
+                        <p className={`font-medium ${isCompleted ? 'text-foreground' : 'text-muted-foreground'}`}>{status.timestamp}</p>
+                        {isCurrent && <p className="text-sm text-primary">Current Status</p>}
                       </div>
-                      
-                      {isCompleted && (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      )}
+                      {isCompleted && <CheckCircle className="w-5 h-5 text-green-500" />}
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Order Items */}
+            {/* Items */}
             <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
               <h2 className="text-xl font-semibold mb-4">Order Items</h2>
               <div className="space-y-3">
                 {orderDetails.items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div key={item.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                     <div>
                       <p className="font-medium">{item.name_en}</p>
                       <p className="text-sm text-muted-foreground">{item.name_ta}</p>
-                      <p className="text-sm">Quantity: {item.quantity}</p>
+                      <p className="text-sm">Qty: {item.quantity}</p>
                     </div>
                     <span className="font-semibold">₹{item.price * item.quantity}</span>
                   </div>
@@ -238,6 +206,7 @@ const TrackOrder = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

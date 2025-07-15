@@ -26,9 +26,15 @@ const translations = {
     
     // Homepage
     heroTitle: 'KM Crackers',
-    heroSubtitle: 'Premium Quality Fireworks for Your Celebrations',
+    heroSubtitle: 'Light up your festivals with premium quality fireworks. Celebrate Diwali with our authentic crackers collection.',
     shopNow: 'Shop Now',
     allCategories: 'All Categories',
+    featureQuality: 'Premium Quality',
+    featureQualityDesc: 'Authentic fireworks with the highest safety standards',
+    featureDelivery: 'Fast Delivery',
+    featureDeliveryDesc: 'Quick and safe delivery to your doorstep',
+    featureOffers: 'Festival Offers',
+    featureOffersDesc: 'Special discounts for all major festivals',
     
     // Categories
     exploreCategories: 'Explore our complete collection of premium fireworks and crackers',
@@ -88,9 +94,15 @@ const translations = {
     
     // Homepage
     heroTitle: 'கே.எம் பட்டாசுகள்',
-    heroSubtitle: 'உங்கள் கொண்டாட்டங்களுக்கு உயர்தர பட்டாசுகள்',
+    heroSubtitle: 'உங்கள் திருவிழாக்களை உயர்தர பட்டாசுகளுடன் ஒளிரச் செய்யுங்கள். எங்கள் அசல் பட்டாசு தொகுப்புடன் தீபாவளியை கொண்டாடுங்கள்.',
     shopNow: 'இப்போது வாங்கவும்',
     allCategories: 'அனைத்து வகைகள்',
+    featureQuality: 'உயர்தர பட்டாசுகள்',
+    featureQualityDesc: 'உயர்ந்த பாதுகாப்பு தரத்துடன் அசல் பட்டாசுகள்',
+    featureDelivery: 'விரைவு டெலிவரி',
+    featureDeliveryDesc: 'உங்கள் வீடுபதிக்க விரைவாகவும் பாதுகாப்பாகவும் டெலிவரி',
+    featureOffers: 'திருவிழா சலுகைகள்',
+    featureOffersDesc: 'அனைத்து முக்கிய திருவிழாக்களுக்கும் சிறப்பு தள்ளுபடி',
     
     // Categories
     exploreCategories: 'எங்கள் உயர்தர பட்டாசுகள் மற்றும் வெடிகளின் முழுமையான சேகரிப்பை ஆராயுங்கள்',

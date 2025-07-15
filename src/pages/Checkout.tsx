@@ -18,7 +18,6 @@ interface CheckoutForm {
   pincode: string;
 }
 
-// Generate formatted date as ddmmyyyy
 const getFormattedDate = (): string => {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, "0");
@@ -27,7 +26,6 @@ const getFormattedDate = (): string => {
   return `${day}${month}${year}`;
 };
 
-// Generate unique order ID per day
 const generateOrderId = (): string => {
   const today = getFormattedDate();
   const storedDate = localStorage.getItem("order_date");
@@ -50,6 +48,7 @@ const Checkout = () => {
   const navigate = useNavigate();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
   const [form, setForm] = useState<CheckoutForm>({
     fullName: "",
     mobile: "",
@@ -73,35 +72,83 @@ const Checkout = () => {
       });
       return;
     }
+    const BASE_URL = "http://localhost:5000";
+
 
     setIsSubmitting(true);
+    const orderId = generateOrderId();
 
-    // Simulate API call
-    setTimeout(() => {
-      const orderId = generateOrderId();
+    const orderDetails = {
+      orderId,
+      items: cartItems,
+      total: getTotalPrice(),
+      customerDetails: form,
+      status: "confirmed",
+      createdAt: new Date().toISOString(),
+    };
 
-      const orderDetails = {
-        orderId,
-        items: cartItems,
-        total: getTotalPrice(),
-        customerDetails: form,
-        status: "confirmed",
-        createdAt: new Date().toISOString(),
-      };
-
-      localStorage.setItem(`order_${orderId}`, JSON.stringify(orderDetails));
-      clearCart();
-
-      toast({
-        title: "Order placed successfully!",
-        description: `Your order ID is ${orderId}. You can track your order status.`,
-        duration: 5000,
+    try {
+      const response = await fetch(`http://localhost:5000/api/orders/place`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderDetails),
       });
+      
+    
+      let result = null;
+      const contentType = response.headers.get("content-type");
 
+      if (contentType && contentType.includes("application/json")) {
+        result = await response.json();
+      } else {
+        const text = await response.text();
+        throw new Error(text || "Server returned an unexpected response");
+      }
+
+      if (response.ok) {
+        clearCart();
+        toast({
+          title: "Order placed successfully!",
+          description: `Your order ID is ${orderId}. Invoice is available for download.`,
+          duration: 5000,
+        });
+
+        setInvoiceUrl(`${BASE_URL}/invoices/${orderId}.pdf`);
+        setIsSubmitting(false);
+      } else {
+        throw new Error(result.error || "Order failed");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Order failed",
+        description: error.message || "Something went wrong.",
+        variant: "destructive",
+      });
       setIsSubmitting(false);
-      navigate(`/track?orderId=${orderId}&mobile=${form.mobile}`);
-    }, 2000);
+    }
   };
+
+  if (invoiceUrl) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar cartCount={0} />
+        <div className="container mx-auto px-4 py-16 text-center">
+          <h1 className="text-2xl font-bold mb-4">Thank you for your order!</h1>
+          <p className="mb-4">Your invoice is ready to download.</p>
+          <a href={invoiceUrl} download target="_blank" rel="noopener noreferrer">
+            <Button variant="festive" className="mb-4">
+              Download Invoice PDF
+            </Button>
+          </a>
+          <br />
+          <Button variant="default" onClick={() => navigate("/track")}>
+            Track Your Order
+          </Button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -109,9 +156,7 @@ const Checkout = () => {
         <Navbar cartCount={0} />
         <div className="container mx-auto px-4 py-16 text-center">
           <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
-          <Button variant="festive" onClick={() => navigate("/categories")}>
-            Start Shopping
-          </Button>
+          <Button variant="festive" onClick={() => navigate("/categories")}>Start Shopping</Button>
         </div>
       </div>
     );
@@ -120,100 +165,46 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
-
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">
           <span className="bg-gradient-primary bg-clip-text text-transparent">Checkout</span>
         </h1>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Checkout Form */}
           <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
             <h2 className="text-xl font-semibold mb-6">Delivery Information</h2>
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="fullName">Full Name *</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  value={form.fullName}
-                  onChange={(e) => handleInputChange("fullName", e.target.value)}
-                  placeholder="Enter your full name"
-                  required
-                />
+                <Input id="fullName" value={form.fullName} onChange={(e) => handleInputChange("fullName", e.target.value)} required />
               </div>
-
               <div>
-                <Label htmlFor="mobile">{t('mobileNumber')} *</Label>
-                <Input
-                  id="mobile"
-                  type="tel"
-                  value={form.mobile}
-                  onChange={(e) => handleInputChange("mobile", e.target.value)}
-                  placeholder="Enter your mobile number"
-                  required
-                />
+                <Label htmlFor="mobile">{t("mobileNumber")} *</Label>
+                <Input id="mobile" type="tel" value={form.mobile} onChange={(e) => handleInputChange("mobile", e.target.value)} required />
               </div>
-
               <div>
-                <Label htmlFor="email">{t('email')} *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  placeholder="Enter your email address"
-                  required
-                />
+                <Label htmlFor="email">{t("email")} *</Label>
+                <Input id="email" type="email" value={form.email} onChange={(e) => handleInputChange("email", e.target.value)} required />
               </div>
-
               <div>
                 <Label htmlFor="address">Delivery Address *</Label>
-                <Textarea
-                  id="address"
-                  value={form.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
-                  placeholder="Enter your complete delivery address"
-                  required
-                  rows={3}
-                />
+                <Textarea id="address" value={form.address} onChange={(e) => handleInputChange("address", e.target.value)} required rows={3} />
               </div>
-
               <div>
                 <Label htmlFor="pincode">Pincode *</Label>
-                <Input
-                  id="pincode"
-                  type="text"
-                  value={form.pincode}
-                  onChange={(e) => handleInputChange("pincode", e.target.value)}
-                  placeholder="Enter your pincode"
-                  required
-                />
+                <Input id="pincode" value={form.pincode} onChange={(e) => handleInputChange("pincode", e.target.value)} required />
               </div>
-
               <div className="bg-muted/50 rounded-lg p-4">
                 <h3 className="font-semibold mb-2">Payment Method</h3>
-                <p className="text-sm text-muted-foreground">
-                  💵 Cash on Delivery (COD) - Pay when your order arrives
-                </p>
+                <p className="text-sm text-muted-foreground">💵 Cash on Delivery (COD) - Pay when your order arrives</p>
               </div>
-
-              <Button
-                type="submit"
-                variant="festive"
-                className="w-full"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" variant="festive" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? "Placing Order..." : "Place Order"}
               </Button>
             </form>
           </div>
 
-          {/* Order Summary */}
           <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border h-fit">
             <h2 className="text-xl font-semibold mb-6">Order Summary</h2>
-
             <div className="space-y-3 mb-6">
               {cartItems.map((item) => (
                 <div key={item.id} className="flex justify-between items-center">
@@ -226,7 +217,6 @@ const Checkout = () => {
                 </div>
               ))}
             </div>
-
             <div className="border-t border-border pt-4 space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal ({getTotalItems()} items):</span>
@@ -244,7 +234,6 @@ const Checkout = () => {
           </div>
         </div>
       </div>
-
       <Footer />
     </div>
   );

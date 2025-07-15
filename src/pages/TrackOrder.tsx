@@ -54,7 +54,7 @@ const TrackOrder = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/orders/track?orderId=${orderId}&mobile=${mobile}`);
+      const response = await fetch(`https://km-crackers.onrender.com/api/orders/track?orderId=${orderId}&mobile=${mobile}`);
       if (!response.ok) {
         throw new Error("Order not found");
       }
@@ -74,7 +74,7 @@ const TrackOrder = () => {
   const cancelOrder = async () => {
     if (!orderId) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/cancel/${orderId}`, {
+      const res = await fetch(`https://km-crackers.onrender.com/api/orders/cancel/${orderId}`, {
         method: "DELETE",
       });
       const data = await res.json();

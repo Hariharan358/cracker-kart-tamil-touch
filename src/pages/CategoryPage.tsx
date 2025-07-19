@@ -16,6 +16,7 @@ type FrontendProduct = {
   name_en: string;
   name_ta: string;
   price: number;
+  original_price?: number;
   image_url: string;
   category: string;
 };
@@ -43,6 +44,7 @@ const CategoryPage = () => {
           name_en: product.name_en,
           name_ta: product.name_ta,
           price: product.price,
+          original_price: product.original_price,
           image_url: product.imageUrl,
           category: product.category,
         }));

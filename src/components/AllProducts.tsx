@@ -9,8 +9,11 @@ interface Product {
   name_en: string;
   name_ta: string;
   price: number;
+  original_price?: number;
   imageUrl: string;
   category: string;
+  youtube_url?: string; // Added youtube_url to the interface
+   // Added original_price to the interface
 }
 
 export const CategoryProducts = () => {
@@ -22,7 +25,7 @@ export const CategoryProducts = () => {
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
-        const res = await axios.get(`https://km-crackers.onrender.com/api/products/category/${encodeURIComponent(category!)}`);
+        const res = await axios.get(`http://localhost:5000/api/products/category/${encodeURIComponent(category!)}`);
         setProducts(res.data);
       } catch (err) {
         console.error("❌ Error fetching products:", err);
@@ -52,8 +55,10 @@ export const CategoryProducts = () => {
                 name_en: product.name_en,
                 name_ta: product.name_ta,
                 price: product.price,
+                original_price: product.original_price,
                 image_url: product.imageUrl,
                 category: product.category,
+                youtube_url: product.youtube_url, // Pass YouTube URL if present
               }}
               onAddToCart={addToCart}
             />

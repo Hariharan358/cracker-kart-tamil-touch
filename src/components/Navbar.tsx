@@ -7,6 +7,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "next-themes";
 import { Switch } from "./ui/switch";
 import { Moon, Sun } from "lucide-react";
+import { useState } from "react";
 
 interface NavbarProps {
   cartCount: number;
@@ -15,6 +16,12 @@ interface NavbarProps {
 export const Navbar = ({ cartCount }: NavbarProps) => {
   const { t } = useLanguage();
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const [isDark, setIsDark] = useState(resolvedTheme === "dark");
+
+  const handleThemeToggle = () => {
+    setTheme(isDark ? "light" : "dark");
+    setIsDark(!isDark);
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
@@ -63,20 +70,13 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
           {/* Language Toggle, Theme Switch, Search and Cart */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Theme Switcher */}
-            <div className="flex items-center space-x-2">
-              <Sun className="h-4 w-4 text-yellow-500" />
-              <Switch
-                checked={resolvedTheme === "dark"}
-                onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-                aria-label="Toggle dark mode"
-              />
-              <Moon className="h-4 w-4 text-blue-900 dark:text-yellow-300" />
-            </div>
-            <LanguageToggle />
+            <Button variant="ghost" size="icon" onClick={handleThemeToggle} aria-label="Toggle dark mode">
+              {isDark ? <Sun className="h-5 w-5 text-yellow-500" /> : <Moon className="h-5 w-5 text-blue-900 dark:text-yellow-300" />}
+            </Button>
+            <LanguageToggle iconSize={16} />
             <Button variant="ghost" size="icon" className="hidden md:flex">
               <Search className="h-5 w-5" />
             </Button>
-            
             <Link to="/cart">
               <Button variant="cart" size="cart-icon" className="relative">
                 <ShoppingCart className="h-5 w-5" />
@@ -92,15 +92,24 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
             </Link>
           </div>
           <div className="flex md:hidden items-center space-x-2 mt-2">
-            {/* Theme Switcher for mobile */}
-            <Sun className="h-4 w-4 text-yellow-500" />
-            <Switch
-              checked={resolvedTheme === "dark"}
-              onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-              aria-label="Toggle dark mode"
-            />
-            <Moon className="h-4 w-4 text-blue-900 dark:text-yellow-300" />
-            <LanguageToggle />
+            {/* Theme Switcher for mobile as a button */}
+            <Button variant="ghost" size="icon" onClick={handleThemeToggle} aria-label="Toggle dark mode">
+              {isDark ? <Sun className="h-5 w-5 text-yellow-500" /> : <Moon className="h-5 w-5 text-blue-900 dark:text-yellow-300" />}
+            </Button>
+            <LanguageToggle iconSize={14} />
+            <Link to="/cart">
+              <Button variant="cart" size="cart-icon" className="relative">
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs animate-bounce-gentle"
+                  >
+                    {cartCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

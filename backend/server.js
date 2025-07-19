@@ -52,7 +52,10 @@ const productSchema = new mongoose.Schema({
   name_en: String,
   name_ta: String,
   price: Number,
+  original_price: Number, // Add this field
   imageUrl: String,
+  youtube_url: String, // Add this field
+  category: String,    // Add this field for completeness
 }, { timestamps: true });
 
 function getProductModelByCategory(category) {
@@ -161,13 +164,16 @@ app.delete('/api/orders/cancel/:orderId', async (req, res) => {
 // ✅ POST: Add Product
 app.post('/api/products', upload.single('image'), async (req, res) => {
   try {
-    const { name_en, name_ta, price, category } = req.body;
+    let { name_en, name_ta, price, original_price, category, youtube_url } = req.body;
     const imageUrl = req.file?.path;
     if (!name_en || !name_ta || !price || !category || !imageUrl) {
       return res.status(400).json({ error: 'All fields including image and category are required.' });
     }
+    // Ensure price and original_price are numbers
+    price = Number(price);
+    original_price = original_price ? Number(original_price) : undefined;
     const ProductModel = getProductModelByCategory(category);
-    const newProduct = new ProductModel({ name_en, name_ta, price, imageUrl });
+    const newProduct = new ProductModel({ name_en, name_ta, price, original_price, imageUrl, youtube_url });
     await newProduct.save();
     res.status(201).json({ message: '✅ Product added successfully', product: newProduct });
   } catch (error) {
@@ -218,7 +224,16 @@ app.post('/api/admin/login', (req, res) => {
 // ✅ GET: Analytics
 app.get('/api/analytics', async (req, res) => {
   try {
-    const orders = await Order.find({});
+    const { date } = req.query;
+    let orders;
+    if (date) {
+      const start = new Date(date);
+      const end = new Date(date);
+      end.setHours(23, 59, 59, 999);
+      orders = await Order.find({ createdAt: { $gte: start, $lte: end } });
+    } else {
+      orders = await Order.find({});
+    }
     const totalOrders = orders.length;
     const totalRevenue = orders.reduce((sum, order) => {
       let itemTotal = 0;
@@ -267,6 +282,36 @@ app.get('/api/products/category/:category', async (req, res) => {
   } catch (error) {
     console.error('❌ Error fetching category products:', error);
     res.status(500).json({ error: 'Failed to fetch products by category' });
+  }
+});
+
+// ✅ DELETE: Delete Product by ID
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Search all category collections for the product
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    let deleted = false;
+    for (const col of collections) {
+      const modelName = col.name;
+      // Only check collections that match the category naming pattern
+      if (/^[A-Z0-9_]+$/.test(modelName)) {
+        const Model = mongoose.model(modelName, productSchema, modelName);
+        const result = await Model.findByIdAndDelete(id);
+        if (result) {
+          deleted = true;
+          break;
+        }
+      }
+    }
+    if (deleted) {
+      res.status(200).json({ message: '✅ Product deleted successfully', id });
+    } else {
+      res.status(404).json({ error: 'Product not found' });
+    }
+  } catch (error) {
+    console.error('❌ Product DELETE error:', error);
+    res.status(500).json({ error: 'Failed to delete product' });
   }
 });
 

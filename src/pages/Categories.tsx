@@ -19,12 +19,12 @@ const Categories = () => {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
             <Sparkles className="h-8 w-8 text-primary animate-sparkle mr-2" />
-            <h1 className="text-4xl font-bold">
+            <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent dark:bg-gradient-primary dark:bg-clip-text">
               {t('allCategories')}
             </h1>
             <Sparkles className="h-8 w-8 text-primary animate-sparkle ml-2" />
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto dark:text-foreground/80">
             {t('exploreCategories')}
           </p>
         </div>

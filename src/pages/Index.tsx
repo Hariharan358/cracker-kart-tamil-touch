@@ -4,27 +4,68 @@ import { Button } from "../components/ui/button";
 import { CategoryCard } from "../components/CategoryCard";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
+import { useEffect, useState } from "react";
+import { ProductCard } from "../components/ProductCard";
 import { useCart } from "../hooks/useCart";
 import { useLanguage } from "../contexts/LanguageContext";
 import { getCategoriesWithCount } from "../data/mockData";
 import heroImage from "../assets/hero-fireworks.jpg";
 
 const Index = () => {
-  const { getTotalItems } = useCart();
+  const { getTotalItems, addToCart } = useCart();
   const { t } = useLanguage();
   const categories = getCategoriesWithCount();
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [sparklerProducts, setSparklerProducts] = useState([]);
+  const [loadingSparklers, setLoadingSparklers] = useState(true);
+
+  useEffect(() => {
+    // Fetch products from a default category or all categories
+    const fetchProducts = async () => {
+      try {
+        // Example: fetch from 'ATOM BOMB' category, or change as needed
+        const res = await fetch("http://localhost:5000/api/products/category/ATOM%20BOMB");
+        const data = await res.json();
+        setProducts(data.slice(0, 4)); // Show only 4 featured products
+      } catch (err) {
+        setProducts([]);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    const fetchSparklers = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/products/category/SPARKLER%20ITEMS");
+        const data = await res.json();
+        console.log('Sparkler products:', data); // <-- Add this
+        console.log('Sparkler products:', data.slice(0, 4));
+
+        setSparklerProducts(data.slice(0, 4));
+      } catch (err) {
+        setSparklerProducts([]);
+      } finally {
+        setLoadingSparklers(false);
+      }
+    };
+    fetchSparklers();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
       
       {/* Hero Section */}
-      <section className="relative h-96 overflow-hidden animate-fade-in">
+      <div className="relative min-h-[60vh] flex flex-col justify-center items-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center scale-105 animate-float"
           style={{ backgroundImage: `url(${heroImage})` }}
         />
-        <div className="absolute inset-0 bg-gradient-hero" />
+        <div className="absolute inset-0 bg-gradient-hero dark:bg-gradient-hero" />
         {/* Animated sparkles overlay */}
         <div className="absolute inset-0 pointer-events-none flex justify-center items-center">
           <Sparkles className="h-24 w-24 text-primary/30 animate-sparkle" />
@@ -37,7 +78,7 @@ const Index = () => {
               <Sparkles className="h-8 w-8 text-primary animate-sparkle" />
             </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-              <span className="bg-gradient-primary bg-clip-text ">
+              <span className="bg-gradient-primary bg-clip-text text-white dark:bg-gradient-primary dark:bg-clip-text">
                 {t('heroTitle')}
               </span>
             </h1>
@@ -59,38 +100,38 @@ const Index = () => {
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Features Section */}
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6 bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up dark:shadow-[0_0_24px_0_hsl(45,100%,60%,0.5)]" style={{ animationDelay: '0.2s' }}>
+            <div className="text-center p-6 bg-gradient-card dark:bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up dark:shadow-[0_0_24px_0_hsl(45,100%,60%,0.5)]" style={{ animationDelay: '0.2s' }}>
               <div className="flex items-center justify-center mb-4">
                 <span className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 dark:bg-yellow-900/40 shadow-[0_0_16px_0_hsl(45,100%,60%,0.3)]">
                   <Sparkles className="h-12 w-12 text-yellow-500 dark:text-yellow-300 animate-glow" />
                 </span>
               </div>
-              <h3 className="text-xl font-semibold mb-2">{t('featureQuality')}</h3>
-              <p className="text-muted-foreground">{t('featureQualityDesc')}</p>
+              <h3 className="text-xl font-semibold mb-2 text-foreground dark:text-yellow-100">{t('featureQuality')}</h3>
+              <p className="text-muted-foreground dark:text-yellow-200/80">{t('featureQualityDesc')}</p>
             </div>
-            <div className="text-center p-6 bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up dark:shadow-[0_0_24px_0_hsl(210,100%,60%,0.4)]" style={{ animationDelay: '0.4s' }}>
+            <div className="text-center p-6 bg-gradient-card dark:bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up dark:shadow-[0_0_24px_0_hsl(210,100%,60%,0.4)]" style={{ animationDelay: '0.4s' }}>
               <div className="flex items-center justify-center mb-4">
                 <span className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900/40 shadow-[0_0_16px_0_hsl(210,100%,60%,0.3)]">
                   <Zap className="h-12 w-12 text-blue-500 dark:text-blue-300 animate-bounce-gentle" />
                 </span>
               </div>
-              <h3 className="text-xl font-semibold mb-2">{t('featureDelivery')}</h3>
-              <p className="text-muted-foreground">{t('featureDeliveryDesc')}</p>
+              <h3 className="text-xl font-semibold mb-2 text-foreground dark:text-blue-100">{t('featureDelivery')}</h3>
+              <p className="text-muted-foreground dark:text-blue-200/80">{t('featureDeliveryDesc')}</p>
             </div>
-            <div className="text-center p-6 bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up dark:shadow-[0_0_24px_0_hsl(0,100%,60%,0.4)]" style={{ animationDelay: '0.6s' }}>
+            <div className="text-center p-6 bg-gradient-card dark:bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up dark:shadow-[0_0_24px_0_hsl(0,100%,60%,0.4)]" style={{ animationDelay: '0.6s' }}>
               <div className="flex items-center justify-center mb-4">
                 <span className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-red-100 dark:bg-red-900/40 shadow-[0_0_16px_0_hsl(0,100%,60%,0.3)]">
-                  <Gift className="h-12 w-12 text-red-500 dark:text-red-300 animate-float" />
+                  <Gift className="h-12 w-12 text-red-500 dark:text-red-300 animate-glow" />
                 </span>
               </div>
-              <h3 className="text-xl font-semibold mb-2">{t('featureOffers')}</h3>
-              <p className="text-muted-foreground">{t('featureOffersDesc')}</p>
+              <h3 className="text-xl font-semibold mb-2 text-foreground dark:text-red-100">{t('featureOffers')}</h3>
+              <p className="text-muted-foreground dark:text-red-200/80">{t('featureOffersDesc')}</p>
             </div>
           </div>
         </div>
@@ -107,8 +148,8 @@ const Index = () => {
               {t('exploreCategories')}
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {categories.slice(0, 12).map((category, idx) => (
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 gap-6 lg:grid-cols-4 xl:grid-cols-4">
+            {categories.slice(0, 8).map((category, idx) => (
               <div key={category.name} className="animate-fade-in" style={{ animationDelay: `${0.1 + idx * 0.07}s` }}>
                 <CategoryCard
                   category={category.name}
@@ -139,8 +180,67 @@ const Index = () => {
           </Button>
         </Link>
       </div>
+      <section className="container mx-auto px-4 py-8">
+        {loadingProducts ? (
+          <p className="text-center text-muted-foreground">Loading products...</p>
+        ) : products.length === 0 ? (
+          <p className="text-center text-muted-foreground">No products found.</p>
+        ) : (
+          <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 md:grid-cols-5 sm:overflow-x-visible">
+            {products.map((product) => (
+              <div className="min-w-[220px] max-w-[240px] flex-shrink-0 sm:min-w-0 sm:max-w-none" key={product._id || product.id}>
+                <ProductCard
+                  product={{
+                    id: product._id || product.id,
+                    name_en: product.name_en,
+                    name_ta: product.name_ta,
+                    price: product.price,
+                    image_url: product.imageUrl || product.image_url, // This line is correct!
+                    category: product.category,
+                    youtube_url: product.youtube_url,
+                  }}
+                  onAddToCart={addToCart}
+                  size="sm"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Sparkler Products Section */}
+      <section className="container mx-auto px-4 py-8">
+        {loadingSparklers ? (
+          <p className="text-center text-muted-foreground">Loading products...</p>
+        ) : sparklerProducts.length === 0 ? (
+          <p className="text-center text-muted-foreground">No sparkler products found.</p>
+        ) : (
+          <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 md:grid-cols-5 sm:overflow-x-visible">
+            {sparklerProducts.map((product) => (
+              <div className="min-w-[220px] max-w-[240px] flex-shrink-0 sm:min-w-0 sm:max-w-none" key={product._id || product.id}>
+                <ProductCard
+                  product={{
+                    id: product._id || product.id,
+                    name_en: product.name_en,
+                    name_ta: product.name_ta,
+                    price: product.price,
+                    image_url: product.imageUrl || product.image_url, // This line is correct!
+                    category: product.category,
+                    youtube_url: product.youtube_url,
+                  }}
+                  onAddToCart={addToCart}
+                  size="sm"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <Footer />
+
+      {/* Featured Products Section */}
+     
     </div>
   );
 };

@@ -49,19 +49,35 @@ const Admin = () => {
     name_en: "",
     name_ta: "",
     price: "",
+    original_price: "",
     category: "",
     image: null,
+    youtube_url: "",
   });
 
   const [orders, setOrders] = useState([]);
   const [searchDate, setSearchDate] = useState("");
   const [searchOrderId, setSearchOrderId] = useState("");
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+  const orderStatuses = [
+    { value: 'all', label: 'All' },
+    { value: 'confirmed', label: 'Confirmed' },
+    { value: 'packed', label: 'Packed' },
+    { value: 'shipped', label: 'Shipped' },
+    { value: 'delivered', label: 'Delivered' },
+  ];
 
   const [analytics, setAnalytics] = useState({
     totalOrders: 0,
     totalRevenue: 0,
   });
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
+  const [productManagementCategory, setProductManagementCategory] = useState("");
+  const [categoryProducts, setCategoryProducts] = useState([]);
+  const [loadingCategoryProducts, setLoadingCategoryProducts] = useState(false);
+  const [analyticsDate, setAnalyticsDate] = useState("");
+  const [analyticsDayStats, setAnalyticsDayStats] = useState({ totalOrders: 0, totalRevenue: 0 });
 
   const fetchOrders = async () => {
     try {
@@ -69,7 +85,7 @@ const Admin = () => {
       if (searchDate.trim()) queryParams.append("date", searchDate);
       if (searchOrderId.trim()) queryParams.append("orderId", searchOrderId);
 
-      const res = await fetch(`https://km-crackers.onrender.com/api/orders?${queryParams.toString()}`);
+      const res = await fetch(`http://localhost:5000/api/orders?${queryParams.toString()}`);
       const data = await res.json();
 
       if (res.ok) {
@@ -90,15 +106,50 @@ const Admin = () => {
     }
   };
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (date = "") => {
     try {
-      const res = await fetch("https://km-crackers.onrender.com/api/analytics");
+      let url = "http://localhost:5000/api/analytics";
+      if (date) url += `?date=${date}`;
+      const res = await fetch(url);
       const data = await res.json();
-      if (res.ok) setAnalytics(data);
+      if (res.ok) {
+        if (date) setAnalyticsDayStats(data);
+        else setAnalytics(data);
+      }
     } catch (error) {
       console.error("Analytics fetch error:", error);
     } finally {
       setLoadingAnalytics(false);
+    }
+  };
+
+  const fetchCategoryProducts = async (category) => {
+    setLoadingCategoryProducts(true);
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/category/${encodeURIComponent(category)}`);
+      const data = await res.json();
+      setCategoryProducts(data);
+    } catch (err) {
+      setCategoryProducts([]);
+    } finally {
+      setLoadingCategoryProducts(false);
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/${productId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setCategoryProducts((prev) => prev.filter((p) => p._id !== productId && p.id !== productId));
+        toast({ title: "Product deleted" });
+      } else {
+        toast({ title: "Failed to delete product", variant: "destructive" });
+      }
+    } catch (err) {
+      toast({ title: "Server error", description: err.message, variant: "destructive" });
     }
   };
 
@@ -113,17 +164,26 @@ const Admin = () => {
     fetchAnalytics();
   }, []);
 
+  useEffect(() => {
+    if (analyticsDate) {
+      setLoadingAnalytics(true);
+      fetchAnalytics(analyticsDate);
+    }
+  }, [analyticsDate]);
+
   const handleProductSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
     formData.append("name_en", productForm.name_en);
     formData.append("name_ta", productForm.name_ta);
     formData.append("price", productForm.price);
+    if (productForm.original_price) formData.append("original_price", productForm.original_price);
     formData.append("category", productForm.category);
     if (productForm.image) formData.append("image", productForm.image);
+    if (productForm.youtube_url) formData.append("youtube_url", productForm.youtube_url);
 
     try {
-      const res = await fetch("https://km-crackers.onrender.com/api/products", {
+      const res = await fetch("http://localhost:5000/api/products", {
         method: "POST",
         body: formData,
       });
@@ -133,7 +193,7 @@ const Admin = () => {
           title: "✅ Product Added!",
           description: `${productForm.name_en} added successfully.`,
         });
-        setProductForm({ name_en: "", name_ta: "", price: "", category: "", image: null });
+        setProductForm({ name_en: "", name_ta: "", price: "", original_price: "", category: "", image: null, youtube_url: "" });
         fetchAnalytics();
       } else {
         toast({
@@ -148,7 +208,7 @@ const Admin = () => {
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      const res = await fetch(`https://km-crackers.onrender.com/api/orders/update-status/${orderId}`, {
+      const res = await fetch(`http://localhost:5000/api/orders/update-status/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -200,10 +260,14 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="products">
-          <TabsList className="grid grid-cols-3 w-full">
+          <TabsList className="grid grid-cols-4 w-full">
             <TabsTrigger value="products">
               <Package className="h-4 w-4 mr-2" />
               {t("addProduct")}
+            </TabsTrigger>
+            <TabsTrigger value="product-management">
+              <Package className="h-4 w-4 mr-2" />
+              Product Management
             </TabsTrigger>
             <TabsTrigger value="orders">
               <TrendingUp className="h-4 w-4 mr-2" />
@@ -214,6 +278,54 @@ const Admin = () => {
               Analytics
             </TabsTrigger>
           </TabsList>
+
+          {/* PRODUCT MANAGEMENT TAB */}
+          <TabsContent value="product-management">
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <Label htmlFor="pm-category">Select Category</Label>
+                  <select
+                    id="pm-category"
+                    className="w-full border rounded-md p-2 mt-1 bg-background text-foreground"
+                    value={productManagementCategory}
+                    onChange={(e) => {
+                      setProductManagementCategory(e.target.value);
+                      if (e.target.value) fetchCategoryProducts(e.target.value);
+                      else setCategoryProducts([]);
+                    }}
+                  >
+                    <option value="">-- Select Category --</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                {loadingCategoryProducts ? (
+                  <p className="text-muted-foreground">Loading products...</p>
+                ) : categoryProducts.length === 0 && productManagementCategory ? (
+                  <p className="text-muted-foreground">No products found in this category.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {categoryProducts.map((product) => (
+                      <div key={product._id || product.id} className="bg-card rounded-lg shadow-card p-4 flex flex-col gap-2 border border-border">
+                        <img src={product.imageUrl || product.image_url} alt={product.name_en} className="h-32 w-full object-cover rounded-md mb-2" />
+                        <div className="font-semibold text-lg">{product.name_en}</div>
+                        <div className="text-sm text-muted-foreground">{product.name_ta}</div>
+                        <div className="text-primary font-bold">₹{product.price}</div>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteProduct(product._id || product.id)}>
+                          Delete
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* PRODUCT FORM */}
           <TabsContent value="products">
@@ -261,6 +373,18 @@ const Admin = () => {
                       />
                     </div>
                     <div>
+                      <Label htmlFor="original_price">Original Price (₹)</Label>
+                      <Input
+                        id="original_price"
+                        type="number"
+                        value={productForm.original_price}
+                        onChange={(e) =>
+                          setProductForm((prev) => ({ ...prev, original_price: e.target.value }))
+                        }
+                        placeholder="(Optional)"
+                      />
+                    </div>
+                    <div>
                       <Label htmlFor="category">Category</Label>
                       <Select
                         value={productForm.category}
@@ -280,6 +404,18 @@ const Admin = () => {
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="youtube_url">YouTube Link (optional)</Label>
+                    <Input
+                      id="youtube_url"
+                      type="url"
+                      placeholder="https://youtube.com/..."
+                      value={productForm.youtube_url}
+                      onChange={(e) =>
+                        setProductForm((prev) => ({ ...prev, youtube_url: e.target.value }))
+                      }
+                    />
                   </div>
                   <div>
                     <Label htmlFor="image">Image</Label>
@@ -344,37 +480,77 @@ const Admin = () => {
                 </div>
 
                 <div className="space-y-4">
-                  {orders.map((order) => (
-                    <div
-                      key={order.orderId}
-                      className="flex items-center justify-between p-4 border border-border rounded-lg"
-                    >
-                      <div>
-                        <p className="font-bold">{order.orderId}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {order.customerDetails.fullName}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {order.customerDetails.mobile}
-                        </p>
-                        <p className="text-primary font-medium">₹{order.total}</p>
-                      </div>
-                      <Select
-                        defaultValue={order.status}
-                        onValueChange={(val) =>
-                          handleStatusUpdate(order.orderId, val)
-                        }
+                  {/* Order Status Filter Tabs */}
+                  <div className="flex gap-2 mb-4">
+                    {orderStatuses.map((status) => (
+                      <button
+                        key={status.value}
+                        className={`px-4 py-1 rounded-full border text-sm font-medium transition-colors
+                          ${orderStatusFilter === status.value
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50'}`}
+                        onClick={() => setOrderStatusFilter(status.value)}
                       >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="confirmed">Confirmed</SelectItem>
-                          <SelectItem value="packed">Packed</SelectItem>
-                          <SelectItem value="shipped">Shipped</SelectItem>
-                          <SelectItem value="delivered">Delivered</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        {status.label}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Filtered Orders */}
+                  {(orders.filter(order => orderStatusFilter === 'all' || order.status === orderStatusFilter)).map((order) => (
+                    <div key={order.orderId} className="border border-border rounded-lg">
+                      <div
+                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                        onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}
+                      >
+                        <div>
+                          <p className="font-bold">{order.orderId}</p>
+                          <p className="text-sm text-muted-foreground">{order.customerDetails.fullName}</p>
+                          <p className="text-sm text-muted-foreground">{order.customerDetails.mobile}</p>
+                          <p className="text-primary font-medium">₹{order.total}</p>
+                        </div>
+                        <Select
+                          defaultValue={order.status}
+                          onValueChange={(val) => handleStatusUpdate(order.orderId, val)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="confirmed">Confirmed</SelectItem>
+                            <SelectItem value="packed">Packed</SelectItem>
+                            <SelectItem value="shipped">Shipped</SelectItem>
+                            <SelectItem value="delivered">Delivered</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {expandedOrderId === order.orderId && (
+                        <div className="bg-blue-50 p-4 border-l-4 border-blue-400 rounded-b-lg transition-all">
+                          <h4 className="font-semibold mb-2 text-blue-700">Ordered Products</h4>
+                          <div className="mb-4">
+                            <p className="text-sm text-blue-700 font-medium">Delivery Address:</p>
+                            <p className="text-sm text-blue-900">{order.customerDetails.address}</p>
+                            <p className="text-xs text-blue-500">Pincode: {order.customerDetails.pincode}</p>
+                          </div>
+                          <div className="space-y-2">
+                            {order.items && order.items.length > 0 ? (
+                              order.items.map((item, idx) => (
+                                <div key={idx} className="flex items-center justify-between border-b border-blue-100 pb-2 last:border-b-0">
+                                  <div>
+                                    <p className="font-medium text-blue-900">{item.name_en} <span className="text-xs text-blue-500">({item.name_ta})</span></p>
+                                    <p className="text-xs text-blue-400">Category: {item.category}</p>
+                                  </div>
+                                  <div className="flex items-center gap-4">
+                                    <span className="text-sm text-blue-700">Qty: {item.quantity}</span>
+                                    <span className="text-sm text-blue-900 font-semibold">₹{item.price}</span>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-sm text-blue-400">No products found in this order.</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -384,6 +560,19 @@ const Admin = () => {
 
           {/* ANALYTICS */}
           <TabsContent value="analytics">
+            <div className="mb-6 flex flex-col md:flex-row gap-4 items-center justify-center">
+              <Label htmlFor="analytics-date">Filter by Date</Label>
+              <input
+                id="analytics-date"
+                type="date"
+                className="border rounded-md p-2 bg-background text-foreground"
+                value={analyticsDate}
+                onChange={e => setAnalyticsDate(e.target.value)}
+              />
+              {analyticsDate && (
+                <Button size="sm" variant="outline" onClick={() => setAnalyticsDate("")}>Clear</Button>
+              )}
+            </div>
             {loadingAnalytics ? (
               <p className="text-center text-muted-foreground">Loading analytics...</p>
             ) : (
@@ -394,24 +583,22 @@ const Admin = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="text-3xl font-bold text-primary">
-                      {analytics.totalOrders}
+                      {analyticsDate ? analyticsDayStats.totalOrders : analytics.totalOrders}
                     </p>
-                    <p className="text-muted-foreground text-sm">All time</p>
+                    <p className="text-muted-foreground text-sm">{analyticsDate ? analyticsDate : "All time"}</p>
                   </CardContent>
                 </Card>
-
                 <Card>
                   <CardHeader>
                     <CardTitle>Total Revenue</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-3xl font-bold text-primary">
-                      ₹{(analytics.totalRevenue || 0).toLocaleString()}
+                      ₹{(analyticsDate ? analyticsDayStats.totalRevenue : analytics.totalRevenue || 0).toLocaleString()}
                     </p>
-                    <p className="text-muted-foreground text-sm">All time</p>
+                    <p className="text-muted-foreground text-sm">{analyticsDate ? analyticsDate : "All time"}</p>
                   </CardContent>
                 </Card>
-
                 <Card>
                   <CardHeader>
                     <CardTitle>Active Products</CardTitle>

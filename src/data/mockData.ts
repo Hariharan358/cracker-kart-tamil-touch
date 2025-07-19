@@ -57,6 +57,7 @@ export interface Product {
   price: number;
   image_url: string;
   category: string;
+  youtube_url?: string; // Optional YouTube link
 }
 
 export const products: Product[] = [
@@ -67,7 +68,8 @@ export const products: Product[] = [
     name_ta: "கிளாசிக் அடம் பாம்",
     price: 100,
     image_url: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=300&h=200&fit=crop",
-    category: "ATOM BOMB"
+    category: "ATOM BOMB",
+    youtube_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
   },
   {
     id: "prod_002", 
@@ -83,7 +85,8 @@ export const products: Product[] = [
     name_ta: "சூப்பர் அடம் பாம்",
     price: 200,
     image_url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&h=200&fit=crop",
-    category: "ATOM BOMB"
+    category: "ATOM BOMB",
+    youtube_url: "https://www.youtube.com/watch?v=ysz5S6PUM-U"
   },
 
   // SPARKLER ITEMS Category

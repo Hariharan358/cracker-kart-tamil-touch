@@ -31,6 +31,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useToast } from "../hooks/use-toast";
 import { categories } from "../data/mockData";
 import { ShieldCheck, Package, TrendingUp } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 const Admin = () => {
   const { getTotalItems } = useCart();
@@ -78,6 +79,7 @@ const Admin = () => {
   const [loadingCategoryProducts, setLoadingCategoryProducts] = useState(false);
   const [analyticsDate, setAnalyticsDate] = useState("");
   const [analyticsDayStats, setAnalyticsDayStats] = useState({ totalOrders: 0, totalRevenue: 0 });
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
 
   const fetchOrders = async () => {
     try {
@@ -182,6 +184,7 @@ const Admin = () => {
     if (productForm.image) formData.append("image", productForm.image);
     if (productForm.youtube_url) formData.append("youtube_url", productForm.youtube_url);
 
+    setIsAddingProduct(true);
     try {
       const res = await fetch("http://localhost:5000/api/products", {
         method: "POST",
@@ -203,6 +206,8 @@ const Admin = () => {
       }
     } catch (err) {
       toast({ title: "❌ Server Error", description: err.message });
+    } finally {
+      setIsAddingProduct(false);
     }
   };
 
@@ -426,8 +431,14 @@ const Admin = () => {
                       onChange={handleImageUpload}
                     />
                   </div>
-                  <Button type="submit" className="w-full">
-                    Save Product
+                  <Button type="submit" className="w-full" disabled={isAddingProduct}>
+                    {isAddingProduct ? (
+                      <span className="flex items-center justify-center">
+                        <Loader2 className="animate-spin h-5 w-5 mr-2" /> Adding...
+                      </span>
+                    ) : (
+                      "Save Product"
+                    )}
                   </Button>
                 </form>
               </CardContent>

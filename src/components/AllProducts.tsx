@@ -58,7 +58,7 @@ export const CategoryProducts = () => {
                 original_price: product.original_price,
                 image_url: product.imageUrl,
                 category: product.category,
-                youtube_url: product.youtube_url, // Pass YouTube URL if present
+                youtube_url: product.youtube_url, // This is correct!
               }}
               onAddToCart={addToCart}
             />

@@ -13,6 +13,11 @@ import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import PDFDocument from 'pdfkit';
 import nodemailer from 'nodemailer';
 import { Order } from './models/order.model.js';
+import helmet from 'helmet';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
+import apicache from 'apicache';
+import twilio from 'twilio'; // <-- Add this line
 
 dotenv.config();
 
@@ -20,8 +25,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.use(helmet());
+app.use(compression());
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
 app.use(cors());
 app.use(express.json());
+const cache = apicache.middleware;
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB connected'))
@@ -35,7 +50,20 @@ cloudinary.config({
 
 const invoiceDir = path.join(__dirname, 'invoices');
 if (!fs.existsSync(invoiceDir)) fs.mkdirSync(invoiceDir);
-app.use('/invoices', express.static(invoiceDir));
+// Remove static serving of invoices. Use custom endpoint below.
+
+// Custom endpoint: Serve and delete invoice after download
+app.get('/invoices/:filename', (req, res) => {
+  const filePath = path.join(invoiceDir, req.params.filename);
+  res.download(filePath, (err) => {
+    if (!err) {
+      // Delete the file after successful download
+      fs.unlink(filePath, (unlinkErr) => {
+        if (unlinkErr) console.error('Error deleting invoice:', unlinkErr);
+      });
+    }
+  });
+});
 
 const storage = new CloudinaryStorage({
   cloudinary,
@@ -108,24 +136,73 @@ app.get('/api/orders', async (req, res) => {
 });
 
 function generateInvoice(order, filePath) {
-  const doc = new PDFDocument();
+  const doc = new PDFDocument({ margin: 40 });
   doc.pipe(fs.createWriteStream(filePath));
-  doc.fontSize(20).text('KM Crackers Invoice', { align: 'center' });
-  doc.moveDown();
-  doc.fontSize(12).text(`Order ID: ${order.orderId}`);
-  doc.text(`Date: ${new Date(order.createdAt).toLocaleString()}`);
-  doc.text(`Name: ${order.customerDetails.fullName}`);
-  doc.text(`Email: ${order.customerDetails.email}`);
-  doc.text(`Mobile: ${order.customerDetails.mobile}`);
-  doc.text(`Address: ${order.customerDetails.address}`);
-  doc.text(`Pincode: ${order.customerDetails.pincode}`);
-  doc.moveDown();
-  doc.text('Products:', { underline: true });
+
+  // Header
+  doc
+    .fontSize(24)
+    .fillColor('#d97706')
+    .text(' KM Crackers Invoice', { align: 'center', underline: true });
+  doc.moveDown(1.5);
+
+  // Draw main box
+  const boxTop = doc.y;
+  const boxLeft = 40;
+  const boxWidth = 520;
+  let boxHeight = 320 + (order.items.length * 20);
+
+  // Draw rectangle (box)
+  doc
+    .lineWidth(1.5)
+    .roundedRect(boxLeft, boxTop, boxWidth, boxHeight, 12)
+    .stroke('#d97706');
+
+  doc.moveDown(0.5);
+  doc.fontSize(12).fillColor('#222');
+  const startY = doc.y + 10;
+  doc.text(`Order ID: ${order.orderId}`, boxLeft + 16, startY);
+  doc.text(`Date: ${new Date(order.createdAt).toLocaleString()}`, boxLeft + 280, startY);
+  doc.moveDown(1);
+  doc.text(`Name: ${order.customerDetails.fullName}`, boxLeft + 16);
+  doc.text(`Email: ${order.customerDetails.email}`, boxLeft + 280);
+  doc.text(`Mobile: ${order.customerDetails.mobile}`, boxLeft + 16);
+  doc.text(`Pincode: ${order.customerDetails.pincode}`, boxLeft + 280);
+  doc.text(`Address: ${order.customerDetails.address}`, boxLeft + 16, doc.y, { width: boxWidth - 32 });
+  doc.moveDown(1);
+
+  // Products Table Header
+  doc.font('Helvetica-Bold').fontSize(13).fillColor('#d97706');
+  doc.text('Products', boxLeft + 16, doc.y);
+  doc.font('Helvetica').fontSize(12).fillColor('#222');
+
+  // Table columns
+  doc.text('No.', boxLeft + 16, doc.y, { continued: true });
+  doc.text('Name', boxLeft + 50, doc.y, { continued: true });
+  doc.text('Qty', boxLeft + 220, doc.y, { continued: true });
+  doc.text('Price', boxLeft + 270, doc.y, { continued: true });
+  doc.text('Total', boxLeft + 300, doc.y);
+
+  // Products Table Rows
   order.items.forEach((item, idx) => {
-    doc.text(`${idx + 1}. ${item.name_en} (${item.name_ta}) × ${item.quantity} - ₹${item.price * item.quantity}`);
+    doc.text(`${idx + 1}`, boxLeft + 16, doc.y, { continued: true });
+    doc.text(`${item.name_en} (${item.name_ta})`, boxLeft + 50, doc.y, { continued: true });
+    doc.text(`${item.quantity}`, boxLeft + 220, doc.y, { continued: true });
+    doc.text(`₹${item.price}`, boxLeft + 270, doc.y, { continued: true });
+    doc.text(`₹${item.price * item.quantity}`, boxLeft + 300, doc.y);
   });
-  doc.moveDown();
-  doc.font('Helvetica-Bold').text(`Total Amount: ₹${order.total}`, { align: 'right' });
+  doc.moveDown(1);
+
+  // Payment, Status, Total
+  doc.font('Helvetica-Bold').fontSize(13).fillColor('#222');
+ 
+  doc.text(`Order Status: ${order.status || 'confirmed'}`, boxLeft + 16, doc.y);
+  doc.fontSize(15).fillColor('#d97706').text(`Total Amount: ₹${order.total}`, boxLeft + 180, doc.y);
+
+  // Thank you note
+  doc.moveDown(2);
+  doc.fontSize(13).fillColor('#16a34a').text('Thank you for shopping with KM Crackers! Wishing you a safe and sparkling festival!', { align: 'center' });
+
   doc.end();
 }
 
@@ -182,6 +259,33 @@ app.post('/api/products', upload.single('image'), async (req, res) => {
   }
 });
 
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+async function sendOrderToWhatsApp(order) {
+  const to = process.env.OWNER_WHATSAPP_TO;
+  const from = process.env.TWILIO_WHATSAPP_FROM;
+  const items = order.items.map(
+    (item, i) => `${i + 1}. ${item.name_en} (${item.name_ta}) x${item.quantity} - ₹${item.price * item.quantity}`
+  ).join('\n');
+  const message =
+    `🧨 *New Order Placed!*\n` +
+    `Order ID: ${order.orderId}\n` +
+    `Name: ${order.customerDetails.fullName}\n` +
+    `Mobile: ${order.customerDetails.mobile}\n` +
+    `Address: ${order.customerDetails.address}, ${order.customerDetails.pincode}\n` +
+    `Items:\n${items}\n` +
+    `Total: ₹${order.total}\n` +
+    `Status: ${order.status || 'confirmed'}`;
+
+  if (to && from) {
+    await twilioClient.messages.create({
+      from,
+      to,
+      body: message,
+    });
+  }
+}
+
 // ✅ POST: Place Order
 app.post('/api/orders/place', async (req, res) => {
   try {
@@ -201,7 +305,9 @@ app.post('/api/orders/place', async (req, res) => {
     const invoicePath = path.join(invoiceDir, `${orderId}.pdf`);
     generateInvoice(newOrder, invoicePath);
     await sendEmailWithInvoice(customerDetails.email, invoicePath);
-    fs.unlinkSync(invoicePath);
+    // fs.unlinkSync(invoicePath); // Do not delete immediately so frontend can download
+    // Send WhatsApp message to owner
+    await sendOrderToWhatsApp(newOrder);
     res.status(201).json({ message: '✅ Order placed & invoice emailed', orderId });
   } catch (error) {
     console.error('❌ Order placement error:', error);
@@ -222,7 +328,7 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 // ✅ GET: Analytics
-app.get('/api/analytics', async (req, res) => {
+app.get('/api/analytics', cache('2 minutes'), async (req, res) => {
   try {
     const { date } = req.query;
     let orders;
@@ -273,7 +379,7 @@ app.patch('/api/orders/update-status/:orderId', async (req, res) => {
 });
 
 // ✅ GET: Products by Category
-app.get('/api/products/category/:category', async (req, res) => {
+app.get('/api/products/category/:category', cache('2 minutes'), async (req, res) => {
   try {
     const category = req.params.category;
     const ProductModel = getProductModelByCategory(category);

@@ -19,6 +19,7 @@ type FrontendProduct = {
   original_price?: number;
   image_url: string;
   category: string;
+  youtube_url?: string; // <-- Add this line
 };
 
 const CategoryPage = () => {
@@ -47,6 +48,7 @@ const CategoryPage = () => {
           original_price: product.original_price,
           image_url: product.imageUrl,
           category: product.category,
+          youtube_url: product.youtube_url, // <-- Add this line
         }));
 
         setProducts(transformed);

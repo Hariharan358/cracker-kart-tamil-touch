@@ -167,7 +167,7 @@ const Checkout = () => {
       <Navbar cartCount={getTotalItems()} />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">
-          <span className="bg-gradient-primary bg-clip-text text-transparent">Checkout</span>
+          <span className="title-styled text-primary">Checkout</span>
         </h1>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">

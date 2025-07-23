@@ -19,6 +19,7 @@ import rateLimit from 'express-rate-limit';
 import apicache from 'apicache';
 import twilio from 'twilio'; // <-- Add this line
 
+
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -293,6 +294,7 @@ app.post('/api/orders/place', async (req, res) => {
     if (!orderId || !items || !total || !customerDetails) {
       return res.status(400).json({ error: 'Missing required order fields.' });
     }
+
     const newOrder = new Order({
       orderId,
       items,
@@ -311,7 +313,7 @@ app.post('/api/orders/place', async (req, res) => {
     res.status(201).json({ message: '✅ Order placed & invoice emailed', orderId });
   } catch (error) {
     console.error('❌ Order placement error:', error);
-    res.status(500).json({ error: 'Failed to place order or send invoice' });
+    res.status(500).json({ error: 'Failed to place order or send notifications' });
   }
 });
 
@@ -363,14 +365,17 @@ app.patch('/api/orders/update-status/:orderId', async (req, res) => {
     if (!status) {
       return res.status(400).json({ error: "Status is required." });
     }
+    
     const order = await Order.findOneAndUpdate(
       { orderId },
       { status },
       { new: true }
     );
+    
     if (!order) {
       return res.status(404).json({ error: "Order not found." });
     }
+
     res.json({ message: "✅ Status updated successfully", order });
   } catch (error) {
     console.error("❌ Status update error:", error);

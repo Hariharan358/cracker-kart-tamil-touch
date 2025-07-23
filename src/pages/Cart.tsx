@@ -31,7 +31,7 @@ const Cart = () => {
       
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">
-          Your <span className="bg-gradient-primary bg-clip-text text-transparent">Cart</span>
+          Your <span className="title-styled text-primary">Cart</span>
         </h1>
 
         {cartItems.length === 0 ? (

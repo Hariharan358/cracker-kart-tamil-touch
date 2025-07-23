@@ -19,7 +19,7 @@ const Categories = () => {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
             <Sparkles className="h-8 w-8 text-primary animate-sparkle mr-2" />
-            <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent dark:bg-gradient-primary dark:bg-clip-text">
+            <h1 className="title-styled text-4xl font-bold text-primary">
               {t('allCategories')}
             </h1>
             <Sparkles className="h-8 w-8 text-primary animate-sparkle ml-2" />

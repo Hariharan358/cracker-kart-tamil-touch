@@ -35,6 +35,7 @@ const TrackOrder = () => {
   const { getTotalItems } = useCart();
   const { toast } = useToast();
   const { t } = useLanguage();
+  
   const [searchParams] = useSearchParams();
   
   const [orderId, setOrderId] = useState(searchParams.get("orderId") || "");
@@ -51,7 +52,11 @@ const TrackOrder = () => {
       });
       return;
     }
+    // Directly fetch order details, no OTP verification
+    await fetchOrderDetails();
+  };
 
+  const fetchOrderDetails = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(`http://localhost:5000/api/orders/track?orderId=${orderId}&mobile=${mobile}`);
@@ -123,7 +128,7 @@ const TrackOrder = () => {
       <Navbar cartCount={getTotalItems()} />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">
-          <span className="bg-gradient-primary bg-clip-text text-transparent">Track Your Order</span>
+          <span className="title-styled text-primary">Track Your Order</span>
         </h1>
 
         {/* Search Form */}
@@ -131,13 +136,28 @@ const TrackOrder = () => {
           <div className="space-y-4">
             <div>
               <Label htmlFor="orderId">Order ID</Label>
-              <Input id="orderId" type="text" value={orderId} onChange={(e) => setOrderId(e.target.value)} />
+              <Input 
+                id="orderId" 
+                type="text" 
+                value={orderId} 
+                onChange={(e) => setOrderId(e.target.value)}
+              />
             </div>
             <div>
               <Label htmlFor="mobile">Mobile Number</Label>
-              <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} />
+              <Input 
+                id="mobile" 
+                type="tel" 
+                value={mobile} 
+                onChange={(e) => setMobile(e.target.value)}
+              />
             </div>
-            <Button variant="festive" className="w-full" onClick={handleTrackOrder} disabled={isLoading}>
+            <Button 
+              variant="festive" 
+              className="w-full" 
+              onClick={handleTrackOrder} 
+              disabled={isLoading}
+            >
               {isLoading ? "Tracking..." : "Track Order"}
             </Button>
           </div>

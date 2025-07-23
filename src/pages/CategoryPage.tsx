@@ -97,7 +97,7 @@ const CategoryPage = () => {
         {/* Page Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">
-            <span className="bg-gradient-primary bg-clip-text text-transparent">
+            <span className="title-styled text-primary">
               {decodedCategory}
             </span>
           </h1>
@@ -114,6 +114,7 @@ const CategoryPage = () => {
                 key={product.id}
                 product={product}
                 onAddToCart={handleAddToCart}
+                size="sm"
               />
             ))}
           </div>

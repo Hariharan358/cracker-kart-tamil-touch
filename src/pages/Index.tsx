@@ -11,6 +11,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { getCategoriesWithCount } from "../data/mockData";
 import heroImage from "../assets/hero-fireworks.jpg";
 import { useLocation } from "react-router-dom";
+import '../index.css'; // Ensure global styles are loaded
 
 const Index = () => {
   const { getTotalItems, addToCart } = useCart();
@@ -60,13 +61,23 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
-      
+
+      {/* Discount Marquee Banner */}
+      <div className="relative w-full overflow-hidden bg-primary py-2">
+        <div className="marquee whitespace-nowrap text-white font-bold text-lg tracking-wide">
+          <span className="mx-8">🔥 Festival Offer: 20% OFF on all products! Use code <span className="underline">FEST20</span> at checkout 🔥</span>
+          <span className="mx-8">🔥 Festival Offer: 20% OFF on all products! Use code <span className="underline">FEST20</span> at checkout 🔥</span>
+        </div>
+      </div>
+
       {/* Hero Section */}
       <div className="relative min-h-[60vh] flex flex-col justify-center items-center overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center scale-105 animate-float"
           style={{ backgroundImage: `url(${heroImage})` }}
         />
+        {/* Light theme: semi-transparent dark overlay for contrast */}
+        <div className="absolute inset-0 z-10 pointer-events-none block dark:hidden" style={{background: 'rgba(0,0,0,0.28)'}} />
         {/* Colorful animated gradient overlays for both themes */}
         <div className="absolute inset-0 z-10 pointer-events-none">
           {/* Light theme subtle pastel gradient */}
@@ -87,7 +98,7 @@ const Index = () => {
               <Sparkles className="h-8 w-8 text-primary animate-sparkle" />
             </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-              <span className="bg-gradient-primary bg-clip-text text-white dark:bg-gradient-primary dark:bg-clip-text">
+              <span className="title-styled text-white hero-title-contrast">
                 {t('heroTitle')}
               </span>
             </h1>
@@ -180,9 +191,9 @@ const Index = () => {
       {/* Secret Admin Button */}
       <div className="fixed bottom-4 right-4">
         <Link to="/admin">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="opacity-20 hover:opacity-100 transition-opacity"
           >
             🔐
@@ -251,7 +262,7 @@ const Index = () => {
       <Footer />
 
       {/* Featured Products Section */}
-     
+
     </div>
   );
 };

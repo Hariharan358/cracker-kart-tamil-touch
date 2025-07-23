@@ -36,7 +36,7 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-bold bg-gradient-primary bg-clip-text ">
+              <span className="title-styled text-base font-bold text-primary">
                 KM Crackers
               </span>
               <span className="text-xs text-muted-foreground -mt-1">

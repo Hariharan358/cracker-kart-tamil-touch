@@ -241,6 +241,35 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm("Are you sure you want to delete/cancel this order?")) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/orders/cancel/${orderId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast({
+          title: "Order deleted/cancelled",
+          description: `Order ${orderId} has been deleted/cancelled successfully.`,
+        });
+        fetchOrders();
+      } else {
+        toast({
+          title: "Failed to delete order",
+          description: data.error || "Unknown error",
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Server error",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -519,20 +548,29 @@ const Admin = () => {
                           <p className="text-sm text-muted-foreground">{order.customerDetails.mobile}</p>
                           <p className="text-primary font-medium">₹{order.total}</p>
                         </div>
-                        <Select
-                          defaultValue={order.status}
-                          onValueChange={(val) => handleStatusUpdate(order.orderId, val)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="confirmed">Confirmed</SelectItem>
-                            <SelectItem value="packed">Packed</SelectItem>
-                            <SelectItem value="shipped">Shipped</SelectItem>
-                            <SelectItem value="delivered">Delivered</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="flex flex-col gap-2 items-end">
+                          <Select
+                            defaultValue={order.status}
+                            onValueChange={(val) => handleStatusUpdate(order.orderId, val)}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="confirmed">Confirmed</SelectItem>
+                              <SelectItem value="packed">Packed</SelectItem>
+                              <SelectItem value="shipped">Shipped</SelectItem>
+                              <SelectItem value="delivered">Delivered</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={e => { e.stopPropagation(); handleDeleteOrder(order.orderId); }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                       {expandedOrderId === order.orderId && (
                         <div className="bg-blue-50 p-4 border-l-4 border-blue-400 rounded-b-lg transition-all">

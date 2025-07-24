@@ -6,7 +6,7 @@ export function generateInvoice(order, outputPath) {
   const doc = new PDFDocument();
   doc.pipe(fs.createWriteStream(outputPath));
 
-  doc.fontSize(20).text("🧨 KM Crackers - Invoice", { align: "center" });
+  doc.fontSize(20).text("🧨 KMPyrotech - Invoice", { align: "center" });
   doc.moveDown();
   doc.fontSize(12).text(`Order ID: ${order.orderId}`);
   doc.text(`Customer: ${order.customerDetails.fullName}`);

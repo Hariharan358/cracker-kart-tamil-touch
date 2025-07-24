@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { Button } from "../components/ui/button";
@@ -32,6 +32,7 @@ import { useToast } from "../hooks/use-toast";
 import { categories } from "../data/mockData";
 import { ShieldCheck, Package, TrendingUp } from "lucide-react";
 import { Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
 
 const Admin = () => {
   const { getTotalItems } = useCart();
@@ -64,9 +65,7 @@ const Admin = () => {
   const orderStatuses = [
     { value: 'all', label: 'All' },
     { value: 'confirmed', label: 'Confirmed' },
-    { value: 'packed', label: 'Packed' },
-    { value: 'shipped', label: 'Shipped' },
-    { value: 'delivered', label: 'Delivered' },
+    { value: 'booked', label: 'Booked' },
   ];
 
   const [analytics, setAnalytics] = useState({
@@ -80,6 +79,58 @@ const Admin = () => {
   const [analyticsDate, setAnalyticsDate] = useState("");
   const [analyticsDayStats, setAnalyticsDayStats] = useState({ totalOrders: 0, totalRevenue: 0 });
   const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [editProduct, setEditProduct] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name_en: "",
+    name_ta: "",
+    price: "",
+    original_price: "",
+    category: "",
+    image: null,
+    youtube_url: "",
+  });
+  const fileInputRef = useRef(null);
+  const [discount, setDiscount] = useState("");
+  const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
+
+  // Add state for transportName and lrNumber per order
+  const [transportInputs, setTransportInputs] = useState({});
+
+  const handleTransportInputChange = (orderId, field, value) => {
+    setTransportInputs((prev) => ({
+      ...prev,
+      [orderId]: {
+        ...prev[orderId],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleTransportSubmit = async (orderId) => {
+    const { transportName = '', lrNumber = '' } = transportInputs[orderId] || {};
+    if (!transportName || !lrNumber) {
+      toast({ title: 'Both fields required', description: 'Please enter both Transport Name and LR Number.', variant: 'destructive' });
+      return;
+    }
+    try {
+      const res = await fetch(`http://localhost:5000/api/orders/update-status/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transportName, lrNumber }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast({ title: 'Transport details updated', description: 'Order marked as booked.' });
+        fetchOrders();
+        setTransportInputs((prev) => ({ ...prev, [orderId]: { transportName: '', lrNumber: '' } }));
+      } else {
+        toast({ title: 'Update failed', description: data.error || 'Unknown error', variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -277,6 +328,90 @@ const Admin = () => {
     }
   };
 
+  const handleEditClick = (product) => {
+    setEditProduct(product);
+    setEditForm({
+      name_en: product.name_en,
+      name_ta: product.name_ta,
+      price: product.price,
+      original_price: product.original_price || "",
+      category: product.category,
+      image: null,
+      youtube_url: product.youtube_url || "",
+    });
+    setIsEditing(true);
+  };
+
+  const handleEditFormChange = (field, value) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleEditImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditForm((prev) => ({ ...prev, image: file }));
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editProduct) return;
+    const formData = new FormData();
+    formData.append("name_en", editForm.name_en);
+    formData.append("name_ta", editForm.name_ta);
+    formData.append("price", editForm.price);
+    if (editForm.original_price) formData.append("original_price", editForm.original_price);
+    formData.append("category", editForm.category);
+    if (editForm.image) formData.append("image", editForm.image);
+    if (editForm.youtube_url) formData.append("youtube_url", editForm.youtube_url);
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/${editProduct._id || editProduct.id}`, {
+        method: "PUT",
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast({ title: "✅ Product Updated!", description: `${editForm.name_en} updated successfully.` });
+        setIsEditing(false);
+        setEditProduct(null);
+        setEditForm({ name_en: "", name_ta: "", price: "", original_price: "", category: "", image: null, youtube_url: "" });
+        if (productManagementCategory) fetchCategoryProducts(productManagementCategory);
+      } else {
+        toast({ title: "❌ Failed to Update", description: data.error || "Something went wrong." });
+      }
+    } catch (err) {
+      toast({ title: "❌ Server Error", description: err.message });
+    }
+  };
+
+  const handleApplyDiscount = async (e) => {
+    e.preventDefault();
+    if (!discount || isNaN(Number(discount)) || Number(discount) < 0 || Number(discount) > 100) {
+      toast({ title: "Invalid Discount", description: "Please enter a valid discount percentage (0-100).", variant: "destructive" });
+      return;
+    }
+    setIsApplyingDiscount(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/products/apply-discount", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discount: Number(discount) }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast({ title: "✅ Discount Applied!", description: `All products updated with ${discount}% discount.` });
+        setDiscount("");
+        if (productManagementCategory) fetchCategoryProducts(productManagementCategory);
+      } else {
+        toast({ title: "❌ Failed to Apply Discount", description: data.error || "Something went wrong." });
+      }
+    } catch (err) {
+      toast({ title: "❌ Server Error", description: err.message });
+    } finally {
+      setIsApplyingDiscount(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
@@ -350,6 +485,9 @@ const Admin = () => {
                         <div className="font-semibold text-lg">{product.name_en}</div>
                         <div className="text-sm text-muted-foreground">{product.name_ta}</div>
                         <div className="text-primary font-bold">₹{product.price}</div>
+                        <Button variant="secondary" size="sm" onClick={() => handleEditClick(product)}>
+                          Edit
+                        </Button>
                         <Button variant="destructive" size="sm" onClick={() => handleDeleteProduct(product._id || product.id)}>
                           Delete
                         </Button>
@@ -558,9 +696,7 @@ const Admin = () => {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="confirmed">Confirmed</SelectItem>
-                              <SelectItem value="packed">Packed</SelectItem>
-                              <SelectItem value="shipped">Shipped</SelectItem>
-                              <SelectItem value="delivered">Delivered</SelectItem>
+                              <SelectItem value="booked">Booked</SelectItem>
                             </SelectContent>
                           </Select>
                           <Button
@@ -598,6 +734,32 @@ const Admin = () => {
                               <p className="text-sm text-blue-400">No products found in this order.</p>
                             )}
                           </div>
+                          <div className="mt-4 flex flex-col md:flex-row gap-4 items-center">
+                            <Input
+                              placeholder="Transport Name"
+                              value={transportInputs[order.orderId]?.transportName ?? order.transportName ?? ''}
+                              onChange={e => handleTransportInputChange(order.orderId, 'transportName', e.target.value)}
+                              className="w-48"
+                            />
+                            <Input
+                              placeholder="LR Number"
+                              value={transportInputs[order.orderId]?.lrNumber ?? order.lrNumber ?? ''}
+                              onChange={e => handleTransportInputChange(order.orderId, 'lrNumber', e.target.value)}
+                              className="w-48"
+                            />
+                            <Button
+                              variant="primary"
+                              onClick={() => handleTransportSubmit(order.orderId)}
+                              disabled={order.status === 'booked' || !transportInputs[order.orderId]?.transportName || !transportInputs[order.orderId]?.lrNumber}
+                            >
+                              {order.status === 'booked' ? 'Booked' : 'Set as Booked'}
+                            </Button>
+                          </div>
+                          {order.transportName && order.lrNumber && (
+                            <div className="mt-2 text-sm text-blue-700">
+                              <span className="font-semibold">Transport:</span> {order.transportName} <span className="ml-4 font-semibold">LR No:</span> {order.lrNumber}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -663,6 +825,126 @@ const Admin = () => {
         </Tabs>
       </div>
       <Footer />
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="edit_name_en">Product Name (English)</Label>
+              <Input
+                id="edit_name_en"
+                value={editForm.name_en}
+                onChange={e => handleEditFormChange("name_en", e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit_name_ta">Product Name (Tamil)</Label>
+              <Input
+                id="edit_name_ta"
+                value={editForm.name_ta}
+                onChange={e => handleEditFormChange("name_ta", e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit_price">Price (₹)</Label>
+              <Input
+                id="edit_price"
+                type="number"
+                value={editForm.price}
+                onChange={e => handleEditFormChange("price", e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit_original_price">Original Price (₹)</Label>
+              <Input
+                id="edit_original_price"
+                type="number"
+                value={editForm.original_price}
+                onChange={e => handleEditFormChange("original_price", e.target.value)}
+                placeholder="(Optional)"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit_category">Category</Label>
+              <Select
+                value={editForm.category}
+                onValueChange={value => handleEditFormChange("category", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="edit_youtube_url">YouTube Link (optional)</Label>
+              <Input
+                id="edit_youtube_url"
+                type="url"
+                placeholder="https://youtube.com/..."
+                value={editForm.youtube_url}
+                onChange={e => handleEditFormChange("youtube_url", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit_image">Image</Label>
+              <Input
+                id="edit_image"
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleEditImageUpload}
+              />
+              {editProduct && (editProduct.imageUrl || editProduct.image_url) && (
+                <img src={editProduct.imageUrl || editProduct.image_url} alt="Current" className="h-20 mt-2 rounded" />
+              )}
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="ml-2">Save Changes</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      {/* DISCOUNT SECTION */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Set Discount for All Products</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleApplyDiscount} className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex flex-col">
+              <Label htmlFor="discount">Discount Percentage (%)</Label>
+              <Input
+                id="discount"
+                type="number"
+                min="0"
+                max="100"
+                value={discount}
+                onChange={e => setDiscount(e.target.value)}
+                placeholder="e.g. 10"
+                className="w-32"
+              />
+            </div>
+            <Button type="submit" className="mt-2 sm:mt-0" disabled={isApplyingDiscount}>
+              {isApplyingDiscount ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : null}
+              Apply Discount
+            </Button>
+          </form>
+          <p className="text-muted-foreground text-xs mt-2">This will update the price of all products to the given percentage off their original price.</p>
+        </CardContent>
+      </Card>
     </div>
   );
 };

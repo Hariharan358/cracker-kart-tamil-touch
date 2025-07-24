@@ -144,7 +144,7 @@ function generateInvoice(order, filePath) {
   doc
     .fontSize(24)
     .fillColor('#d97706')
-    .text(' KM Crackers Invoice', { align: 'center', underline: true });
+    .text(' KMPyrotech Invoice', { align: 'center', underline: true });
   doc.moveDown(1.5);
 
   // Draw main box
@@ -202,7 +202,7 @@ function generateInvoice(order, filePath) {
 
   // Thank you note
   doc.moveDown(2);
-  doc.fontSize(13).fillColor('#16a34a').text('Thank you for shopping with KM Crackers! Wishing you a safe and sparkling festival!', { align: 'center' });
+  doc.fontSize(13).fillColor('#16a34a').text('Thank you for shopping with KMPyrotech! Wishing you a safe and sparkling festival!', { align: 'center' });
 
   doc.end();
 }
@@ -216,9 +216,9 @@ async function sendEmailWithInvoice(to, filePath) {
     },
   });
   await transporter.sendMail({
-    from: `"KM Crackers" <${process.env.EMAIL_FROM}>`,
+    from: `"KMPyrotech" <${process.env.EMAIL_FROM}>`,
     to,
-    subject: 'KM Crackers - Your Order Invoice',
+    subject: 'KMPyrotech - Your Order Invoice',
     text: 'Thank you for your order! Please find your invoice attached.',
     attachments: [{ filename: 'invoice.pdf', path: filePath }],
   });
@@ -257,6 +257,41 @@ app.post('/api/products', upload.single('image'), async (req, res) => {
   } catch (error) {
     console.error('❌ Product POST error:', error);
     res.status(500).json({ error: 'Failed to add product' });
+  }
+});
+
+// ✅ BULK DISCOUNT: Apply discount to all products in all categories
+app.post('/api/products/apply-discount', async (req, res) => {
+  try {
+    const { discount } = req.body;
+    if (typeof discount !== 'number' || discount < 0 || discount > 100) {
+      return res.status(400).json({ error: 'Invalid discount percentage.' });
+    }
+    // Get all collections that match the category naming pattern
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    let totalUpdated = 0;
+    for (const col of collections) {
+      const modelName = col.name;
+      if (/^[A-Z0-9_]+$/.test(modelName)) {
+        const Model = mongoose.model(modelName, productSchema, modelName);
+        // Only update products that have an original_price
+        const result = await Model.updateMany(
+          { original_price: { $exists: true, $ne: null } },
+          [{ $set: { price: { $round: [{ $multiply: ["$original_price", (1 - discount / 100)] }, 0] } } }]
+        );
+        totalUpdated += result.modifiedCount || 0;
+      }
+    }
+    // Clear apicache for all product category endpoints (dynamic)
+    if (apicache.clearRegexp) {
+      apicache.clearRegexp(/\/api\/products\/category\//);
+    } else {
+      apicache.clear(); // fallback: clear all cache
+    }
+    res.json({ message: `✅ Discount applied to all products.`, updated: totalUpdated });
+  } catch (error) {
+    console.error('❌ Error applying discount:', error);
+    res.status(500).json({ error: 'Failed to apply discount to products.' });
   }
 });
 
@@ -357,26 +392,31 @@ app.get('/api/analytics', cache('2 minutes'), async (req, res) => {
   }
 });
 
-// ✅ PATCH: Update Order Status
+// ✅ PATCH: Update Order Status and Transport Details
 app.patch('/api/orders/update-status/:orderId', async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { status } = req.body;
-    if (!status) {
-      return res.status(400).json({ error: "Status is required." });
+    const { status, transportName, lrNumber } = req.body;
+    // If transportName and lrNumber are provided, set status to 'booked'
+    let updateFields = {};
+    if (transportName || lrNumber) {
+      updateFields.transportName = transportName || '';
+      updateFields.lrNumber = lrNumber || '';
+      updateFields.status = 'booked';
+    } else if (status) {
+      updateFields.status = status;
+    } else {
+      return res.status(400).json({ error: "Status or transport details required." });
     }
-    
     const order = await Order.findOneAndUpdate(
       { orderId },
-      { status },
+      { $set: updateFields },
       { new: true }
     );
-    
     if (!order) {
       return res.status(404).json({ error: "Order not found." });
     }
-
-    res.json({ message: "✅ Status updated successfully", order });
+    res.json({ message: "✅ Order updated successfully", order });
   } catch (error) {
     console.error("❌ Status update error:", error);
     res.status(500).json({ error: "Failed to update order status" });

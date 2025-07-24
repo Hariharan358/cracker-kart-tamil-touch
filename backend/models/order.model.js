@@ -23,6 +23,8 @@ const orderSchema = new mongoose.Schema({
     pincode: String,
   },
   status: { type: String, default: "confirmed" },
+  transportName: { type: String, default: "" },
+  lrNumber: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
 });
 

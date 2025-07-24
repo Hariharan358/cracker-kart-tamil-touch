@@ -140,9 +140,28 @@ const Cart = () => {
                   </div>
                 </div>
                 
-                <Button variant="festive" className="w-full" asChild>
-                  <Link to="/checkout">
-                    Proceed to Checkout
+                {getTotalPrice() < 1000 && (
+                  <div className="text-red-600 text-sm font-semibold mb-2 text-center">
+                    {t('minOrderAlert')}
+                  </div>
+                )}
+                <Button
+                  variant="festive"
+                  className="w-full"
+                  asChild
+                  disabled={getTotalPrice() < 1000}
+                  onClick={() => {
+                    if (getTotalPrice() < 1000) {
+                      toast({
+                        title: t('minOrderButton'),
+                        description: t('minOrderAlert'),
+                        variant: 'destructive',
+                      });
+                    }
+                  }}
+                >
+                  <Link to={getTotalPrice() >= 1000 ? "/checkout" : "#"}>
+                    {t('proceedToCheckout')}
                   </Link>
                 </Button>
                 

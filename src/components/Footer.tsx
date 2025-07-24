@@ -12,7 +12,7 @@ export const Footer = () => {
           {/* Company Info */}
           <div className="space-y-4">
             <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text ">
-              KM Crackers
+              KMPyrotech
             </h3>
             <p className="text-muted-foreground text-sm">
               Premium quality fireworks and crackers for all your celebrations. 
@@ -73,7 +73,7 @@ export const Footer = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground text-sm">info@kmcrackers.com</span>
+                <span className="text-muted-foreground text-sm">kmpyrotech@gmail.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4 text-primary" />
@@ -86,7 +86,7 @@ export const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-border mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
           <p className="text-muted-foreground text-sm">
-            © 2024 KM Crackers. All rights reserved.
+            © 2024 KMPyrotech. All rights reserved.
           </p>
           <p className="text-muted-foreground text-sm mt-2 md:mt-0">
             Made with ❤️ for celebrations

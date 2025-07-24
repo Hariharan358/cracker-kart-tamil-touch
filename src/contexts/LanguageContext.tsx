@@ -25,7 +25,7 @@ const translations = {
     trackOrder: 'Track Order',
     
     // Homepage
-    heroTitle: 'KM Crackers',
+    heroTitle: 'KMPyrotech',
     heroSubtitle: 'Light up your festivals with premium quality fireworks. Celebrate Diwali with our authentic crackers collection.',
     shopNow: 'Shop Now',
     allCategories: 'All Categories',
@@ -46,6 +46,8 @@ const translations = {
     continueShopping: 'Continue Shopping',
     proceedToCheckout: 'Proceed to Checkout',
     total: 'Total',
+    minOrderAlert: 'Minimum order is ₹1,000. Please add more items to proceed to checkout.',
+    minOrderButton: 'Minimum order ₹1,000 required',
     
     // Checkout
     checkout: 'Checkout',
@@ -114,6 +116,8 @@ const translations = {
     continueShopping: 'வாங்குதலைத் தொடரவும்',
     proceedToCheckout: 'செக்அவுட்டுக்கு செல்லவும்',
     total: 'மொத்தம்',
+    minOrderAlert: 'குறைந்தபட்ச ஆர்டர் ₹1,000. தொடர மேலும் பொருட்களைச் சேர்க்கவும்.',
+    minOrderButton: 'குறைந்தபட்சம் ₹1,000 தேவை',
     
     // Checkout
     checkout: 'செக்அவுட்',

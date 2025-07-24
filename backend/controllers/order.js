@@ -15,7 +15,7 @@ const generateInvoicePDF = async (order) => {
       resolve(pdfBuffer);
     });
 
-    doc.fontSize(20).text('🧾 KM Crackers Invoice', { align: 'center' });
+    doc.fontSize(20).text('🧾 KMPyrotech Invoice', { align: 'center' });
     doc.moveDown();
     doc.fontSize(12).text(`Order ID: ${order.orderId}`);
     doc.text(`Name: ${order.customerDetails.fullName}`);
@@ -49,10 +49,10 @@ const sendInvoiceEmail = async (order) => {
   });
 
   const mailOptions = {
-    from: `"KM Crackers" <${process.env.EMAIL_USER}>`,
+    from: `"KMPyrotech" <${process.env.EMAIL_USER}>`,
     to: order.customerDetails.email,
-    subject: `🧾 Invoice for KM Crackers Order #${order.orderId}`,
-    text: `Dear ${order.customerDetails.fullName},\n\nPlease find attached the invoice for your recent order.\n\nThanks for shopping with KM Crackers!`,
+    subject: `🧾 Invoice for KMPyrotech Order #${order.orderId}`,
+    text: `Dear ${order.customerDetails.fullName},\n\nPlease find attached the invoice for your recent order.\n\nThanks for shopping with KMPyrotech!`,
     attachments: [
       {
         filename: `Invoice-${order.orderId}.pdf`,

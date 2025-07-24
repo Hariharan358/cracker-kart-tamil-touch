@@ -1,4 +1,4 @@
-// Mock data for KM Crackers
+// Mock data for KMPyrotech
 // Category images
 import sparklerImg from '../assets/categories/sparkler.jpg';
 import flowerPotsImg from '../assets/image/flowerpot.jpg';

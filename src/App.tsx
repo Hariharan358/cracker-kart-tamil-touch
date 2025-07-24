@@ -13,6 +13,7 @@ import TrackOrder from "./pages/TrackOrder";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
+import Safety from "./pages/Safety";
 import { ThemeProvider } from "next-themes";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/track" element={<TrackOrder />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/adminlogin" element={<AdminLogin />} />
+              <Route path="/safety" element={<Safety />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

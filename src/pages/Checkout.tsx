@@ -63,8 +63,16 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (getTotalPrice() < 1000) {
+      toast({
+        title: t('minOrderButton'),
+        description: t('minOrderAlert'),
+        variant: 'destructive',
+      });
+      return;
+    }
 
-    if (!form.fullName || !form.mobile || !form.email || !form.address || !form.pincode) {
+    if (!form.fullName || !form.mobile ||  !form.address || !form.pincode) {
       toast({
         title: "Please fill all fields",
         description: "All fields are required to place your order.",
@@ -197,8 +205,8 @@ const Checkout = () => {
                 <h3 className="font-semibold mb-2">Payment Method</h3>
                 <p className="text-sm text-muted-foreground">💵 Cash on Delivery (COD) - Pay when your order arrives</p>
               </div>
-              <Button type="submit" variant="festive" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Placing Order..." : "Place Order"}
+              <Button type="submit" variant="festive" className="w-full" disabled={isSubmitting || getTotalPrice() < 1000}>
+                {isSubmitting ? "Placing Order..." : t('placeOrder')}
               </Button>
             </form>
           </div>

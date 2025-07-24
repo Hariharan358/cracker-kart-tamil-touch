@@ -14,7 +14,7 @@ import { useLocation } from "react-router-dom";
 import '../index.css'; // Ensure global styles are loaded
 
 const Index = () => {
-  const { getTotalItems, addToCart } = useCart();
+  const { getTotalItems, addToCart, cartItems, updateQuantity } = useCart();
   const { t } = useLanguage();
   const categories = getCategoriesWithCount();
   const [products, setProducts] = useState([]);
@@ -30,7 +30,7 @@ const Index = () => {
         // Example: fetch from 'ATOM BOMB' category, or change as needed
         const res = await fetch("http://localhost:5000/api/products/category/ATOM%20BOMB");
         const data = await res.json();
-        setProducts(data.slice(0, 4)); // Show only 4 featured products
+        setProducts(data.slice(0, 8)); // Show 8 featured products
       } catch (err) {
         setProducts([]);
       } finally {
@@ -48,7 +48,7 @@ const Index = () => {
         console.log('Sparkler products:', data); // <-- Add this
         console.log('Sparkler products:', data.slice(0, 4));
 
-        setSparklerProducts(data.slice(0, 4));
+        setSparklerProducts(data.slice(0, 8)); // Show 8 sparkler products
       } catch (err) {
         setSparklerProducts([]);
       } finally {
@@ -65,8 +65,8 @@ const Index = () => {
       {/* Discount Marquee Banner */}
       <div className="relative w-full overflow-hidden bg-primary py-2">
         <div className="marquee whitespace-nowrap text-white font-bold text-lg tracking-wide">
-          <span className="mx-8">🔥 Festival Offer: 20% OFF on all products! Use code <span className="underline">FEST20</span> at checkout 🔥</span>
-          <span className="mx-8">🔥 Festival Offer: 20% OFF on all products! Use code <span className="underline">FEST20</span> at checkout 🔥</span>
+          <span className="mx-8">🔥 Festival Offer: 10% OFF on all products! Use code <span className="underline">FEST20</span> at checkout 🔥</span>
+          <span className="mx-8">🔥 Festival Offer: 10% OFF on all products! Use code <span className="underline">FEST20</span> at checkout 🔥</span>
         </div>
       </div>
 
@@ -103,7 +103,9 @@ const Index = () => {
               </span>
             </h1>
             <p className="text-xl text-foreground/90 mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.5s' }}>
-              {t('heroSubtitle')}
+              Minimum Order Rs 1,000/-<br/>
+              The Product Image is only for your reference, the packing and brand may change<br/>
+              Crackers In Sivakasi,Best Crackers Sivakasi,Crackers in India
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: '0.7s' }}>
               <Button variant="festive" size="lg" asChild className="transition-transform duration-300 hover:scale-110">
@@ -207,24 +209,29 @@ const Index = () => {
           <p className="text-center text-muted-foreground">No products found.</p>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 md:grid-cols-5 sm:overflow-x-visible">
-            {products.map((product) => (
-              <div className="min-w-[220px] max-w-[240px] flex-shrink-0 sm:min-w-0 sm:max-w-none" key={product._id || product.id}>
-                <ProductCard
-                  product={{
-                    id: product._id || product.id,
-                    name_en: product.name_en,
-                    name_ta: product.name_ta,
-                    price: product.price,
-                    original_price: product.original_price,
-                    image_url: product.imageUrl || product.image_url, // This line is correct!
-                    category: product.category,
-                    youtube_url: product.youtube_url,
-                  }}
-                  onAddToCart={addToCart}
-                  size="sm"
-                />
-              </div>
-            ))}
+            {products.map((product) => {
+              const quantity = cartItems.find(item => item.id === (product._id || product.id))?.quantity || 0;
+              return (
+                <div className="min-w-[220px] max-w-[240px] flex-shrink-0 sm:min-w-0 sm:max-w-none" key={product._id || product.id}>
+                  <ProductCard
+                    product={{
+                      id: product._id || product.id,
+                      name_en: product.name_en,
+                      name_ta: product.name_ta,
+                      price: product.price,
+                      original_price: product.original_price,
+                      image_url: product.imageUrl || product.image_url,
+                      category: product.category,
+                      youtube_url: product.youtube_url,
+                    }}
+                    onAddToCart={addToCart}
+                    onRemoveFromCart={() => updateQuantity(product._id || product.id, quantity - 1)}
+                    quantity={quantity}
+                    size="sm"
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
@@ -237,24 +244,29 @@ const Index = () => {
           <p className="text-center text-muted-foreground">No sparkler products found.</p>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 md:grid-cols-5 sm:overflow-x-visible">
-            {sparklerProducts.map((product) => (
-              <div className="min-w-[220px] max-w-[240px] flex-shrink-0 sm:min-w-0 sm:max-w-none" key={product._id || product.id}>
-                <ProductCard
-                  product={{
-                    id: product._id || product.id,
-                    name_en: product.name_en,
-                    name_ta: product.name_ta,
-                    price: product.price,
-                    original_price: product.original_price,
-                    image_url: product.imageUrl || product.image_url, // This line is correct!
-                    category: product.category,
-                    youtube_url: product.youtube_url,
-                  }}
-                  onAddToCart={addToCart}
-                  size="sm"
-                />
-              </div>
-            ))}
+            {sparklerProducts.map((product) => {
+              const quantity = cartItems.find(item => item.id === (product._id || product.id))?.quantity || 0;
+              return (
+                <div className="min-w-[220px] max-w-[240px] flex-shrink-0 sm:min-w-0 sm:max-w-none" key={product._id || product.id}>
+                  <ProductCard
+                    product={{
+                      id: product._id || product.id,
+                      name_en: product.name_en,
+                      name_ta: product.name_ta,
+                      price: product.price,
+                      original_price: product.original_price,
+                      image_url: product.imageUrl || product.image_url,
+                      category: product.category,
+                      youtube_url: product.youtube_url,
+                    }}
+                    onAddToCart={addToCart}
+                    onRemoveFromCart={() => updateQuantity(product._id || product.id, quantity - 1)}
+                    quantity={quantity}
+                    size="sm"
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

@@ -17,20 +17,33 @@ interface Product {
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
+  onRemoveFromCart?: (product: Product) => void;
+  quantity?: number;
   size?: "sm" | "md";
 }
 
 export const ProductCard = ({
   product,
   onAddToCart,
+  onRemoveFromCart,
+  quantity = 0,
   size = "md",
 }: ProductCardProps) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const handleAddToCart = () => {
     setIsAdding(true);
     onAddToCart(product);
     setTimeout(() => setIsAdding(false), 600);
+  };
+
+  const handleRemoveFromCart = () => {
+    if (onRemoveFromCart) {
+      setIsRemoving(true);
+      onRemoveFromCart(product);
+      setTimeout(() => setIsRemoving(false), 600);
+    }
   };
 
   const isDiscount =
@@ -107,19 +120,34 @@ export const ProductCard = ({
             </span>
           </div>
 
-          <Button
-            variant="cart"
-            size="cart-icon"
-            onClick={handleAddToCart}
-            className={`relative ${isAdding ? "cart-bounce" : ""}`}
-            disabled={isAdding}
-            aria-label="Add to cart"
-          >
-            <Plus className={size === "sm" ? "h-4 w-4" : "h-5 w-5"} />
-            {isAdding && (
-              <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
-            )}
-          </Button>
+          <div className="flex items-center gap-2 mt-2">
+            <Button
+              variant="cart"
+              size="cart-icon"
+              onClick={handleRemoveFromCart}
+              className={`relative ${isRemoving ? "cart-bounce" : ""}`}
+              disabled={isRemoving || quantity === 0}
+              aria-label="Remove from cart"
+            >
+              -
+            </Button>
+            <span className="font-semibold text-base w-6 text-center select-none">
+              {quantity}
+            </span>
+            <Button
+              variant="cart"
+              size="cart-icon"
+              onClick={handleAddToCart}
+              className={`relative ${isAdding ? "cart-bounce" : ""}`}
+              disabled={isAdding}
+              aria-label="Add to cart"
+            >
+              <Plus className={size === "sm" ? "h-4 w-4" : "h-5 w-5"} />
+              {isAdding && (
+                <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

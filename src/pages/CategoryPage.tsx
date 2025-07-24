@@ -24,7 +24,7 @@ type FrontendProduct = {
 
 const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
-  const { getTotalItems, addToCart } = useCart();
+  const { getTotalItems, addToCart, cartItems, updateQuantity } = useCart();
   const { toast } = useToast();
   const { t } = useLanguage();
 
@@ -109,14 +109,19 @@ const CategoryPage = () => {
         {/* Products Grid */}
         {products.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={handleAddToCart}
-                size="sm"
-              />
-            ))}
+            {products.map((product) => {
+              const quantity = cartItems.find(item => item.id === product.id)?.quantity || 0;
+              return (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={handleAddToCart}
+                  onRemoveFromCart={() => updateQuantity(product.id, quantity - 1)}
+                  quantity={quantity}
+                  size="sm"
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-16">

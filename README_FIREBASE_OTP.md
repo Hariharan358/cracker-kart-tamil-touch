@@ -1,6 +1,6 @@
 # Firebase OTP Authentication Implementation
 
-This document explains the Firebase OTP authentication implementation for the KM Crackers application.
+This document explains the Firebase OTP authentication implementation for the KMPyrotech application.
 
 ## 🚀 Features Implemented
 

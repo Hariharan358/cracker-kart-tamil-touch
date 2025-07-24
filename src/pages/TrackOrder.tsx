@@ -22,13 +22,13 @@ interface OrderDetails {
   customerDetails: any;
   status: string;
   createdAt: string;
+  transportName?: string;
+  lrNumber?: string;
 }
 
 const orderStatuses: OrderStatus[] = [
   { status: "confirmed", timestamp: "Order confirmed" },
-  { status: "packed", timestamp: "Order packed" },
-  { status: "shipped", timestamp: "Order shipped" },
-  { status: "delivered", timestamp: "Order delivered" },
+  { status: "booked", timestamp: "Order booked (Dispatched)" },
 ];
 
 const TrackOrder = () => {
@@ -169,8 +169,12 @@ const TrackOrder = () => {
             <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Order Information</h2>
-                {orderDetails.status !== "delivered" && (
-                  <Button variant="destructive" size="sm" onClick={cancelOrder}>
+                {orderDetails.status === "confirmed" && (
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={cancelOrder}
+                  >
                     <XCircle className="w-4 h-4 mr-1" />
                     Cancel Order
                   </Button>
@@ -181,6 +185,12 @@ const TrackOrder = () => {
                 <div><p className="text-sm text-muted-foreground">Order Date</p><p className="font-semibold">{new Date(orderDetails.createdAt).toLocaleDateString()}</p></div>
                 <div><p className="text-sm text-muted-foreground">Total Amount</p><p className="font-semibold text-primary">₹{orderDetails.total}</p></div>
                 <div><p className="text-sm text-muted-foreground">Payment</p><p className="font-semibold">Cash on Delivery</p></div>
+                {orderDetails.transportName && (
+                  <div><p className="text-sm text-muted-foreground">Transport Name</p><p className="font-semibold">{orderDetails.transportName}</p></div>
+                )}
+                {orderDetails.lrNumber && (
+                  <div><p className="text-sm text-muted-foreground">LR Number</p><p className="font-semibold">{orderDetails.lrNumber}</p></div>
+                )}
               </div>
             </div>
 

@@ -36,10 +36,10 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="title-styled text-base font-bold text-primary">
-                KM Crackers
+              <span className="title-styled text-sm font-bold text-primary">
+                KMPyrotech
               </span>
-              <span className="text-xs text-muted-foreground -mt-1">
+              <span className="text-[10px] text-muted-foreground -mt-1">
                 Festival Fireworks
               </span>
             </div>
@@ -64,6 +64,12 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
               className="text-foreground hover:text-primary transition-colors font-medium"
             >
               {t('trackOrder')}
+            </Link>
+            <Link 
+              to="/safety" 
+              className="text-foreground hover:text-primary transition-colors font-medium"
+            >
+              Safety Guidance
             </Link>
           </div>
 

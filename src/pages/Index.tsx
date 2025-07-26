@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sparkles, Zap, Gift } from "lucide-react";
+import { Sparkles, Zap, Gift, Users } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { CategoryCard } from "../components/CategoryCard";
 import { Navbar } from "../components/Navbar";
@@ -12,6 +12,7 @@ import { getCategoriesWithCount } from "../data/mockData";
 import heroImage from "../assets/hero-fireworks.jpg";
 import { useLocation } from "react-router-dom";
 import '../index.css'; // Ensure global styles are loaded
+import { useTheme } from "next-themes";
 
 const Index = () => {
   const { getTotalItems, addToCart, cartItems, updateQuantity } = useCart();
@@ -22,6 +23,21 @@ const Index = () => {
   const [sparklerProducts, setSparklerProducts] = useState([]);
   const [loadingSparklers, setLoadingSparklers] = useState(true);
   const location = useLocation();
+  const { resolvedTheme } = useTheme();
+
+  const sliderImages = [
+    '/banner.jpg',
+    '/banner1.jpg',
+    '/banner2.jpg',
+  ];
+  const [currentSlide, setCurrentSlide] = useState(0);
+  useEffect(() => {
+    if (resolvedTheme === 'dark') return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [resolvedTheme]);
 
   useEffect(() => {
     // Fetch products from a default category or all categories
@@ -45,9 +61,6 @@ const Index = () => {
       try {
         const res = await fetch("http://localhost:5000/api/products/category/SPARKLER%20ITEMS");
         const data = await res.json();
-        console.log('Sparkler products:', data); // <-- Add this
-        console.log('Sparkler products:', data.slice(0, 4));
-
         setSparklerProducts(data.slice(0, 8)); // Show 8 sparkler products
       } catch (err) {
         setSparklerProducts([]);
@@ -70,27 +83,35 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Hero Section */}
+      {/* Hero Section with Local Video Background */}
       <div className="relative min-h-[60vh] flex flex-col justify-center items-center overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center scale-105 animate-float"
-          style={{ backgroundImage: `url(${heroImage})` }}
-        />
-        {/* Light theme: semi-transparent dark overlay for contrast */}
-        <div className="absolute inset-0 z-10 pointer-events-none block dark:hidden" style={{background: 'rgba(0,0,0,0.28)'}} />
-        {/* Colorful animated gradient overlays for both themes */}
-        <div className="absolute inset-0 z-10 pointer-events-none">
-          {/* Light theme subtle pastel gradient */}
-          <div className="w-full h-full bg-gradient-to-br from-yellow-100 via-pink-100 to-blue-100 opacity-40 animate-none dark:opacity-0" style={{mixBlendMode: 'screen'}} />
-          {/* Dark theme vibrant gradient */}
-          <div className="w-full h-full hidden dark:block bg-gradient-to-br from-fuchsia-700 via-blue-900 to-yellow-700 opacity-70 animate-gradient-x" style={{mixBlendMode: 'screen', position: 'absolute', top: 0, left: 0}} />
+        {/* Dynamic Background based on theme */}
+        <div className="absolute inset-0 z-0 w-full h-full overflow-hidden pointer-events-none">
+          {resolvedTheme === 'dark' ? (
+            // Dark theme: Video background
+            <video
+              className="w-full h-full object-cover"
+              src="/dark_bg.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          ) : (
+            // Light theme: Banner image background
+            <img
+              src="/banner.jpg"
+              alt="Hero Banner"
+              className="w-full h-full object-cover"
+            />
+          )}
+          {resolvedTheme === 'dark' && (
+            <div className="absolute inset-0 bg-black/50"></div>
+          )}
         </div>
-        <div className="absolute inset-0 bg-gradient-hero dark:bg-gradient-hero z-20" />
-        {/* Animated sparkles overlay */}
-        <div className="absolute inset-0 pointer-events-none flex justify-center items-center z-30">
-          <Sparkles className="h-24 w-24 text-primary/30 animate-sparkle" />
-        </div>
-        <div className="relative z-40 container mx-auto px-4 h-full flex items-center">
+
+        {/* Hero Content */}
+        <div className="relative z-10 container mx-auto px-4 h-full flex items-center">
           <div className="max-w-2xl text-center mx-auto">
             <div className="flex items-center justify-center mb-4 space-x-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
               <Sparkles className="h-8 w-8 text-primary animate-sparkle" />
@@ -102,7 +123,7 @@ const Index = () => {
                 {t('heroTitle')}
               </span>
             </h1>
-            <p className="text-xl text-foreground/90 mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.5s' }}>
+            <p className="text-xl text-white mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.5s' }}>
               Minimum Order Rs 1,000/-<br/>
               The Product Image is only for your reference, the packing and brand may change<br/>
               Crackers In Sivakasi,Best Crackers Sivakasi,Crackers in India
@@ -155,6 +176,30 @@ const Index = () => {
               <h3 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-red-100">{t('featureOffers')}</h3>
               <p className="text-sm sm:text-base text-muted-foreground dark:text-red-200/80">{t('featureOffersDesc')}</p>
             </div>
+          </div>
+          
+          {/* Special Category Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+            <Link to="/category/FAMILY%20PACK">
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
+              >
+                <Users className="h-6 w-6 mr-3 group-hover:scale-110 transition-transform duration-300" />
+                {t('familyPack')}
+              </Button>
+            </Link>
+            
+            <Link to="/category/GIFT%20BOX">
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="w-full sm:w-auto border-2 border-primary text-primary hover:bg-primary hover:text-white font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
+              >
+                <Gift className="h-6 w-6 mr-3 group-hover:scale-110 transition-transform duration-300" />
+                {t('giftBox')}
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { categoryImages } from "../data/mockData";
+import { useLanguage } from "../contexts/LanguageContext";
 import sparklerImg from '../assets/categories/sparkler.jpg';
 
 interface CategoryCardProps {
@@ -9,6 +10,8 @@ interface CategoryCardProps {
 }
 
 export const CategoryCard = ({ category, productCount }: CategoryCardProps) => {
+  const { t } = useLanguage();
+  
   return (
     <Link to={`/category/${encodeURIComponent(category)}`}>
       <div className="group relative bg-gradient-card rounded-lg p-6 hover-lift shadow-card hover:shadow-glow transition-all duration-300 border border-border">
@@ -34,7 +37,7 @@ export const CategoryCard = ({ category, productCount }: CategoryCardProps) => {
           
           {/* Product Count */}
           <p className="text-sm text-muted-foreground">
-            {productCount} items
+            {productCount} {t('items')}
           </p>
         </div>
       </div>

@@ -89,7 +89,7 @@ const CategoryPage = () => {
           <Button variant="ghost" size="sm" asChild>
             <Link to="/categories">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Categories
+              {t('backToCategories')}
             </Link>
           </Button>
         </div>
@@ -102,7 +102,7 @@ const CategoryPage = () => {
             </span>
           </h1>
           <p className="text-lg text-muted-foreground">
-            {products.length} products available
+            {products.length} {t('productsAvailable')}
           </p>
         </div>
 
@@ -126,11 +126,11 @@ const CategoryPage = () => {
         ) : (
           <div className="text-center py-16">
             <p className="text-xl text-muted-foreground mb-4">
-              No products available in this category yet.
+              {t('noProductsInCategory')}
             </p>
             <Button variant="outline" asChild>
               <Link to="/categories">
-                Browse Other Categories
+                {t('browseOtherCategories')}
               </Link>
             </Button>
           </div>

@@ -3,13 +3,21 @@ import { CategoryCard } from "../components/CategoryCard";
 import { Footer } from "../components/Footer";
 import { useCart } from "../hooks/useCart";
 import { useLanguage } from "../contexts/LanguageContext";
-import { getCategoriesWithCount } from "../data/mockData";
-import { Sparkles } from "lucide-react";
+import { categoryTranslationKeys } from "../data/mockData";
+import { Sparkles, Gift, Users } from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Link } from "react-router-dom";
 
 const Categories = () => {
   const { getTotalItems } = useCart();
   const { t } = useLanguage();
-  const categories = getCategoriesWithCount();
+  
+  // Get categories with translated names and counts
+  const categories = categoryTranslationKeys.map(key => ({
+    name: t(key),
+    translationKey: key,
+    count: 0 // You can implement actual count logic here if needed
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,10 +37,34 @@ const Categories = () => {
           </p>
         </div>
 
+        {/* Special Category Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <Link to="/category/FAMILY%20PACK">
+            <Button 
+              size="lg" 
+              className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
+            >
+              <Users className="h-6 w-6 mr-3 group-hover:scale-110 transition-transform duration-300" />
+              {t('familyPack')}
+            </Button>
+          </Link>
+          
+          <Link to="/category/GIFT%20BOX">
+            <Button 
+              size="lg" 
+              variant="outline"
+              className="w-full sm:w-auto border-2 border-primary text-primary hover:bg-primary hover:text-white font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
+            >
+              <Gift className="h-6 w-6 mr-3 group-hover:scale-110 transition-transform duration-300" />
+              {t('giftBox')}
+            </Button>
+          </Link>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {categories.map((category) => (
             <CategoryCard
-              key={category.name}
+              key={category.translationKey}
               category={category.name}
               productCount={category.count}
             />

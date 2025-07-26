@@ -201,10 +201,11 @@ const Checkout = () => {
                 <Label htmlFor="pincode">Pincode *</Label>
                 <Input id="pincode" value={form.pincode} onChange={(e) => handleInputChange("pincode", e.target.value)} required />
               </div>
-              <div className="bg-muted/50 rounded-lg p-4">
+              {/* Payment Method - REMOVE COD */}
+              {/* <div className="bg-muted/50 rounded-lg p-4">
                 <h3 className="font-semibold mb-2">Payment Method</h3>
                 <p className="text-sm text-muted-foreground">💵 Cash on Delivery (COD) - Pay when your order arrives</p>
-              </div>
+              </div> */}
               <Button type="submit" variant="festive" className="w-full" disabled={isSubmitting || getTotalPrice() < 1000}>
                 {isSubmitting ? "Placing Order..." : t('placeOrder')}
               </Button>

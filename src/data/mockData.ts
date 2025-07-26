@@ -6,6 +6,42 @@ import chakkarsImg from '../assets/image/chakkaras.jpeg';
 import fountainImg from '../assets/image/fountain.jpg';
 import atomBombImg from '../assets/categories/atom-bomb.jpg';
 
+// Category translation keys mapping
+export const categoryTranslationKeys = [
+  "sparklerItems",
+  "flowerPots", 
+  "chakkars",
+  "twinkling",
+  "colourFountainWindowBig",
+  "colorWindowFountain3Inch",
+  "enjoyPencial",
+  "oneSoundCrackers",
+  "bijili",
+  "rocketBomb",
+  "atomBomb",
+  "gaintAndDeluxe",
+  "redMiracleOther",
+  "redMiracleBrands",
+  "babyFancyNovelties",
+  "multiColourShotBrand",
+  "multiColourShotOthers",
+  "colourPaperMusicalOut",
+  "megaDisplaySerious",
+  "megaFountain",
+  "miniAerialChottaFancy",
+  "megaDisplay",
+  "gujarathFlowerPots",
+  "newColourFountainSky",
+  "colourSmokeFountain",
+  "matchesBox",
+  "kannan5PieceGiftBox",
+  "guns",
+  "nattuVedi",
+  "familyPack",
+  "giftBox"
+];
+
+// Legacy categories array for backward compatibility
 export const categories = [
   "SPARKLER ITEMS",
   "FLOWER POTS",
@@ -35,7 +71,9 @@ export const categories = [
   "MATCHES BOX",
   "KANNAN 5 PIECE GIFT BOX",
   "GUNS",
-  "NATTU VEDI"
+  "NATTU VEDI",
+  "FAMILY PACK",
+  "GIFT BOX"
 ];
 
 // Category images mapping
@@ -47,6 +85,8 @@ export const categoryImages: Record<string, string> = {
   "CHAKKARS": chakkarsImg,
   "ATOM BOMB": atomBombImg,
   "GUJARATH FLOWER POTS": flowerPotsImg,
+  "FAMILY PACK": sparklerImg, // Using sparkler image for family pack
+  "GIFT BOX": flowerPotsImg, // Using flower pots image for gift box
   // Add more mappings as needed, defaulting to sparkler for now
 };
 
@@ -141,6 +181,58 @@ export const products: Product[] = [
     price: 220,
     image_url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&h=200&fit=crop",
     category: "ROCKET BOMB"
+  },
+
+  // FAMILY PACK Category
+  {
+    id: "prod_010",
+    name_en: "Diwali Family Pack",
+    name_ta: "தீபாவளி குடும்ப பேக்",
+    price: 500,
+    image_url: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=300&h=200&fit=crop",
+    category: "FAMILY PACK"
+  },
+  {
+    id: "prod_011",
+    name_en: "Festival Family Pack",
+    name_ta: "திருவிழா குடும்ப பேக்",
+    price: 750,
+    image_url: "https://images.unsplash.com/photo-1500673922987-e212871fec22?w=300&h=200&fit=crop",
+    category: "FAMILY PACK"
+  },
+  {
+    id: "prod_012",
+    name_en: "Premium Family Pack",
+    name_ta: "பிரீமியம் குடும்ப பேக்",
+    price: 1000,
+    image_url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&h=200&fit=crop",
+    category: "FAMILY PACK"
+  },
+
+  // GIFT BOX Category
+  {
+    id: "prod_013",
+    name_en: "Deluxe Gift Box",
+    name_ta: "டீலக்ஸ் பரிசு பெட்டகம்",
+    price: 300,
+    image_url: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=300&h=200&fit=crop",
+    category: "GIFT BOX"
+  },
+  {
+    id: "prod_014",
+    name_en: "Premium Gift Box",
+    name_ta: "பிரீமியம் பரிசு பெட்டகம்",
+    price: 450,
+    image_url: "https://images.unsplash.com/photo-1500673922987-e212871fec22?w=300&h=200&fit=crop",
+    category: "GIFT BOX"
+  },
+  {
+    id: "prod_015",
+    name_en: "Special Occasion Gift Box",
+    name_ta: "சிறப்பு சந்தர்ப்ப பரிசு பெட்டகம்",
+    price: 600,
+    image_url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&h=200&fit=crop",
+    category: "GIFT BOX"
   }
 ];
 

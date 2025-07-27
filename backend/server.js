@@ -411,26 +411,26 @@ app.post('/api/orders/place', async (req, res) => {
       return res.status(400).json({ error: 'Missing required order fields.' });
     }
 
-    // Generate unique order ID on the backend with date and sequence
-    const generateOrderId = async () => {
+    // Generate unique order ID on the backend
+    const generateOrderId = () => {
       const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-      
-      // Find the highest sequence number for today
-      const todayOrders = await Order.find({
-        orderId: { $regex: `^${today}` }
-      }).sort({ orderId: -1 }).limit(1);
-      
-      let sequence = 1;
-      if (todayOrders.length > 0) {
-        const lastOrderId = todayOrders[0].orderId;
-        const lastSequence = parseInt(lastOrderId.slice(-2));
-        sequence = lastSequence + 1;
-      }
-      
-      return `${today}${String(sequence).padStart(2, "0")}`;
+      const timestamp = Date.now().toString().slice(-6);
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, "0");
+      return `${today}${timestamp}${random}`;
     };
 
-    const orderId = await generateOrderId();
+    let orderId;
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    // Try to generate a unique order ID
+    do {
+      orderId = generateOrderId();
+      attempts++;
+      if (attempts > maxAttempts) {
+        return res.status(500).json({ error: 'Failed to generate unique order ID' });
+      }
+    } while (await Order.findOne({ orderId }));
 
     const newOrder = new Order({
       orderId,

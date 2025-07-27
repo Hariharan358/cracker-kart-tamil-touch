@@ -143,67 +143,102 @@ function generateInvoice(order, filePath) {
 
   // Header
   doc
-    .fontSize(24)
+    .fontSize(28)
     .fillColor('#d97706')
-    .text(' KMPyrotech Invoice', { align: 'center', underline: true });
-  doc.moveDown(1.5);
+    .text('KMPyrotech Invoice', { align: 'center', underline: true });
+  doc.moveDown(2);
 
   // Draw main box
   const boxTop = doc.y;
   const boxLeft = 40;
   const boxWidth = 520;
-  let boxHeight = 320 + (order.items.length * 20);
+  let boxHeight = 350 + (order.items.length * 25);
 
   // Draw rectangle (box)
   doc
-    .lineWidth(1.5)
+    .lineWidth(2)
     .roundedRect(boxLeft, boxTop, boxWidth, boxHeight, 12)
     .stroke('#d97706');
 
+  // Customer Information Section
   doc.moveDown(0.5);
-  doc.fontSize(12).fillColor('#222');
-  const startY = doc.y + 10;
+  doc.fontSize(14).fillColor('#d97706').font('Helvetica-Bold');
+  doc.text('Customer Information', boxLeft + 16, doc.y + 20);
+  
+  doc.fontSize(12).fillColor('#222').font('Helvetica');
+  const startY = doc.y + 40;
+  
+  // Left column
   doc.text(`Order ID: ${order.orderId}`, boxLeft + 16, startY);
-  doc.text(`Date: ${new Date(order.createdAt).toLocaleString()}`, boxLeft + 280, startY);
-  doc.moveDown(1);
-  doc.text(`Name: ${order.customerDetails.fullName}`, boxLeft + 16);
-  doc.text(`Email: ${order.customerDetails.email}`, boxLeft + 280);
-  doc.text(`Mobile: ${order.customerDetails.mobile}`, boxLeft + 16);
-  doc.text(`Pincode: ${order.customerDetails.pincode}`, boxLeft + 280);
-  doc.text(`Address: ${order.customerDetails.address}`, boxLeft + 16, doc.y, { width: boxWidth - 32 });
-  doc.moveDown(1);
+  doc.text(`Name: ${order.customerDetails.fullName}`, boxLeft + 16, startY + 25);
+  doc.text(`Mobile: ${order.customerDetails.mobile}`, boxLeft + 16, startY + 50);
+  doc.text(`Address: ${order.customerDetails.address}`, boxLeft + 16, startY + 75, { width: 240 });
+  
+  // Right column
+  doc.text(`Date: ${new Date(order.createdAt).toLocaleString('en-IN')}`, boxLeft + 280, startY);
+  doc.text(`Email: ${order.customerDetails.email}`, boxLeft + 280, startY + 25);
+  doc.text(`Pincode: ${order.customerDetails.pincode}`, boxLeft + 280, startY + 50);
+  
+  doc.moveDown(2);
 
   // Products Table Header
-  doc.font('Helvetica-Bold').fontSize(13).fillColor('#d97706');
-  doc.text('Products', boxLeft + 16, doc.y);
-  doc.font('Helvetica').fontSize(12).fillColor('#222');
-
-  // Table columns
-  doc.text('No.', boxLeft + 16, doc.y, { continued: true });
-  doc.text('Name', boxLeft + 50, doc.y, { continued: true });
-  doc.text('Qty', boxLeft + 220, doc.y, { continued: true });
-  doc.text('Price', boxLeft + 270, doc.y, { continued: true });
-  doc.text('Total', boxLeft + 300, doc.y);
+  doc.font('Helvetica-Bold').fontSize(14).fillColor('#d97706');
+  doc.text('Order Items', boxLeft + 16, doc.y + 20);
+  
+  // Table header line
+  doc.moveDown(0.5);
+  doc.lineWidth(1);
+  doc.moveTo(boxLeft + 16, doc.y + 5);
+  doc.lineTo(boxLeft + boxWidth - 16, doc.y + 5);
+  doc.stroke('#d97706');
+  
+  // Table columns header
+  doc.font('Helvetica-Bold').fontSize(11).fillColor('#d97706');
+  const tableY = doc.y + 15;
+  doc.text('No.', boxLeft + 16, tableY);
+  doc.text('Product Name', boxLeft + 60, tableY);
+  doc.text('Qty', boxLeft + 280, tableY);
+  doc.text('Price', boxLeft + 320, tableY);
+  doc.text('Total', boxLeft + 380, tableY);
+  
+  // Table header line
+  doc.moveTo(boxLeft + 16, tableY + 15);
+  doc.lineTo(boxLeft + boxWidth - 16, tableY + 15);
+  doc.stroke('#d97706');
 
   // Products Table Rows
+  doc.font('Helvetica').fontSize(11).fillColor('#222');
   order.items.forEach((item, idx) => {
-    doc.text(`${idx + 1}`, boxLeft + 16, doc.y, { continued: true });
-    doc.text(`${item.name_en} (${item.name_ta})`, boxLeft + 50, doc.y, { continued: true });
-    doc.text(`${item.quantity}`, boxLeft + 220, doc.y, { continued: true });
-    doc.text(`₹${item.price}`, boxLeft + 270, doc.y, { continued: true });
-    doc.text(`₹${item.price * item.quantity}`, boxLeft + 300, doc.y);
+    const rowY = tableY + 25 + (idx * 20);
+    doc.text(`${idx + 1}.`, boxLeft + 16, rowY);
+    doc.text(item.name_en, boxLeft + 60, rowY, { width: 200 });
+    doc.text(`${item.quantity}`, boxLeft + 280, rowY);
+    doc.text(`₹${item.price}`, boxLeft + 320, rowY);
+    doc.text(`₹${item.price * item.quantity}`, boxLeft + 380, rowY);
   });
-  doc.moveDown(1);
+  
+  // Table bottom line
+  const lastRowY = tableY + 25 + (order.items.length * 20);
+  doc.moveTo(boxLeft + 16, lastRowY + 10);
+  doc.lineTo(boxLeft + boxWidth - 16, lastRowY + 10);
+  doc.stroke('#d97706');
 
-  // Payment, Status, Total
-  doc.font('Helvetica-Bold').fontSize(13).fillColor('#222');
- 
-  doc.text(`Order Status: ${order.status || 'confirmed'}`, boxLeft + 16, doc.y);
-  doc.fontSize(15).fillColor('#d97706').text(`Total Amount: ₹${order.total}`, boxLeft + 180, doc.y);
+  // Order Summary
+  doc.moveDown(1);
+  doc.font('Helvetica-Bold').fontSize(12).fillColor('#222');
+  doc.text(`Order Status: ${order.status || 'confirmed'}`, boxLeft + 16, lastRowY + 30);
+  
+  // Total Amount
+  doc.fontSize(16).fillColor('#d97706');
+  doc.text(`Total Amount: ₹${order.total}`, boxLeft + 280, lastRowY + 30);
 
   // Thank you note
-  doc.moveDown(2);
-  doc.fontSize(13).fillColor('#16a34a').text('Thank you for shopping with KMPyrotech! Wishing you a safe and sparkling festival!', { align: 'center' });
+  doc.moveDown(3);
+  doc.fontSize(14).fillColor('#16a34a').font('Helvetica-Bold');
+  doc.text('Thank you for shopping with KMPyrotech!', { align: 'center' });
+  doc.moveDown(0.5);
+  doc.fontSize(12).fillColor('#16a34a');
+  doc.text('Wishing you a safe and sparkling festival!', { align: 'center' });
 
   doc.end();
 }
@@ -371,10 +406,31 @@ async function sendOrderToWhatsApp(order) {
 // ✅ POST: Place Order
 app.post('/api/orders/place', async (req, res) => {
   try {
-    const { orderId, items, total, customerDetails, status, createdAt } = req.body;
-    if (!orderId || !items || !total || !customerDetails) {
+    const { items, total, customerDetails, status, createdAt } = req.body;
+    if (!items || !total || !customerDetails) {
       return res.status(400).json({ error: 'Missing required order fields.' });
     }
+
+    // Generate unique order ID on the backend with date and sequence
+    const generateOrderId = async () => {
+      const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      
+      // Find the highest sequence number for today
+      const todayOrders = await Order.find({
+        orderId: { $regex: `^${today}` }
+      }).sort({ orderId: -1 }).limit(1);
+      
+      let sequence = 1;
+      if (todayOrders.length > 0) {
+        const lastOrderId = todayOrders[0].orderId;
+        const lastSequence = parseInt(lastOrderId.slice(-2));
+        sequence = lastSequence + 1;
+      }
+      
+      return `${today}${String(sequence).padStart(2, "0")}`;
+    };
+
+    const orderId = await generateOrderId();
 
     const newOrder = new Order({
       orderId,
@@ -386,9 +442,11 @@ app.post('/api/orders/place', async (req, res) => {
     });
     await newOrder.save();
     
+    // Generate invoice path
+    const invoicePath = path.join(invoiceDir, `${orderId}.pdf`);
+    
     // Generate invoice (optional - will work without email)
     try {
-      const invoicePath = path.join(invoiceDir, `${orderId}.pdf`);
       generateInvoice(newOrder, invoicePath);
       console.log('✅ Invoice generated successfully');
     } catch (invoiceError) {

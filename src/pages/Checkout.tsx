@@ -29,17 +29,10 @@ const getFormattedDate = (): string => {
 
 const generateOrderId = (): string => {
   const today = getFormattedDate();
-  const storedDate = localStorage.getItem("order_date");
-  let counter = parseInt(localStorage.getItem("order_counter") || "1");
-
-  if (storedDate !== today) {
-    counter = 1;
-  }
-
-  localStorage.setItem("order_date", today);
-  localStorage.setItem("order_counter", (counter + 1).toString());
-
-  return `${today}${String(counter).padStart(2, "0")}`;
+  const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, "0"); // Random 3-digit number
+  
+  return `${today}${timestamp}${random}`;
 };
 
 const Checkout = () => {
@@ -86,10 +79,8 @@ const Checkout = () => {
 
 
     setIsSubmitting(true);
-    const orderId = generateOrderId();
 
     const orderDetails = {
-      orderId,
       items: cartItems,
       total: getTotalPrice(),
       customerDetails: form,
@@ -122,6 +113,7 @@ const Checkout = () => {
       }
 
       if (response.ok) {
+        const { orderId } = result;
         clearCart();
         toast({
           title: "Order placed successfully!",

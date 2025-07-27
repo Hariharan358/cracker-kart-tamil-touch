@@ -687,13 +687,13 @@ const Admin = () => {
                     <Label htmlFor="image">Image</Label>
                     <div className="space-y-2">
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                        <Input
-                          id="image"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
+                    <Input
+                      id="image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
                           className="mb-2"
-                        />
+                    />
                         {productForm.image && (
                           <p className="text-xs text-green-600 mb-2">
                             ✓ File selected: {productForm.image.name}
@@ -1027,14 +1027,14 @@ const Admin = () => {
               <Label htmlFor="edit_image">Image</Label>
               <div className="space-y-2">
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                  <Input
-                    id="edit_image"
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={handleEditImageUpload}
+              <Input
+                id="edit_image"
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleEditImageUpload}
                     className="mb-2"
-                  />
+              />
                   {editForm.image && (
                     <p className="text-xs text-green-600 mb-2">
                       ✓ File selected: {editForm.image.name}

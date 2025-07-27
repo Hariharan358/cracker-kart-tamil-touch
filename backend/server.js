@@ -301,19 +301,34 @@ app.post('/api/products/apply-discount', async (req, res) => {
 // Initialize Firebase Admin
 let firebaseApp;
 try {
-  firebaseApp = admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: "kmpyrotech-ff59c",
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
-  console.log('✅ Firebase Admin initialized');
+  if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+    firebaseApp = admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: "kmpyrotech-ff59c",
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+    });
+    console.log('✅ Firebase Admin initialized');
+  } else {
+    console.log('⚠️ Firebase Admin not initialized - missing credentials');
+  }
 } catch (error) {
-  console.log('⚠️ Firebase Admin already initialized or missing credentials');
+  console.log('⚠️ Firebase Admin initialization failed:', error.message);
 }
 
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+// Initialize Twilio client (optional)
+let twilioClient;
+try {
+  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+    twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+    console.log('✅ Twilio client initialized');
+  } else {
+    console.log('⚠️ Twilio client not initialized - missing credentials');
+  }
+} catch (error) {
+  console.log('⚠️ Twilio client initialization failed:', error.message);
+}
 
 // FCM Token storage (in production, use a database)
 const fcmTokens = new Map();
@@ -321,6 +336,12 @@ const fcmTokens = new Map();
 async function sendOrderToWhatsApp(order) {
   const to = process.env.OWNER_WHATSAPP_TO;
   const from = process.env.TWILIO_WHATSAPP_FROM;
+  
+  if (!twilioClient || !to || !from) {
+    console.log('⚠️ WhatsApp not sent - missing Twilio configuration or phone numbers');
+    return;
+  }
+  
   const items = order.items.map(
     (item, i) => `${i + 1}. ${item.name_en} (${item.name_ta}) x${item.quantity} - ₹${item.price * item.quantity}`
   ).join('\n');
@@ -334,12 +355,16 @@ async function sendOrderToWhatsApp(order) {
     `Total: ₹${order.total}\n` +
     `Status: ${order.status || 'confirmed'}`;
 
-  if (to && from) {
+  try {
     await twilioClient.messages.create({
       from,
       to,
       body: message,
     });
+    console.log('✅ WhatsApp message sent successfully');
+  } catch (error) {
+    console.error('❌ WhatsApp sending failed:', error);
+    throw error;
   }
 }
 
@@ -360,14 +385,41 @@ app.post('/api/orders/place', async (req, res) => {
       createdAt: createdAt || new Date().toISOString(),
     });
     await newOrder.save();
-    const invoicePath = path.join(invoiceDir, `${orderId}.pdf`);
-    generateInvoice(newOrder, invoicePath);
-    await sendEmailWithInvoice(customerDetails.email, invoicePath);
-    // fs.unlinkSync(invoicePath); // Do not delete immediately so frontend can download
-    // Send WhatsApp message to owner
-    await sendOrderToWhatsApp(newOrder);
     
-    // Send push notification to admin about new order
+    // Generate invoice (optional - will work without email)
+    try {
+      const invoicePath = path.join(invoiceDir, `${orderId}.pdf`);
+      generateInvoice(newOrder, invoicePath);
+      console.log('✅ Invoice generated successfully');
+    } catch (invoiceError) {
+      console.error('⚠️ Invoice generation failed:', invoiceError);
+    }
+    
+    // Send email with invoice (optional - will work without email config)
+    try {
+      if (process.env.EMAIL_FROM && process.env.EMAIL_PASS) {
+        await sendEmailWithInvoice(customerDetails.email, invoicePath);
+        console.log('✅ Email sent successfully');
+      } else {
+        console.log('⚠️ Email not sent - missing email configuration');
+      }
+    } catch (emailError) {
+      console.error('⚠️ Email sending failed:', emailError);
+    }
+    
+    // Send WhatsApp message (optional - will work without Twilio config)
+    try {
+      if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+        await sendOrderToWhatsApp(newOrder);
+        console.log('✅ WhatsApp message sent successfully');
+      } else {
+        console.log('⚠️ WhatsApp not sent - missing Twilio configuration');
+      }
+    } catch (whatsappError) {
+      console.error('⚠️ WhatsApp sending failed:', whatsappError);
+    }
+    
+    // Send push notification to admin about new order (optional)
     try {
       const adminToken = fcmTokens.get('admin');
       if (adminToken && firebaseApp) {
@@ -386,15 +438,17 @@ app.post('/api/orders/place', async (req, res) => {
         };
         await admin.messaging().send(adminMessage);
         console.log('✅ Admin notification sent for new order');
+      } else {
+        console.log('⚠️ Admin notification not sent - missing FCM token or Firebase config');
       }
     } catch (notificationError) {
-      console.error('❌ Failed to send admin notification:', notificationError);
+      console.error('⚠️ Failed to send admin notification:', notificationError);
     }
     
-    res.status(201).json({ message: '✅ Order placed & invoice emailed', orderId });
+    res.status(201).json({ message: '✅ Order placed successfully', orderId });
   } catch (error) {
     console.error('❌ Order placement error:', error);
-    res.status(500).json({ error: 'Failed to place order or send notifications' });
+    res.status(500).json({ error: 'Failed to place order' });
   }
 });
 

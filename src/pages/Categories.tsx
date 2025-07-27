@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Navbar } from "../components/Navbar";
 import { CategoryCard } from "../components/CategoryCard";
 import { Footer } from "../components/Footer";
@@ -11,12 +12,40 @@ import { Link } from "react-router-dom";
 const Categories = () => {
   const { getTotalItems } = useCart();
   const { t } = useLanguage();
+  const [categoryProductCounts, setCategoryProductCounts] = useState({});
+  const [loadingCounts, setLoadingCounts] = useState(true);
   
-  // Get categories with translated names and counts
+  // Fetch product counts for all categories
+  const fetchCategoryProductCounts = async () => {
+    setLoadingCounts(true);
+    try {
+      const counts = {};
+      for (const categoryKey of categoryTranslationKeys) {
+        try {
+          const res = await fetch(`http://localhost:5000/api/products/category/${encodeURIComponent(t(categoryKey))}`);
+          const data = await res.json();
+          counts[t(categoryKey)] = data.length;
+        } catch (err) {
+          counts[t(categoryKey)] = 0;
+        }
+      }
+      setCategoryProductCounts(counts);
+    } catch (err) {
+      console.error('Error fetching category counts:', err);
+    } finally {
+      setLoadingCounts(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategoryProductCounts();
+  }, [t]); // Re-fetch when language changes
+  
+  // Get categories with translated names and actual counts
   const categories = categoryTranslationKeys.map(key => ({
     name: t(key),
     translationKey: key,
-    count: 0 // You can implement actual count logic here if needed
+    count: loadingCounts ? 0 : (categoryProductCounts[t(key)] || 0)
   }));
 
   return (
@@ -35,6 +64,17 @@ const Categories = () => {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto dark:text-foreground/80">
             {t('exploreCategories')}
           </p>
+          <div className="mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchCategoryProductCounts}
+              disabled={loadingCounts}
+              className="text-xs"
+            >
+              {loadingCounts ? 'Refreshing...' : 'Refresh Counts'}
+            </Button>
+          </div>
         </div>
 
         {/* Special Category Buttons */}
@@ -70,6 +110,14 @@ const Categories = () => {
             />
           ))}
         </div>
+        
+        {loadingCounts && (
+          <div className="text-center mt-8">
+            <p className="text-sm text-muted-foreground">
+              Loading product counts...
+            </p>
+          </div>
+        )}
       </div>
       
       <Footer />

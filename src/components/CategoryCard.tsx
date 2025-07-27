@@ -35,10 +35,7 @@ export const CategoryCard = ({ category, productCount }: CategoryCardProps) => {
             {category}
           </h3>
           
-          {/* Product Count */}
-          <p className="text-sm text-muted-foreground">
-            {productCount} {t('items')}
-          </p>
+
         </div>
       </div>
     </Link>

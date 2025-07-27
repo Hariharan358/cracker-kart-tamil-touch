@@ -9,6 +9,7 @@ import { Label } from "../components/ui/label";
 import { useCart } from "../hooks/useCart";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useToast } from "../hooks/use-toast";
+import { useFCM } from "../hooks/useFCM";
 
 interface OrderStatus {
   status: "confirmed" | "packed" | "shipped" | "delivered";
@@ -35,6 +36,7 @@ const TrackOrder = () => {
   const { getTotalItems } = useCart();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { requestPermission } = useFCM();
   
   const [searchParams] = useSearchParams();
   
@@ -59,6 +61,12 @@ const TrackOrder = () => {
   const fetchOrderDetails = async () => {
     setIsLoading(true);
     try {
+      // Store customer mobile for notifications
+      localStorage.setItem('customerMobile', mobile);
+      
+      // Request notification permission for customer
+      await requestPermission();
+      
       const response = await fetch(`http://localhost:5000/api/orders/track?orderId=${orderId}&mobile=${mobile}`);
       if (!response.ok) {
         throw new Error("Order not found");

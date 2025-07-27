@@ -3,6 +3,7 @@ import { ShoppingCart, Sparkles, Search, Menu, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { LanguageToggle } from "./LanguageToggle";
+import { NotificationPermission } from "./NotificationPermission";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "next-themes";
 import { Switch } from "./ui/switch";
@@ -136,6 +137,8 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                 </Button>
                 
                 <LanguageToggle iconSize={16} />
+                
+                <NotificationPermission />
                 
                 <Button 
                   variant="ghost" 

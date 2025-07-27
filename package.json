@@ -8,7 +8,9 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node backend/server.js",
+    "dev:full": "concurrently \"npm run server\" \"npm run dev\""
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -53,6 +55,8 @@
     "embla-carousel-react": "^8.3.0",
     "express": "^5.1.0",
     "express-rate-limit": "^8.0.1",
+    "firebase": "^10.14.1",
+    "firebase-admin": "^12.0.0",
     "framer-motion": "^12.23.6",
     "fs": "^0.0.1-security",
     "helmet": "^8.1.0",
@@ -87,6 +91,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^8.2.2",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",

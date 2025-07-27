@@ -29,6 +29,7 @@ import {
 import { useCart } from "../hooks/useCart";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useToast } from "../hooks/use-toast";
+import { useFCM } from "../hooks/useFCM";
 import { categories } from "../data/mockData";
 import { ShieldCheck, Package, TrendingUp } from "lucide-react";
 import { Loader2 } from "lucide-react";
@@ -39,13 +40,17 @@ const Admin = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { requestPermission } = useFCM();
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
     if (token !== "admin-auth-token") {
       navigate("/admin-login"); // unauthorized? redirect
+    } else {
+      // Register admin for notifications
+      requestPermission();
     }
-  }, []);
+  }, [requestPermission]);
 
   const [productForm, setProductForm] = useState({
     name_en: "",
@@ -54,6 +59,7 @@ const Admin = () => {
     original_price: "",
     category: "",
     image: null,
+    imageUrl: "",
     youtube_url: "",
   });
 
@@ -76,6 +82,8 @@ const Admin = () => {
   const [productManagementCategory, setProductManagementCategory] = useState("");
   const [categoryProducts, setCategoryProducts] = useState([]);
   const [loadingCategoryProducts, setLoadingCategoryProducts] = useState(false);
+  const [categoryProductCounts, setCategoryProductCounts] = useState({});
+  const [loadingCategoryCounts, setLoadingCategoryCounts] = useState(false);
   const [analyticsDate, setAnalyticsDate] = useState("");
   const [analyticsDayStats, setAnalyticsDayStats] = useState({ totalOrders: 0, totalRevenue: 0 });
   const [isAddingProduct, setIsAddingProduct] = useState(false);
@@ -88,11 +96,17 @@ const Admin = () => {
     original_price: "",
     category: "",
     image: null,
+    imageUrl: "",
     youtube_url: "",
   });
   const fileInputRef = useRef(null);
   const [discount, setDiscount] = useState("");
   const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
+  const [notificationForm, setNotificationForm] = useState({
+    title: "",
+    body: "",
+  });
+  const [isSendingNotification, setIsSendingNotification] = useState(false);
 
   // Add state for transportName and lrNumber per order
   const [transportInputs, setTransportInputs] = useState({});
@@ -189,6 +203,27 @@ const Admin = () => {
     }
   };
 
+  const fetchCategoryProductCounts = async () => {
+    setLoadingCategoryCounts(true);
+    try {
+      const counts = {};
+      for (const category of categories) {
+        try {
+          const res = await fetch(`http://localhost:5000/api/products/category/${encodeURIComponent(category)}`);
+          const data = await res.json();
+          counts[category] = data.length;
+        } catch (err) {
+          counts[category] = 0;
+        }
+      }
+      setCategoryProductCounts(counts);
+    } catch (err) {
+      console.error('Error fetching category counts:', err);
+    } finally {
+      setLoadingCategoryCounts(false);
+    }
+  };
+
   const handleDeleteProduct = async (productId) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
@@ -197,6 +232,7 @@ const Admin = () => {
       });
       if (res.ok) {
         setCategoryProducts((prev) => prev.filter((p) => p._id !== productId && p.id !== productId));
+        fetchCategoryProductCounts();
         toast({ title: "Product deleted" });
       } else {
         toast({ title: "Failed to delete product", variant: "destructive" });
@@ -215,6 +251,7 @@ const Admin = () => {
 
   useEffect(() => {
     fetchAnalytics();
+    fetchCategoryProductCounts();
   }, []);
 
   useEffect(() => {
@@ -226,6 +263,17 @@ const Admin = () => {
 
   const handleProductSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate that at least one image option is provided
+    if (!productForm.image && !productForm.imageUrl) {
+      toast({
+        title: "❌ Image Required",
+        description: "Please upload an image file or provide an image URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const formData = new FormData();
     formData.append("name_en", productForm.name_en);
     formData.append("name_ta", productForm.name_ta);
@@ -233,6 +281,7 @@ const Admin = () => {
     if (productForm.original_price) formData.append("original_price", productForm.original_price);
     formData.append("category", productForm.category);
     if (productForm.image) formData.append("image", productForm.image);
+    if (productForm.imageUrl) formData.append("imageUrl", productForm.imageUrl);
     if (productForm.youtube_url) formData.append("youtube_url", productForm.youtube_url);
 
     setIsAddingProduct(true);
@@ -247,8 +296,9 @@ const Admin = () => {
           title: "✅ Product Added!",
           description: `${productForm.name_en} added successfully.`,
         });
-        setProductForm({ name_en: "", name_ta: "", price: "", original_price: "", category: "", image: null, youtube_url: "" });
+        setProductForm({ name_en: "", name_ta: "", price: "", original_price: "", category: "", image: null, imageUrl: "", youtube_url: "" });
         fetchAnalytics();
+        fetchCategoryProductCounts();
       } else {
         toast({
           title: "❌ Failed to Add",
@@ -324,7 +374,7 @@ const Admin = () => {
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      setProductForm((prev) => ({ ...prev, image: file }));
+      setProductForm((prev) => ({ ...prev, image: file, imageUrl: "" }));
     }
   };
 
@@ -337,6 +387,7 @@ const Admin = () => {
       original_price: product.original_price || "",
       category: product.category,
       image: null,
+      imageUrl: product.imageUrl || product.image_url || "",
       youtube_url: product.youtube_url || "",
     });
     setIsEditing(true);
@@ -349,13 +400,24 @@ const Admin = () => {
   const handleEditImageUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      setEditForm((prev) => ({ ...prev, image: file }));
+      setEditForm((prev) => ({ ...prev, image: file, imageUrl: "" }));
     }
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     if (!editProduct) return;
+    
+    // Validate that at least one image option is provided (unless keeping existing image)
+    if (!editForm.image && !editForm.imageUrl && !(editProduct.imageUrl || editProduct.image_url)) {
+      toast({
+        title: "❌ Image Required",
+        description: "Please upload an image file or provide an image URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const formData = new FormData();
     formData.append("name_en", editForm.name_en);
     formData.append("name_ta", editForm.name_ta);
@@ -363,6 +425,7 @@ const Admin = () => {
     if (editForm.original_price) formData.append("original_price", editForm.original_price);
     formData.append("category", editForm.category);
     if (editForm.image) formData.append("image", editForm.image);
+    if (editForm.imageUrl) formData.append("imageUrl", editForm.imageUrl);
     if (editForm.youtube_url) formData.append("youtube_url", editForm.youtube_url);
     try {
       const res = await fetch(`http://localhost:5000/api/products/${editProduct._id || editProduct.id}`, {
@@ -374,8 +437,9 @@ const Admin = () => {
         toast({ title: "✅ Product Updated!", description: `${editForm.name_en} updated successfully.` });
         setIsEditing(false);
         setEditProduct(null);
-        setEditForm({ name_en: "", name_ta: "", price: "", original_price: "", category: "", image: null, youtube_url: "" });
+        setEditForm({ name_en: "", name_ta: "", price: "", original_price: "", category: "", image: null, imageUrl: "", youtube_url: "" });
         if (productManagementCategory) fetchCategoryProducts(productManagementCategory);
+        fetchCategoryProductCounts();
       } else {
         toast({ title: "❌ Failed to Update", description: data.error || "Something went wrong." });
       }
@@ -402,6 +466,7 @@ const Admin = () => {
         toast({ title: "✅ Discount Applied!", description: `All products updated with ${discount}% discount.` });
         setDiscount("");
         if (productManagementCategory) fetchCategoryProducts(productManagementCategory);
+        fetchCategoryProductCounts();
       } else {
         toast({ title: "❌ Failed to Apply Discount", description: data.error || "Something went wrong." });
       }
@@ -409,6 +474,33 @@ const Admin = () => {
       toast({ title: "❌ Server Error", description: err.message });
     } finally {
       setIsApplyingDiscount(false);
+    }
+  };
+
+  const handleSendNotification = async (e) => {
+    e.preventDefault();
+    if (!notificationForm.title || !notificationForm.body) {
+      toast({ title: "Invalid Notification", description: "Please enter both title and body.", variant: "destructive" });
+      return;
+    }
+    setIsSendingNotification(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/notifications/send-to-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(notificationForm),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast({ title: "✅ Notification Sent!", description: `Sent to ${data.successCount} users successfully.` });
+        setNotificationForm({ title: "", body: "" });
+      } else {
+        toast({ title: "❌ Failed to Send Notification", description: data.error || "Something went wrong." });
+      }
+    } catch (err) {
+      toast({ title: "❌ Server Error", description: err.message });
+    } finally {
+      setIsSendingNotification(false);
     }
   };
 
@@ -454,7 +546,7 @@ const Admin = () => {
               <CardHeader>
                 <CardTitle>Product Management</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="max-h-[70vh] overflow-y-auto">
                 <div className="mb-4">
                   <Label htmlFor="pm-category">Select Category</Label>
                   <select
@@ -469,7 +561,9 @@ const Admin = () => {
                   >
                     <option value="">-- Select Category --</option>
                     {categories.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
+                      <option key={cat} value={cat}>
+                        {cat} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat] || 0} products)`}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -505,7 +599,7 @@ const Admin = () => {
               <CardHeader>
                 <CardTitle>{t("addProduct")}</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="max-h-[70vh] overflow-y-auto">
                 <form onSubmit={handleProductSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
@@ -570,7 +664,7 @@ const Admin = () => {
                         <SelectContent>
                           {categories.map((cat) => (
                             <SelectItem key={cat} value={cat}>
-                              {cat}
+                              {cat} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat] || 0} products)`}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -591,12 +685,43 @@ const Admin = () => {
                   </div>
                   <div>
                     <Label htmlFor="image">Image</Label>
-                    <Input
-                      id="image"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                    />
+                    <div className="space-y-2">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                        <Input
+                          id="image"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="mb-2"
+                        />
+                        {productForm.image && (
+                          <p className="text-xs text-green-600 mb-2">
+                            ✓ File selected: {productForm.image.name}
+                          </p>
+                        )}
+                        <div className="text-center text-sm text-muted-foreground mb-2">OR</div>
+                        <Input
+                          id="imageUrl"
+                          type="url"
+                          placeholder="https://example.com/image.jpg"
+                          value={productForm.imageUrl}
+                                                  onChange={(e) => {
+                          setProductForm((prev) => ({ ...prev, imageUrl: e.target.value, image: null }));
+                          // Clear file input
+                          const fileInput = document.getElementById('image') as HTMLInputElement;
+                          if (fileInput) fileInput.value = '';
+                        }}
+                        />
+                        {productForm.imageUrl && (
+                          <p className="text-xs text-green-600 mt-2">
+                            ✓ URL provided: {productForm.imageUrl.substring(0, 50)}...
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Upload an image file or provide an image URL (at least one is required)
+                    </p>
                   </div>
                   <Button type="submit" className="w-full" disabled={isAddingProduct}>
                     {isAddingProduct ? (
@@ -608,6 +733,7 @@ const Admin = () => {
                     )}
                   </Button>
                 </form>
+                <div className="h-4"></div> {/* Extra space at bottom */}
               </CardContent>
             </Card>
           </TabsContent>
@@ -618,7 +744,7 @@ const Admin = () => {
               <CardHeader>
                 <CardTitle>{t("orderManagement")}</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="max-h-[70vh] overflow-y-auto">
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
                   <div>
                     <Label>Search by Date</Label>
@@ -826,7 +952,7 @@ const Admin = () => {
       </div>
       <Footer />
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>
           </DialogHeader>
@@ -880,7 +1006,9 @@ const Admin = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <SelectItem key={cat} value={cat}>
+                      {cat} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat] || 0} products)`}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -897,15 +1025,50 @@ const Admin = () => {
             </div>
             <div>
               <Label htmlFor="edit_image">Image</Label>
-              <Input
-                id="edit_image"
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                onChange={handleEditImageUpload}
-              />
+              <div className="space-y-2">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                  <Input
+                    id="edit_image"
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={handleEditImageUpload}
+                    className="mb-2"
+                  />
+                  {editForm.image && (
+                    <p className="text-xs text-green-600 mb-2">
+                      ✓ File selected: {editForm.image.name}
+                    </p>
+                  )}
+                  <div className="text-center text-sm text-muted-foreground mb-2">OR</div>
+                  <Input
+                    id="edit_imageUrl"
+                    type="url"
+                    placeholder="https://example.com/image.jpg"
+                    value={editForm.imageUrl}
+                                            onChange={e => {
+                          handleEditFormChange("imageUrl", e.target.value);
+                          handleEditFormChange("image", null);
+                          // Clear file input
+                          const fileInput = document.getElementById('edit_image') as HTMLInputElement;
+                          if (fileInput) fileInput.value = '';
+                        }}
+                  />
+                  {editForm.imageUrl && (
+                    <p className="text-xs text-green-600 mt-2">
+                      ✓ URL provided: {editForm.imageUrl.substring(0, 50)}...
+                    </p>
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Upload an image file or provide an image URL (optional - will keep current image if none provided)
+              </p>
               {editProduct && (editProduct.imageUrl || editProduct.image_url) && (
-                <img src={editProduct.imageUrl || editProduct.image_url} alt="Current" className="h-20 mt-2 rounded" />
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Current image:</p>
+                  <img src={editProduct.imageUrl || editProduct.image_url} alt="Current" className="h-20 rounded" />
+                </div>
               )}
             </div>
             <DialogFooter>
@@ -915,6 +1078,7 @@ const Admin = () => {
               <Button type="submit" className="ml-2">Save Changes</Button>
             </DialogFooter>
           </form>
+          <div className="h-4"></div> {/* Extra space at bottom */}
         </DialogContent>
       </Dialog>
       {/* DISCOUNT SECTION */}
@@ -943,6 +1107,42 @@ const Admin = () => {
             </Button>
           </form>
           <p className="text-muted-foreground text-xs mt-2">This will update the price of all products to the given percentage off their original price.</p>
+        </CardContent>
+      </Card>
+
+      {/* NOTIFICATION SECTION */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Send Push Notifications</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSendNotification} className="space-y-4">
+            <div>
+              <Label htmlFor="notification-title">Notification Title</Label>
+              <Input
+                id="notification-title"
+                value={notificationForm.title}
+                onChange={e => setNotificationForm(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="e.g. New Offers Available!"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="notification-body">Notification Message</Label>
+              <Input
+                id="notification-body"
+                value={notificationForm.body}
+                onChange={e => setNotificationForm(prev => ({ ...prev, body: e.target.value }))}
+                placeholder="e.g. Check out our latest fireworks collection with amazing discounts!"
+                required
+              />
+            </div>
+            <Button type="submit" disabled={isSendingNotification}>
+              {isSendingNotification ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : null}
+              Send Notification to All Users
+            </Button>
+          </form>
+          <p className="text-muted-foreground text-xs mt-2">This will send a push notification to all users who have enabled notifications.</p>
         </CardContent>
       </Card>
     </div>

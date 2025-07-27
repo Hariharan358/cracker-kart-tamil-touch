@@ -9,6 +9,7 @@ import { Textarea } from "../components/ui/textarea";
 import { useCart } from "../hooks/useCart";
 import { useToast } from "../hooks/use-toast";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useFCM } from "../hooks/useFCM";
 
 interface CheckoutForm {
   fullName: string;
@@ -46,6 +47,7 @@ const Checkout = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { requestPermission } = useFCM();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
@@ -96,6 +98,12 @@ const Checkout = () => {
     };
 
     try {
+      // Store customer mobile for notifications
+      localStorage.setItem('customerMobile', form.mobile);
+      
+      // Request notification permission for customer
+      await requestPermission();
+      
       const response = await fetch(`http://localhost:5000/api/orders/place`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

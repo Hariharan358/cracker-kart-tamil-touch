@@ -181,7 +181,7 @@ const About = () => {
             <h2 className="text-2xl font-bold mb-4">Call to ask any question</h2>
             <div className="flex items-center justify-center gap-2 text-xl font-semibold text-primary">
               <Phone className="h-6 w-6" />
-              <span>+91 86086 22755</span>
+              <span>+91 9940891416</span>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -196,7 +196,7 @@ const About = () => {
               <h3 className="text-lg font-semibold mb-2">or phone:</h3>
               <div className="flex items-center justify-center gap-2 text-primary">
                 <Phone className="h-5 w-5" />
-                <span>+91 86086 22755</span>
+                <span>+91 9940891416</span>
               </div>
             </div>
           </div>

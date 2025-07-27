@@ -18,6 +18,7 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import apicache from 'apicache';
 import twilio from 'twilio'; // <-- Add this line
+import admin from 'firebase-admin'; // <-- Add this line
 
 
 dotenv.config();
@@ -242,16 +243,16 @@ app.delete('/api/orders/cancel/:orderId', async (req, res) => {
 // ✅ POST: Add Product
 app.post('/api/products', upload.single('image'), async (req, res) => {
   try {
-    let { name_en, name_ta, price, original_price, category, youtube_url } = req.body;
-    const imageUrl = req.file?.path;
-    if (!name_en || !name_ta || !price || !category || !imageUrl) {
-      return res.status(400).json({ error: 'All fields including image and category are required.' });
+    let { name_en, name_ta, price, original_price, category, youtube_url, imageUrl } = req.body;
+    let finalImageUrl = req.file?.path || imageUrl;
+    if (!name_en || !name_ta || !price || !category || !finalImageUrl) {
+      return res.status(400).json({ error: 'All fields including image (file or URL) and category are required.' });
     }
     // Ensure price and original_price are numbers
     price = Number(price);
     original_price = original_price ? Number(original_price) : undefined;
     const ProductModel = getProductModelByCategory(category);
-    const newProduct = new ProductModel({ name_en, name_ta, price, original_price, imageUrl, youtube_url });
+    const newProduct = new ProductModel({ name_en, name_ta, price, original_price, imageUrl: finalImageUrl, youtube_url });
     await newProduct.save();
     res.status(201).json({ message: '✅ Product added successfully', product: newProduct });
   } catch (error) {
@@ -259,6 +260,8 @@ app.post('/api/products', upload.single('image'), async (req, res) => {
     res.status(500).json({ error: 'Failed to add product' });
   }
 });
+
+
 
 // ✅ BULK DISCOUNT: Apply discount to all products in all categories
 app.post('/api/products/apply-discount', async (req, res) => {
@@ -295,7 +298,25 @@ app.post('/api/products/apply-discount', async (req, res) => {
   }
 });
 
+// Initialize Firebase Admin
+let firebaseApp;
+try {
+  firebaseApp = admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: "kmpyrotech-ff59c",
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+  });
+  console.log('✅ Firebase Admin initialized');
+} catch (error) {
+  console.log('⚠️ Firebase Admin already initialized or missing credentials');
+}
+
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+// FCM Token storage (in production, use a database)
+const fcmTokens = new Map();
 
 async function sendOrderToWhatsApp(order) {
   const to = process.env.OWNER_WHATSAPP_TO;
@@ -345,6 +366,31 @@ app.post('/api/orders/place', async (req, res) => {
     // fs.unlinkSync(invoicePath); // Do not delete immediately so frontend can download
     // Send WhatsApp message to owner
     await sendOrderToWhatsApp(newOrder);
+    
+    // Send push notification to admin about new order
+    try {
+      const adminToken = fcmTokens.get('admin');
+      if (adminToken && firebaseApp) {
+        const adminMessage = {
+          notification: {
+            title: '🆕 New Order Received!',
+            body: `Order ${orderId} - ₹${total} from ${customerDetails.fullName}`,
+          },
+          data: {
+            orderId: orderId,
+            total: total.toString(),
+            customerName: customerDetails.fullName,
+            type: 'new_order'
+          },
+          token: adminToken,
+        };
+        await admin.messaging().send(adminMessage);
+        console.log('✅ Admin notification sent for new order');
+      }
+    } catch (notificationError) {
+      console.error('❌ Failed to send admin notification:', notificationError);
+    }
+    
     res.status(201).json({ message: '✅ Order placed & invoice emailed', orderId });
   } catch (error) {
     console.error('❌ Order placement error:', error);
@@ -416,6 +462,44 @@ app.patch('/api/orders/update-status/:orderId', async (req, res) => {
     if (!order) {
       return res.status(404).json({ error: "Order not found." });
     }
+
+    // Send push notification to customer about order status update
+    try {
+      const customerUserId = `customer_${order.customerDetails.mobile}`;
+      const customerToken = fcmTokens.get(customerUserId);
+      if (customerToken && firebaseApp) {
+        let notificationTitle = '';
+        let notificationBody = '';
+        
+        if (updateFields.status === 'confirmed') {
+          notificationTitle = '✅ Order Confirmed!';
+          notificationBody = `Your order ${orderId} has been confirmed and is being processed.`;
+        } else if (updateFields.status === 'booked') {
+          notificationTitle = '🚚 Order Booked for Delivery!';
+          notificationBody = `Your order ${orderId} has been booked for delivery. Transport: ${updateFields.transportName}`;
+        }
+        
+        if (notificationTitle && notificationBody) {
+          const customerMessage = {
+            notification: {
+              title: notificationTitle,
+              body: notificationBody,
+            },
+            data: {
+              orderId: orderId,
+              status: updateFields.status,
+              type: 'order_status_update'
+            },
+            token: customerToken,
+          };
+          await admin.messaging().send(customerMessage);
+          console.log(`✅ Customer notification sent for order ${orderId} status: ${updateFields.status}`);
+        }
+      }
+    } catch (notificationError) {
+      console.error('❌ Failed to send customer notification:', notificationError);
+    }
+
     res.json({ message: "✅ Order updated successfully", order });
   } catch (error) {
     console.error("❌ Status update error:", error);
@@ -464,6 +548,96 @@ app.delete('/api/products/:id', async (req, res) => {
     console.error('❌ Product DELETE error:', error);
     res.status(500).json({ error: 'Failed to delete product' });
   }
+});
+
+// ✅ FCM Token Registration
+app.post('/api/notifications/register-token', async (req, res) => {
+  try {
+    const { token, userId } = req.body;
+    if (!token) {
+      return res.status(400).json({ error: 'FCM token is required' });
+    }
+    
+    fcmTokens.set(userId, token);
+    console.log(`✅ FCM token registered for user: ${userId}`);
+    res.json({ message: 'Token registered successfully' });
+  } catch (error) {
+    console.error('❌ Error registering FCM token:', error);
+    res.status(500).json({ error: 'Failed to register token' });
+  }
+});
+
+// ✅ Send Push Notification
+app.post('/api/notifications/send', async (req, res) => {
+  try {
+    const { title, body, userId, data } = req.body;
+    
+    if (!firebaseApp) {
+      return res.status(500).json({ error: 'Firebase Admin not initialized' });
+    }
+    
+    const token = fcmTokens.get(userId);
+    if (!token) {
+      return res.status(404).json({ error: 'User token not found' });
+    }
+    
+    const message = {
+      notification: {
+        title: title || 'KMPyrotech',
+        body: body || 'You have a new notification',
+      },
+      data: data || {},
+      token: token,
+    };
+    
+    const response = await admin.messaging().send(message);
+    console.log('✅ Push notification sent:', response);
+    res.json({ message: 'Notification sent successfully', messageId: response });
+  } catch (error) {
+    console.error('❌ Error sending push notification:', error);
+    res.status(500).json({ error: 'Failed to send notification' });
+  }
+});
+
+// ✅ Send Notification to All Users
+app.post('/api/notifications/send-to-all', async (req, res) => {
+  try {
+    const { title, body, data } = req.body;
+    
+    if (!firebaseApp) {
+      return res.status(500).json({ error: 'Firebase Admin not initialized' });
+    }
+    
+    const tokens = Array.from(fcmTokens.values());
+    if (tokens.length === 0) {
+      return res.status(404).json({ error: 'No registered tokens found' });
+    }
+    
+    const message = {
+      notification: {
+        title: title || 'KMPyrotech',
+        body: body || 'You have a new notification',
+      },
+      data: data || {},
+      tokens: tokens,
+    };
+    
+    const response = await admin.messaging().sendMulticast(message);
+    console.log('✅ Multicast notification sent:', response);
+    res.json({ 
+      message: 'Notifications sent successfully', 
+      successCount: response.successCount,
+      failureCount: response.failureCount
+    });
+  } catch (error) {
+    console.error('❌ Error sending multicast notification:', error);
+    res.status(500).json({ error: 'Failed to send notifications' });
+  }
+});
+
+// ✅ Get Registered Tokens Count
+app.get('/api/notifications/tokens-count', (req, res) => {
+  res.json({ count: fcmTokens.size });
 });
 
 const PORT = process.env.PORT || 5000;

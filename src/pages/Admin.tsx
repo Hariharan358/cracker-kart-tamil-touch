@@ -31,7 +31,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useToast } from "../hooks/use-toast";
 import { useFCM } from "../hooks/useFCM";
 import { categories } from "../data/mockData";
-import { ShieldCheck, Package, TrendingUp } from "lucide-react";
+import { ShieldCheck, Package, TrendingUp, Eye, CheckCircle, XCircle } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
 
@@ -68,10 +68,17 @@ const Admin = () => {
   const [searchOrderId, setSearchOrderId] = useState("");
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+  const [paymentFilter, setPaymentFilter] = useState('all');
   const orderStatuses = [
     { value: 'all', label: 'All' },
     { value: 'confirmed', label: 'Confirmed' },
     { value: 'booked', label: 'Booked' },
+  ];
+  const paymentFilters = [
+    { value: 'all', label: 'All Orders' },
+    { value: 'with_payment', label: 'With Payment' },
+    { value: 'pending_verification', label: 'Pending Verification' },
+    { value: 'verified', label: 'Verified' },
   ];
 
   const [analytics, setAnalytics] = useState({
@@ -107,6 +114,8 @@ const Admin = () => {
     body: "",
   });
   const [isSendingNotification, setIsSendingNotification] = useState(false);
+  const [paymentViewOrder, setPaymentViewOrder] = useState(null);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
   // Add state for transportName and lrNumber per order
   const [transportInputs, setTransportInputs] = useState({});
@@ -504,6 +513,33 @@ const Admin = () => {
     }
   };
 
+  const handleVerifyPayment = async (orderId, verified) => {
+    setIsVerifyingPayment(true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/orders/verify-payment/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verified, verifiedBy: "admin" }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast({ 
+          title: "✅ Success", 
+          description: `Payment ${verified ? 'verified' : 'rejected'} successfully` 
+        });
+        // Refresh orders to show updated status
+        fetchOrders();
+        setPaymentViewOrder(null);
+      } else {
+        toast({ title: "❌ Error", description: data.error });
+      }
+    } catch (err) {
+      toast({ title: "❌ Server Error", description: err.message });
+    } finally {
+      setIsVerifyingPayment(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
@@ -799,8 +835,39 @@ const Admin = () => {
                       </button>
                     ))}
                   </div>
+                  
+                  {/* Payment Filter Tabs */}
+                  <div className="flex gap-2 mb-4">
+                    {paymentFilters.map((filter) => (
+                      <button
+                        key={filter.value}
+                        className={`px-4 py-1 rounded-full border text-sm font-medium transition-colors
+                          ${paymentFilter === filter.value
+                            ? 'bg-orange-600 text-white border-orange-600'
+                            : 'bg-white text-orange-700 border-orange-200 hover:bg-orange-50'}`}
+                        onClick={() => setPaymentFilter(filter.value)}
+                      >
+                        {filter.label}
+                      </button>
+                    ))}
+                  </div>
                   {/* Filtered Orders */}
-                  {(orders.filter(order => orderStatusFilter === 'all' || order.status === orderStatusFilter)).map((order) => (
+                  {(orders.filter(order => {
+                    // Status filter
+                    const statusMatch = orderStatusFilter === 'all' || order.status === orderStatusFilter;
+                    
+                    // Payment filter
+                    let paymentMatch = true;
+                    if (paymentFilter === 'with_payment') {
+                      paymentMatch = !!order.paymentScreenshot;
+                    } else if (paymentFilter === 'pending_verification') {
+                      paymentMatch = order.paymentScreenshot && !order.paymentScreenshot.verified;
+                    } else if (paymentFilter === 'verified') {
+                      paymentMatch = order.paymentScreenshot && order.paymentScreenshot.verified;
+                    }
+                    
+                    return statusMatch && paymentMatch;
+                  })).map((order) => (
                     <div key={order.orderId} className="border border-border rounded-lg">
                       <div
                         className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
@@ -811,6 +878,21 @@ const Admin = () => {
                           <p className="text-sm text-muted-foreground">{order.customerDetails.fullName}</p>
                           <p className="text-sm text-muted-foreground">{order.customerDetails.mobile}</p>
                           <p className="text-primary font-medium">₹{order.total}</p>
+                          {order.paymentScreenshot && (
+                            <div className="flex items-center gap-2 mt-1">
+                              {order.paymentScreenshot.verified ? (
+                                <div className="flex items-center gap-1 text-green-600 text-xs">
+                                  <CheckCircle className="w-3 h-3" />
+                                  <span>Payment Verified</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1 text-orange-600 text-xs">
+                                  <Eye className="w-3 h-3" />
+                                  <span>Payment Pending</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="flex flex-col gap-2 items-end">
                           <Select
@@ -825,13 +907,24 @@ const Admin = () => {
                               <SelectItem value="booked">Booked</SelectItem>
                             </SelectContent>
                           </Select>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={e => { e.stopPropagation(); handleDeleteOrder(order.orderId); }}
-                          >
-                            Delete
-                          </Button>
+                          <div className="flex gap-1">
+                            {order.paymentScreenshot && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={e => { e.stopPropagation(); setPaymentViewOrder(order); }}
+                              >
+                                <Eye className="w-3 h-3" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={e => { e.stopPropagation(); handleDeleteOrder(order.orderId); }}
+                            >
+                              Delete
+                            </Button>
+                          </div>
                         </div>
                       </div>
                       {expandedOrderId === order.orderId && (
@@ -874,7 +967,6 @@ const Admin = () => {
                               className="w-48"
                             />
                             <Button
-                              variant="primary"
                               onClick={() => handleTransportSubmit(order.orderId)}
                               disabled={order.status === 'booked' || !transportInputs[order.orderId]?.transportName || !transportInputs[order.orderId]?.lrNumber}
                             >
@@ -884,6 +976,31 @@ const Admin = () => {
                           {order.transportName && order.lrNumber && (
                             <div className="mt-2 text-sm text-blue-700">
                               <span className="font-semibold">Transport:</span> {order.transportName} <span className="ml-4 font-semibold">LR No:</span> {order.lrNumber}
+                            </div>
+                          )}
+                          
+                          {/* Payment Screenshot Section */}
+                          {order.paymentScreenshot && (
+                            <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                              <h4 className="font-semibold mb-2 text-orange-700">Payment Screenshot</h4>
+                              <div className="flex items-center justify-between">
+                                <div className="text-sm text-orange-700">
+                                  <p><strong>Uploaded:</strong> {new Date(order.paymentScreenshot.uploadedAt).toLocaleString()}</p>
+                                  <p><strong>Status:</strong> {order.paymentScreenshot.verified ? 'Verified' : 'Pending Verification'}</p>
+                                  {order.paymentScreenshot.verified && (
+                                    <p><strong>Verified by:</strong> {order.paymentScreenshot.verifiedBy} on {new Date(order.paymentScreenshot.verifiedAt).toLocaleString()}</p>
+                                  )}
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setPaymentViewOrder(order)}
+                                  className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                                >
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  View Screenshot
+                                </Button>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -1145,6 +1262,88 @@ const Admin = () => {
           <p className="text-muted-foreground text-xs mt-2">This will send a push notification to all users who have enabled notifications.</p>
         </CardContent>
       </Card>
+
+      {/* Payment Screenshot Viewer Dialog */}
+      <Dialog open={!!paymentViewOrder} onOpenChange={() => setPaymentViewOrder(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Payment Screenshot - Order {paymentViewOrder?.orderId}</DialogTitle>
+          </DialogHeader>
+          {paymentViewOrder && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="text-sm">
+                  <p><strong>Customer:</strong> {paymentViewOrder.customerDetails.fullName}</p>
+                  <p><strong>Mobile:</strong> {paymentViewOrder.customerDetails.mobile}</p>
+                  <p><strong>Amount:</strong> ₹{paymentViewOrder.total}</p>
+                  <p><strong>Uploaded:</strong> {new Date(paymentViewOrder.paymentScreenshot.uploadedAt).toLocaleString()}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm">
+                    <strong>Status:</strong> 
+                    <span className={`ml-1 ${paymentViewOrder.paymentScreenshot.verified ? 'text-green-600' : 'text-orange-600'}`}>
+                      {paymentViewOrder.paymentScreenshot.verified ? 'Verified' : 'Pending Verification'}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex justify-center">
+                <img 
+                  src={paymentViewOrder.paymentScreenshot.imageUrl} 
+                  alt="Payment Screenshot" 
+                  className="max-w-full max-h-96 object-contain border rounded-lg"
+                />
+              </div>
+              
+              {!paymentViewOrder.paymentScreenshot.verified && (
+                <DialogFooter className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setPaymentViewOrder(null)}
+                    disabled={isVerifyingPayment}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleVerifyPayment(paymentViewOrder.orderId, false)}
+                    disabled={isVerifyingPayment}
+                  >
+                    {isVerifyingPayment ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Rejecting...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Reject Payment
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => handleVerifyPayment(paymentViewOrder.orderId, true)}
+                    disabled={isVerifyingPayment}
+                  >
+                    {isVerifyingPayment ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Verifying...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Verify Payment
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

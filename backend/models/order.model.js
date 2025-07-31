@@ -25,6 +25,14 @@ const orderSchema = new mongoose.Schema({
   status: { type: String, default: "confirmed" },
   transportName: { type: String, default: "" },
   lrNumber: { type: String, default: "" },
+  // Payment screenshot fields
+  paymentScreenshot: {
+    imageUrl: String,
+    uploadedAt: Date,
+    verified: { type: Boolean, default: false },
+    verifiedBy: String,
+    verifiedAt: Date,
+  },
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Sparkles, Search, Menu, X } from "lucide-react";
+import { ShoppingCart, Sparkles, Menu, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { LanguageToggle } from "./LanguageToggle";
@@ -108,6 +108,13 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full"></span>
                 </Link>
                 <Link 
+                  to="/payment-upload" 
+                  className="text-foreground/80 hover:text-primary transition-all duration-300 font-medium relative group"
+                >
+                  Upload Payment
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full"></span>
+                </Link>
+                <Link 
                   to="/about" 
                   className="text-foreground/80 hover:text-primary transition-all duration-300 font-medium relative group"
                 >
@@ -139,14 +146,6 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                 <LanguageToggle iconSize={16} />
                 
                 <NotificationPermission />
-                
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="hover:bg-white/10 dark:hover:bg-black/20 transition-all duration-300"
-                >
-                  <Search className="h-5 w-5" />
-                </Button>
                 
                 <Link to="/cart">
                   <Button 
@@ -233,6 +232,13 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {t('trackOrder')}
+                  </Link>
+                  <Link 
+                    to="/payment-upload" 
+                    className="text-foreground/80 hover:text-primary transition-all duration-300 font-medium py-2 px-3 rounded-lg hover:bg-white/5 dark:hover:bg-black/10"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Upload Payment
                   </Link>
                   <Link 
                     to="/about" 

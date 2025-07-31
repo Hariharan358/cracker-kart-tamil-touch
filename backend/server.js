@@ -17,7 +17,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import apicache from 'apicache';
-import twilio from 'twilio'; // <-- Add this line
+
 import admin from 'firebase-admin'; // <-- Add this line
 
 
@@ -114,6 +114,84 @@ app.get('/api/orders/track', async (req, res) => {
   } catch (error) {
     console.error('❌ Error tracking order:', error);
     res.status(500).json({ error: 'Failed to fetch order details' });
+  }
+});
+
+// ✅ POST: Upload Payment Screenshot
+app.post('/api/orders/upload-payment', upload.single('screenshot'), async (req, res) => {
+  try {
+    const { orderId, mobile } = req.body;
+    
+    if (!orderId || !mobile || !req.file) {
+      return res.status(400).json({ error: 'Missing orderId, mobile number, or screenshot' });
+    }
+
+    // Verify order exists and belongs to the customer
+    const order = await Order.findOne({
+      orderId: String(orderId),
+      'customerDetails.mobile': String(mobile)
+    });
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found or mobile number does not match' });
+    }
+
+    // Update order with payment screenshot
+    const updatedOrder = await Order.findOneAndUpdate(
+      { orderId: String(orderId) },
+      {
+        $set: {
+          'paymentScreenshot.imageUrl': req.file.path,
+          'paymentScreenshot.uploadedAt': new Date(),
+          'paymentScreenshot.verified': false
+        }
+      },
+      { new: true }
+    );
+
+    res.json({ 
+      message: '✅ Payment screenshot uploaded successfully', 
+      order: updatedOrder 
+    });
+  } catch (error) {
+    console.error('❌ Error uploading payment screenshot:', error);
+    res.status(500).json({ error: 'Failed to upload payment screenshot' });
+  }
+});
+
+// ✅ PATCH: Verify Payment Screenshot (Admin only)
+app.patch('/api/orders/verify-payment/:orderId', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { verified, verifiedBy } = req.body;
+
+    if (typeof verified !== 'boolean') {
+      return res.status(400).json({ error: 'Verified status is required' });
+    }
+
+    const updateFields = {
+      'paymentScreenshot.verified': verified,
+      'paymentScreenshot.verifiedBy': verifiedBy || 'admin',
+      'paymentScreenshot.verifiedAt': new Date()
+    };
+
+    const order = await Order.findOneAndUpdate(
+      { orderId },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    res.json({ 
+      message: `✅ Payment ${verified ? 'verified' : 'rejected'} successfully`, 
+      order 
+    });
+  } catch (error) {
+    console.error('❌ Error verifying payment:', error);
+    res.status(500).json({ error: 'Failed to verify payment' });
   }
 });
 
@@ -352,56 +430,12 @@ try {
   console.log('⚠️ Firebase Admin initialization failed:', error.message);
 }
 
-// Initialize Twilio client (optional)
-let twilioClient;
-try {
-  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-    twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-    console.log('✅ Twilio client initialized');
-  } else {
-    console.log('⚠️ Twilio client not initialized - missing credentials');
-  }
-} catch (error) {
-  console.log('⚠️ Twilio client initialization failed:', error.message);
-}
+
 
 // FCM Token storage (in production, use a database)
 const fcmTokens = new Map();
 
-async function sendOrderToWhatsApp(order) {
-  const to = process.env.OWNER_WHATSAPP_TO;
-  const from = process.env.TWILIO_WHATSAPP_FROM;
-  
-  if (!twilioClient || !to || !from) {
-    console.log('⚠️ WhatsApp not sent - missing Twilio configuration or phone numbers');
-    return;
-  }
-  
-  const items = order.items.map(
-    (item, i) => `${i + 1}. ${item.name_en} (${item.name_ta}) x${item.quantity} - ₹${item.price * item.quantity}`
-  ).join('\n');
-  const message =
-    `🧨 *New Order Placed!*\n` +
-    `Order ID: ${order.orderId}\n` +
-    `Name: ${order.customerDetails.fullName}\n` +
-    `Mobile: ${order.customerDetails.mobile}\n` +
-    `Address: ${order.customerDetails.address}, ${order.customerDetails.pincode}\n` +
-    `Items:\n${items}\n` +
-    `Total: ₹${order.total}\n` +
-    `Status: ${order.status || 'confirmed'}`;
 
-  try {
-    await twilioClient.messages.create({
-      from,
-      to,
-      body: message,
-    });
-    console.log('✅ WhatsApp message sent successfully');
-  } catch (error) {
-    console.error('❌ WhatsApp sending failed:', error);
-    throw error;
-  }
-}
 
 // ✅ POST: Place Order
 app.post('/api/orders/place', async (req, res) => {
@@ -465,17 +499,7 @@ app.post('/api/orders/place', async (req, res) => {
       console.error('⚠️ Email sending failed:', emailError);
     }
     
-    // Send WhatsApp message (optional - will work without Twilio config)
-    try {
-      if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-        await sendOrderToWhatsApp(newOrder);
-        console.log('✅ WhatsApp message sent successfully');
-      } else {
-        console.log('⚠️ WhatsApp not sent - missing Twilio configuration');
-      }
-    } catch (whatsappError) {
-      console.error('⚠️ WhatsApp sending failed:', whatsappError);
-    }
+
     
     // Send push notification to admin about new order (optional)
     try {

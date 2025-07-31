@@ -36,25 +36,20 @@ export const NotificationPermission = () => {
     }
   };
 
-  if (isTokenFound) {
-    return (
-      <div className="flex items-center gap-2 text-green-600">
-        <Bell className="h-4 w-4" />
-        <span className="text-sm">Notifications enabled</span>
-      </div>
-    );
-  }
-
   return (
     <Button
-      variant="outline"
-      size="sm"
+      variant="ghost"
+      size="icon"
       onClick={handleRequestPermission}
       disabled={isRequesting}
-      className="flex items-center gap-2"
+      className="hover:bg-white/10 dark:hover:bg-black/20 transition-all duration-300"
+      aria-label={isTokenFound ? "Notifications enabled" : "Enable notifications"}
     >
-      <BellOff className="h-4 w-4" />
-      {isRequesting ? 'Enabling...' : 'Enable Notifications'}
+      {isTokenFound ? (
+        <Bell className="h-5 w-5 text-green-600" />
+      ) : (
+        <BellOff className="h-5 w-5" />
+      )}
     </Button>
   );
 }; 

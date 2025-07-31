@@ -16,6 +16,7 @@ import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 import Safety from "./pages/Safety";
 import About from "./pages/About";
+import PaymentUpload from "./pages/PaymentUpload";
 import { ThemeProvider } from "next-themes";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/adminlogin" element={<AdminLogin />} />
               <Route path="/safety" element={<Safety />} />
               <Route path="/about" element={<About />} />
+              <Route path="/payment-upload" element={<PaymentUpload />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

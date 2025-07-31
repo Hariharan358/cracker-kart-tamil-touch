@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { CheckCircle, Package, Truck, MapPin, XCircle } from "lucide-react";
+import { useSearchParams, Link } from "react-router-dom";
+import { CheckCircle, Package, Truck, MapPin, XCircle, Upload, CreditCard } from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { Button } from "../components/ui/button";
@@ -171,35 +171,68 @@ const TrackOrder = () => {
           </div>
         </div>
 
-        {/* Order Info */}
-        {orderDetails && (
-          <div className="max-w-4xl mx-auto space-y-8">
-            <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Order Information</h2>
-                {orderDetails.status === "confirmed" && (
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    onClick={cancelOrder}
-                  >
-                    <XCircle className="w-4 h-4 mr-1" />
-                    Cancel Order
-                  </Button>
-                )}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div><p className="text-sm text-muted-foreground">Order ID</p><p className="font-semibold">{orderDetails.orderId}</p></div>
-                <div><p className="text-sm text-muted-foreground">Order Date</p><p className="font-semibold">{new Date(orderDetails.createdAt).toLocaleDateString()}</p></div>
-                <div><p className="text-sm text-muted-foreground">Total Amount</p><p className="font-semibold text-primary">₹{orderDetails.total}</p></div>
-                <div><p className="text-sm text-muted-foreground">Payment</p><p className="font-semibold">Cash on Delivery</p></div>
-                {orderDetails.transportName && (
-                  <div><p className="text-sm text-muted-foreground">Transport Name</p><p className="font-semibold">{orderDetails.transportName}</p></div>
-                )}
-                {orderDetails.lrNumber && (
-                  <div><p className="text-sm text-muted-foreground">LR Number</p><p className="font-semibold">{orderDetails.lrNumber}</p></div>
-                )}
-              </div>
+                    {/* Order Info */}
+            {orderDetails && (
+              <div className="max-w-4xl mx-auto space-y-8">
+                <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-semibold">Order Information</h2>
+                    <div className="flex gap-2">
+                      <Link to="/payment-upload">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-700"
+                        >
+                          <Upload className="w-4 h-4 mr-1" />
+                          Upload Payment
+                        </Button>
+                      </Link>
+                      {orderDetails.status === "confirmed" && (
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={cancelOrder}
+                        >
+                          <XCircle className="w-4 h-4 mr-1" />
+                          Cancel Order
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div><p className="text-sm text-muted-foreground">Order ID</p><p className="font-semibold">{orderDetails.orderId}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Order Date</p><p className="font-semibold">{new Date(orderDetails.createdAt).toLocaleDateString()}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Total Amount</p><p className="font-semibold text-primary">₹{orderDetails.total}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Payment Status</p>
+                    <div className="flex items-center gap-2">
+                      {orderDetails.paymentScreenshot ? (
+                        orderDetails.paymentScreenshot.verified ? (
+                          <div className="flex items-center gap-1 text-green-600">
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="font-semibold">Verified</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-orange-600">
+                            <Upload className="w-4 h-4" />
+                            <span className="font-semibold">Pending Verification</span>
+                          </div>
+                        )
+                      ) : (
+                        <div className="flex items-center gap-1 text-gray-600">
+                          <CreditCard className="w-4 h-4" />
+                          <span className="font-semibold">Not Uploaded</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {orderDetails.transportName && (
+                    <div><p className="text-sm text-muted-foreground">Transport Name</p><p className="font-semibold">{orderDetails.transportName}</p></div>
+                  )}
+                  {orderDetails.lrNumber && (
+                    <div><p className="text-sm text-muted-foreground">LR Number</p><p className="font-semibold">{orderDetails.lrNumber}</p></div>
+                  )}
+                </div>
             </div>
 
             {/* Status Steps */}

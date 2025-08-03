@@ -71,7 +71,19 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-full blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
                   <div className="relative bg-gradient-to-r from-primary to-accent p-2 rounded-full">
-                    <Sparkles className="h-6 w-6 text-white animate-sparkle" />
+                    <img 
+                      src="/logonew.jpg" 
+                      alt="KMPyrotech Logo" 
+                      className="h-6 w-6 object-contain rounded-full"
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = '<Sparkles className="h-6 w-6 text-white animate-sparkle" />';
+                        }
+                      }}
+                    />
                   </div>
                 </div>
                 <div className="flex flex-col">
@@ -132,6 +144,17 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
 
               {/* Desktop Actions */}
               <div className="hidden md:flex items-center space-x-3">
+                {/* Location Link */}
+                <a 
+                  href="https://goo.gl/maps/ajVcCJ9UYT9WJWH2A?g_st=aw" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-foreground/80 hover:text-primary transition-all duration-300 font-medium relative group"
+                >
+                  Location
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full"></span>
+                </a>
+                
                 {/* Theme Switcher */}
                 <Button 
                   variant="ghost" 
@@ -166,7 +189,7 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                 </Link>
               </div>
 
-              {/* Mobile Menu Button */}
+                            {/* Mobile Menu Button */}
               <div className="md:hidden flex items-center space-x-2">
                 <Button 
                   variant="ghost" 
@@ -254,6 +277,15 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                   >
                     {t('safety_Guidance')}
                   </Link>
+                  <a 
+                    href="https://goo.gl/maps/ajVcCJ9UYT9WJWH2A?g_st=aw" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-foreground/80 hover:text-primary transition-all duration-300 font-medium py-2 px-3 rounded-lg hover:bg-white/5 dark:hover:bg-black/10"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Location
+                  </a>
                 </div>
               </div>
             )}

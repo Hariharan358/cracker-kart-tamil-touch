@@ -13,6 +13,7 @@ import heroImage from "../assets/hero-fireworks.jpg";
 import { useLocation } from "react-router-dom";
 import '../index.css'; // Ensure global styles are loaded
 import { useTheme } from "next-themes";
+import { Loader } from "../components/ui/loader";
 
 const Index = () => {
   const { getTotalItems, addToCart, cartItems, updateQuantity } = useCart();
@@ -75,75 +76,75 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
 
-      {/* Discount Marquee Banner */}
-      <div className="relative w-full overflow-hidden bg-primary py-2">
-        <div className="marquee whitespace-nowrap text-white font-bold text-lg tracking-wide">
-          <span className="mx-8">🔥 Festival Offer: 10% OFF on all products! Use code <span className="underline">FEST20</span> at checkout 🔥</span>
-          <span className="mx-8">🔥 Festival Offer: 10% OFF on all products! Use code <span className="underline">FEST20</span> at checkout 🔥</span>
-        </div>
-      </div>
+             {/* Discount Marquee Banner */}
+       <div className="relative w-full overflow-hidden bg-primary py-2">
+         <div className="marquee whitespace-nowrap text-white font-bold text-lg tracking-wide">
+           <span className="mx-8">🔥 Festival Offer: 10% OFF on all products! 🔥</span>
+           <span className="mx-8">🔥 Festival Offer: 10% OFF on all products! 🔥</span>
+         </div>
+       </div>
 
-      {/* Hero Section with Local Video Background */}
-      <div className="relative min-h-[60vh] flex flex-col justify-center items-center overflow-hidden">
-        {/* Dynamic Background based on theme */}
-        <div className="absolute inset-0 z-0 w-full h-full overflow-hidden pointer-events-none">
-          {resolvedTheme === 'dark' ? (
-            // Dark theme: Video background
-            <video
-              className="w-full h-full object-cover"
-              src="/dark_bg.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
-          ) : (
-            // Light theme: Banner image background
-            <img
-              src="/banner.jpg"
-              alt="Hero Banner"
-              className="w-full h-full object-cover"
-            />
-          )}
-          {resolvedTheme === 'dark' && (
-            <div className="absolute inset-0 bg-black/50"></div>
-          )}
-        </div>
+             {/* Hero Section with Local Video Background */}
+       <div className="relative min-h-[70vh] md:min-h-[60vh] flex flex-col justify-center items-center overflow-hidden">
+         {/* Dynamic Background based on theme */}
+         <div className="absolute inset-0 z-0 w-full h-full overflow-hidden pointer-events-none">
+           {resolvedTheme === 'dark' ? (
+             // Dark theme: Video background
+             <video
+               className="w-full h-full object-cover object-center"
+               src="/dark_bg.mp4"
+               autoPlay
+               muted
+               loop
+               playsInline
+             />
+           ) : (
+             // Light theme: Banner image background
+             <img
+               src="/banner.jpg"
+               alt="Hero Banner"
+               className="w-full h-full object-cover object-center scale-125 sm:scale-110 md:scale-100 hero-bg-image"
+             />
+           )}
+           {resolvedTheme === 'dark' && (
+             <div className="absolute inset-0 bg-black/50"></div>
+           )}
+         </div>
 
-        {/* Hero Content */}
-        <div className="relative z-10 container mx-auto px-4 h-full flex items-center">
-          <div className="max-w-2xl text-center mx-auto">
-            <div className="flex items-center justify-center mb-4 space-x-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <Sparkles className="h-8 w-8 text-primary animate-sparkle" />
-              <Zap className="h-10 w-10 text-accent animate-bounce-gentle" />
-              <Sparkles className="h-8 w-8 text-primary animate-sparkle" />
-            </div>
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-              <span className="title-styled text-white hero-title-contrast">
-                {t('heroTitle')}
-              </span>
-            </h1>
-            <p className="text-xl text-white mb-8 leading-relaxed animate-fade-in" style={{ animationDelay: '0.5s' }}>
-              Minimum Order Rs 1,000/-<br/>
-              The Product Image is only for your reference, the packing and brand may change<br/>
-              Crackers In Sivakasi,Best Crackers Sivakasi,Crackers in India
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: '0.7s' }}>
-              <Button variant="festive" size="lg" asChild className="transition-transform duration-300 hover:scale-110">
-                <Link to="/categories">
-                  <Gift className="mr-2 h-5 w-5" />
-                  {t('shopNow')}
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild className="transition-transform duration-300 hover:scale-105">
-                <Link to="/track">
-                  {t('trackYourOrder')}
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+         {/* Hero Content */}
+         <div className="relative z-10 container mx-auto px-4 h-full flex items-center hero-content">
+           <div className="max-w-2xl text-center mx-auto w-full">
+             <div className="flex items-center justify-center mb-4 space-x-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+               <Sparkles className="h-6 w-6 md:h-8 md:w-8 text-primary animate-sparkle" />
+               <Zap className="h-8 w-8 md:h-10 md:w-10 text-accent animate-bounce-gentle" />
+               <Sparkles className="h-6 w-6 md:h-8 md:w-8 text-primary animate-sparkle" />
+             </div>
+             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 animate-slide-up hero-title" style={{ animationDelay: '0.3s' }}>
+               <span className="title-styled text-white hero-title-contrast">
+                 {t('heroTitle')}
+               </span>
+             </h1>
+             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white mb-6 md:mb-8 leading-relaxed animate-fade-in px-2 hero-description" style={{ animationDelay: '0.5s' }}>
+               Minimum Order Rs 1,000/-<br/>
+               The Product Image is only for your reference, the packing and brand may change<br/>
+               Crackers In Sivakasi,Best Crackers Sivakasi,Crackers in India
+             </p>
+             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center animate-fade-in px-4" style={{ animationDelay: '0.7s' }}>
+               <Button variant="festive" size="lg" asChild className="transition-transform duration-300 hover:scale-110 text-sm md:text-base">
+                 <Link to="/categories">
+                   <Gift className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                   {t('shopNow')}
+                 </Link>
+               </Button>
+               <Button variant="outline" size="lg" asChild className="transition-transform duration-300 hover:scale-105 text-sm md:text-base">
+                 <Link to="/track">
+                   {t('trackYourOrder')}
+                 </Link>
+               </Button>
+             </div>
+           </div>
+         </div>
+       </div>
 
       {/* Features Section */}
       <section className="py-16 bg-muted/30">
@@ -247,12 +248,14 @@ const Index = () => {
           </Button>
         </Link>
       </div>
-      <section className="container mx-auto px-4 py-8">
-        {loadingProducts ? (
-          <p className="text-center text-muted-foreground">Loading products...</p>
-        ) : products.length === 0 ? (
-          <p className="text-center text-muted-foreground">No products found.</p>
-        ) : (
+             <section className="container mx-auto px-4 py-8">
+         {loadingProducts ? (
+           <div className="py-12">
+             <Loader size="md" />
+           </div>
+         ) : products.length === 0 ? (
+           <p className="text-center text-muted-foreground">No products found.</p>
+         ) : (
           <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 md:grid-cols-5 sm:overflow-x-visible">
             {products.map((product) => {
               const quantity = cartItems.find(item => item.id === (product._id || product.id))?.quantity || 0;
@@ -281,13 +284,15 @@ const Index = () => {
         )}
       </section>
 
-      {/* Sparkler Products Section */}
-      <section className="container mx-auto px-4 py-8">
-        {loadingSparklers ? (
-          <p className="text-center text-muted-foreground">Loading products...</p>
-        ) : sparklerProducts.length === 0 ? (
-          <p className="text-center text-muted-foreground">No sparkler products found.</p>
-        ) : (
+             {/* Sparkler Products Section */}
+       <section className="container mx-auto px-4 py-8">
+         {loadingSparklers ? (
+           <div className="py-12">
+             <Loader size="md" />
+           </div>
+         ) : sparklerProducts.length === 0 ? (
+           <p className="text-center text-muted-foreground">No sparkler products found.</p>
+         ) : (
           <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 md:grid-cols-5 sm:overflow-x-visible">
             {sparklerProducts.map((product) => {
               const quantity = cartItems.find(item => item.id === (product._id || product.id))?.quantity || 0;

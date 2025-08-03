@@ -10,6 +10,8 @@ import { useCart } from "../hooks/useCart";
 import { useToast } from "../hooks/use-toast";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useFCM } from "../hooks/useFCM";
+import { Loader } from "../components/ui/loader";
+import { CreditCard } from "../components/ui/credit-card";
 
 interface CheckoutForm {
   fullName: string;
@@ -173,6 +175,18 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
+      
+      {/* Full-screen loader overlay when placing order */}
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-background rounded-lg p-8 shadow-lg border border-border text-center">
+            <Loader size="lg" className="mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Placing Your Order</h3>
+            <p className="text-muted-foreground">Please wait while we process your order...</p>
+          </div>
+        </div>
+      )}
+      
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">
           <span className="title-styled text-primary">Checkout</span>
@@ -180,6 +194,16 @@ const Checkout = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
             <h2 className="text-xl font-semibold mb-6">Delivery Information</h2>
+            
+            {/* Credit Card Preview */}
+            <div className="mb-6 flex justify-center">
+              <CreditCard 
+                orderId={generateOrderId()}
+                customerName={form.fullName}
+                orderDate={new Date().toISOString()}
+              />
+            </div>
+            
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="fullName">Full Name *</Label>
@@ -207,7 +231,14 @@ const Checkout = () => {
                 <p className="text-sm text-muted-foreground">💵 Cash on Delivery (COD) - Pay when your order arrives</p>
               </div> */}
               <Button type="submit" variant="festive" className="w-full" disabled={isSubmitting || getTotalPrice() < 1000}>
-                {isSubmitting ? "Placing Order..." : t('placeOrder')}
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader size="sm" />
+                    <span>Placing Order...</span>
+                  </div>
+                ) : (
+                  t('placeOrder')
+                )}
               </Button>
             </form>
           </div>

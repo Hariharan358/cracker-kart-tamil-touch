@@ -22,7 +22,7 @@ const Categories = () => {
       const counts = {};
       for (const categoryKey of categoryTranslationKeys) {
         try {
-          const res = await fetch(`http://localhost:5000/api/products/category/${encodeURIComponent(t(categoryKey))}`);
+          const res = await fetch(`https://km-crackers.onrender.com/api/products/category/${encodeURIComponent(t(categoryKey))}`);
           const data = await res.json();
           counts[t(categoryKey)] = data.length;
         } catch (err) {

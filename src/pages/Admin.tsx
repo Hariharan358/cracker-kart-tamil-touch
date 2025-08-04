@@ -137,7 +137,7 @@ const Admin = () => {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/update-status/${orderId}`, {
+      const res = await fetch(`https://km-crackers.onrender.com/api/orders/update-status/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transportName, lrNumber }),
@@ -161,7 +161,7 @@ const Admin = () => {
       if (searchDate.trim()) queryParams.append("date", searchDate);
       if (searchOrderId.trim()) queryParams.append("orderId", searchOrderId);
 
-      const res = await fetch(`http://localhost:5000/api/orders?${queryParams.toString()}`);
+      const res = await fetch(`https://km-crackers.onrender.com/api/orders?${queryParams.toString()}`);
       const data = await res.json();
 
       if (res.ok) {
@@ -184,7 +184,7 @@ const Admin = () => {
 
   const fetchAnalytics = async (date = "") => {
     try {
-      let url = "http://localhost:5000/api/analytics";
+      let url = "https://km-crackers.onrender.com/api/analytics";
       if (date) url += `?date=${date}`;
       const res = await fetch(url);
       const data = await res.json();
@@ -202,7 +202,7 @@ const Admin = () => {
   const fetchCategoryProducts = async (category) => {
     setLoadingCategoryProducts(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/products/category/${encodeURIComponent(category)}`);
+      const res = await fetch(`https://km-crackers.onrender.com/api/products/category/${encodeURIComponent(category)}`);
       const data = await res.json();
       setCategoryProducts(data);
     } catch (err) {
@@ -218,7 +218,7 @@ const Admin = () => {
       const counts = {};
       for (const category of categories) {
         try {
-          const res = await fetch(`http://localhost:5000/api/products/category/${encodeURIComponent(category)}`);
+          const res = await fetch(`https://km-crackers.onrender.com/api/products/category/${encodeURIComponent(category)}`);
           const data = await res.json();
           counts[category] = data.length;
         } catch (err) {
@@ -236,7 +236,7 @@ const Admin = () => {
   const handleDeleteProduct = async (productId) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/products/${productId}`, {
+      const res = await fetch(`https://km-crackers.onrender.com/api/products/${productId}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -295,7 +295,7 @@ const Admin = () => {
 
     setIsAddingProduct(true);
     try {
-      const res = await fetch("http://localhost:5000/api/products", {
+      const res = await fetch("https://km-crackers.onrender.com/api/products", {
         method: "POST",
         body: formData,
       });
@@ -323,7 +323,7 @@ const Admin = () => {
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/update-status/${orderId}`, {
+      const res = await fetch(`https://km-crackers.onrender.com/api/orders/update-status/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -354,7 +354,7 @@ const Admin = () => {
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm("Are you sure you want to delete/cancel this order?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/cancel/${orderId}`, {
+      const res = await fetch(`https://km-crackers.onrender.com/api/orders/cancel/${orderId}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -437,7 +437,7 @@ const Admin = () => {
     if (editForm.imageUrl) formData.append("imageUrl", editForm.imageUrl);
     if (editForm.youtube_url) formData.append("youtube_url", editForm.youtube_url);
     try {
-      const res = await fetch(`http://localhost:5000/api/products/${editProduct._id || editProduct.id}`, {
+      const res = await fetch(`https://km-crackers.onrender.com/api/products/${editProduct._id || editProduct.id}`, {
         method: "PUT",
         body: formData,
       });
@@ -465,7 +465,7 @@ const Admin = () => {
     }
     setIsApplyingDiscount(true);
     try {
-      const res = await fetch("http://localhost:5000/api/products/apply-discount", {
+      const res = await fetch("https://km-crackers.onrender.com/api/products/apply-discount", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ discount: Number(discount) }),
@@ -494,7 +494,7 @@ const Admin = () => {
     }
     setIsSendingNotification(true);
     try {
-      const res = await fetch("http://localhost:5000/api/notifications/send-to-all", {
+      const res = await fetch("https://km-crackers.onrender.com/api/notifications/send-to-all", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(notificationForm),
@@ -516,7 +516,7 @@ const Admin = () => {
   const handleVerifyPayment = async (orderId, verified) => {
     setIsVerifyingPayment(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/orders/verify-payment/${orderId}`, {
+      const response = await fetch(`https://km-crackers.onrender.com/api/orders/verify-payment/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ verified, verifiedBy: "admin" }),

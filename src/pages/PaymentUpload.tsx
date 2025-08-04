@@ -89,7 +89,7 @@ const PaymentUpload = () => {
       formDataToSend.append('mobile', formData.mobile);
       formDataToSend.append('screenshot', formData.screenshot);
 
-      const response = await fetch('http://localhost:5000/api/orders/upload-payment', {
+      const response = await fetch('https://km-crackers.onrender.com/api/orders/upload-payment', {
         method: 'POST',
         body: formDataToSend,
       });
@@ -126,7 +126,7 @@ const PaymentUpload = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-      <Navbar />
+      <Navbar cartCount={getTotalItems()} />
       
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">

@@ -12,7 +12,7 @@ import { useToast } from "../hooks/use-toast";
 import { useFCM } from "../hooks/useFCM";
 
 interface OrderStatus {
-  status: "confirmed" | "packed" | "shipped" | "delivered";
+  status: "confirmed" | "packed" | "shipped" | "delivered" | "booked";
   timestamp: string;
 }
 
@@ -25,6 +25,9 @@ interface OrderDetails {
   createdAt: string;
   transportName?: string;
   lrNumber?: string;
+  paymentScreenshot?: {
+    verified: boolean;
+  };
 }
 
 const orderStatuses: OrderStatus[] = [
@@ -67,7 +70,7 @@ const TrackOrder = () => {
       // Request notification permission for customer
       await requestPermission();
       
-      const response = await fetch(`http://localhost:5000/api/orders/track?orderId=${orderId}&mobile=${mobile}`);
+      const response = await fetch(`https://km-crackers.onrender.com/api/orders/track?orderId=${orderId}&mobile=${mobile}`);
       if (!response.ok) {
         throw new Error("Order not found");
       }
@@ -87,7 +90,7 @@ const TrackOrder = () => {
   const cancelOrder = async () => {
     if (!orderId) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/cancel/${orderId}`, {
+      const res = await fetch(`https://km-crackers.onrender.com/api/orders/cancel/${orderId}`, {
         method: "DELETE",
       });
       const data = await res.json();

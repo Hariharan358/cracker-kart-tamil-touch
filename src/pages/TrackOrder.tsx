@@ -1,285 +1,113 @@
-import { useState, useEffect } from "react";
-import { useSearchParams, Link } from "react-router-dom";
-import { CheckCircle, Package, Truck, MapPin, XCircle, Upload, CreditCard } from "lucide-react";
-import { Navbar } from "../components/Navbar";
-import { Footer } from "../components/Footer";
+import { useState } from "react";
+import { Search, Package, Truck, CheckCircle, Clock } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { useCart } from "../hooks/useCart";
-import { useLanguage } from "../contexts/LanguageContext";
-import { useToast } from "../hooks/use-toast";
-import { useFCM } from "../hooks/useFCM";
-
-interface OrderStatus {
-  status: "confirmed" | "packed" | "shipped" | "delivered" | "booked";
-  timestamp: string;
-}
-
-interface OrderDetails {
-  orderId: string;
-  items: any[];
-  total: number;
-  customerDetails: any;
-  status: string;
-  createdAt: string;
-  transportName?: string;
-  lrNumber?: string;
-  paymentScreenshot?: {
-    verified: boolean;
-  };
-}
-
-const orderStatuses: OrderStatus[] = [
-  { status: "confirmed", timestamp: "Order confirmed" },
-  { status: "booked", timestamp: "Order booked (Dispatched)" },
-];
+import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
 
 const TrackOrder = () => {
-  const { getTotalItems } = useCart();
-  const { toast } = useToast();
-  const { t } = useLanguage();
-  const { requestPermission } = useFCM();
-  
-  const [searchParams] = useSearchParams();
-  
-  const [orderId, setOrderId] = useState(searchParams.get("orderId") || "");
-  const [mobile, setMobile] = useState(searchParams.get("mobile") || "");
-  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [orderId, setOrderId] = useState("");
+  const [orderStatus, setOrderStatus] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleTrackOrder = async () => {
-    if (!orderId || !mobile) {
-      toast({
-        title: "Please fill all fields",
-        description: "Order ID and mobile number are required.",
-        variant: "destructive",
-      });
-      return;
-    }
-    // Directly fetch order details, no OTP verification
-    await fetchOrderDetails();
-  };
-
-  const fetchOrderDetails = async () => {
-    setIsLoading(true);
+    if (!orderId.trim()) return;
+    
+    setLoading(true);
     try {
-      // Store customer mobile for notifications
-      localStorage.setItem('customerMobile', mobile);
-      
-      // Request notification permission for customer
-      await requestPermission();
-      
-      const response = await fetch(`https://km-crackers.onrender.com/api/orders/track?orderId=${orderId}&mobile=${mobile}`);
-      if (!response.ok) {
-        throw new Error("Order not found");
-      }
+      const response = await fetch(`https://km-crackers.onrender.com/api/orders/track/${orderId}`);
       const data = await response.json();
-      setOrderDetails(data);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to track order.",
-        variant: "destructive",
-      });
+      setOrderStatus(data);
+    } catch (error) {
+      setOrderStatus({ error: "Order not found" });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
-
-  const cancelOrder = async () => {
-    if (!orderId) return;
-    try {
-      const res = await fetch(`https://km-crackers.onrender.com/api/orders/cancel/${orderId}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast({
-          title: "Order Cancelled",
-          description: `Order ${orderId} has been successfully cancelled.`,
-        });
-        setOrderDetails(null);
-        setOrderId("");
-        setMobile("");
-      } else {
-        throw new Error(data.error || "Failed to cancel order");
-      }
-    } catch (error: any) {
-      toast({
-        title: "Cancellation Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (orderId && mobile) {
-      handleTrackOrder();
-    }
-  }, []);
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "confirmed": return <CheckCircle className="h-5 w-5" />;
-      case "packed": return <Package className="h-5 w-5" />;
-      case "shipped": return <Truck className="h-5 w-5" />;
-      case "delivered": return <MapPin className="h-5 w-5" />;
-      default: return <CheckCircle className="h-5 w-5" />;
+    switch (status?.toLowerCase()) {
+      case "confirmed":
+        return <CheckCircle className="h-6 w-6 text-green-500" />;
+      case "processing":
+        return <Package className="h-6 w-6 text-blue-500" />;
+      case "shipped":
+        return <Truck className="h-6 w-6 text-orange-500" />;
+      case "delivered":
+        return <CheckCircle className="h-6 w-6 text-green-500" />;
+      default:
+        return <Clock className="h-6 w-6 text-gray-500" />;
     }
-  };
-
-  const getCurrentStatusIndex = (currentStatus: string) => {
-    return orderStatuses.findIndex(status => status.status === currentStatus);
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar cartCount={getTotalItems()} />
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">
-          <span className="title-styled text-primary">Track Your Order</span>
-        </h1>
+      <Navbar cartCount={0} />
+      
+      <div className="w-full px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold mb-4">Track Your Order</h1>
+            <p className="text-muted-foreground">Enter your order ID to track your order status</p>
+          </div>
 
-        {/* Search Form */}
-        <div className="max-w-md mx-auto mb-8 bg-gradient-card rounded-lg p-6 shadow-card border border-border">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="orderId">Order ID</Label>
-              <Input 
-                id="orderId" 
-                type="text" 
-                value={orderId} 
+          <div className="bg-card p-6 rounded-lg border mb-8">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter Order ID"
+                value={orderId}
                 onChange={(e) => setOrderId(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleTrackOrder()}
               />
+              <Button onClick={handleTrackOrder} disabled={loading}>
+                <Search className="h-4 w-4" />
+              </Button>
             </div>
-            <div>
-              <Label htmlFor="mobile">Mobile Number</Label>
-              <Input 
-                id="mobile" 
-                type="tel" 
-                value={mobile} 
-                onChange={(e) => setMobile(e.target.value)}
-              />
-            </div>
-            <Button 
-              variant="festive" 
-              className="w-full" 
-              onClick={handleTrackOrder} 
-              disabled={isLoading}
-            >
-              {isLoading ? "Tracking..." : "Track Order"}
-            </Button>
           </div>
-        </div>
 
-                    {/* Order Info */}
-            {orderDetails && (
-              <div className="max-w-4xl mx-auto space-y-8">
-                <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold">Order Information</h2>
-                    <div className="flex gap-2">
-                      <Link to="/payment-upload">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-700"
-                        >
-                          <Upload className="w-4 h-4 mr-1" />
-                          Upload Payment
-                        </Button>
-                      </Link>
-                      {orderDetails.status === "confirmed" && (
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
-                          onClick={cancelOrder}
-                        >
-                          <XCircle className="w-4 h-4 mr-1" />
-                          Cancel Order
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div><p className="text-sm text-muted-foreground">Order ID</p><p className="font-semibold">{orderDetails.orderId}</p></div>
-                  <div><p className="text-sm text-muted-foreground">Order Date</p><p className="font-semibold">{new Date(orderDetails.createdAt).toLocaleDateString()}</p></div>
-                  <div><p className="text-sm text-muted-foreground">Total Amount</p><p className="font-semibold text-primary">₹{orderDetails.total}</p></div>
-                  <div><p className="text-sm text-muted-foreground">Payment Status</p>
-                    <div className="flex items-center gap-2">
-                      {orderDetails.paymentScreenshot ? (
-                        orderDetails.paymentScreenshot.verified ? (
-                          <div className="flex items-center gap-1 text-green-600">
-                            <CheckCircle className="w-4 h-4" />
-                            <span className="font-semibold">Verified</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1 text-orange-600">
-                            <Upload className="w-4 h-4" />
-                            <span className="font-semibold">Pending Verification</span>
-                          </div>
-                        )
-                      ) : (
-                        <div className="flex items-center gap-1 text-gray-600">
-                          <CreditCard className="w-4 h-4" />
-                          <span className="font-semibold">Not Uploaded</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {orderDetails.transportName && (
-                    <div><p className="text-sm text-muted-foreground">Transport Name</p><p className="font-semibold">{orderDetails.transportName}</p></div>
-                  )}
-                  {orderDetails.lrNumber && (
-                    <div><p className="text-sm text-muted-foreground">LR Number</p><p className="font-semibold">{orderDetails.lrNumber}</p></div>
-                  )}
+          {loading && (
+            <div className="text-center py-8">
+              <p>Searching for your order...</p>
+            </div>
+          )}
+
+          {orderStatus && !loading && (
+            <div className="bg-card p-6 rounded-lg border">
+              {orderStatus.error ? (
+                <div className="text-center">
+                  <p className="text-red-500">{orderStatus.error}</p>
                 </div>
-            </div>
-
-            {/* Status Steps */}
-            <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
-              <h2 className="text-xl font-semibold mb-6">Order Status</h2>
-              <div className="space-y-4">
-                {orderStatuses.map((status, index) => {
-                  const isCompleted = index <= getCurrentStatusIndex(orderDetails.status);
-                  const isCurrent = index === getCurrentStatusIndex(orderDetails.status);
-                  return (
-                    <div key={status.status} className="flex items-center space-x-4">
-                      <div className={`w-10 h-10 flex items-center justify-center rounded-full ${isCompleted ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'} ${isCurrent ? 'animate-pulse' : ''}`}>
-                        {getStatusIcon(status.status)}
-                      </div>
-                      <div className="flex-1">
-                        <p className={`font-medium ${isCompleted ? 'text-foreground' : 'text-muted-foreground'}`}>{status.timestamp}</p>
-                        {isCurrent && <p className="text-sm text-primary">Current Status</p>}
-                      </div>
-                      {isCompleted && <CheckCircle className="w-5 h-5 text-green-500" />}
+              ) : (
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">Order Details</h2>
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Order ID:</span>
+                      <span>{orderStatus.orderId}</span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Items */}
-            <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
-              <h2 className="text-xl font-semibold mb-4">Order Items</h2>
-              <div className="space-y-3">
-                {orderDetails.items.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{item.name_en}</p>
-                      <p className="text-sm text-muted-foreground">{item.name_ta}</p>
-                      <p className="text-sm">Qty: {item.quantity}</p>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Status:</span>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(orderStatus.status)}
+                        <span className="capitalize">{orderStatus.status}</span>
+                      </div>
                     </div>
-                    <span className="font-semibold">₹{item.price * item.quantity}</span>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Total:</span>
+                      <span>₹{orderStatus.total}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Order Date:</span>
+                      <span>{new Date(orderStatus.createdAt).toLocaleDateString()}</span>
+                    </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+      
       <Footer />
     </div>
   );

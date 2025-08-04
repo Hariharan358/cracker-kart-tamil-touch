@@ -37,7 +37,7 @@ const Safety = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar cartCount={0} />
-      <div className="container mx-auto px-4 py-8 flex-1">
+      <div className="w-[98%] max-w-7xl mx-auto px-4 py-8 flex-1">
         <h1 className="text-3xl md:text-4xl font-bold mb-4 text-center text-primary">
           {t('safetyGuidance')}
         </h1>

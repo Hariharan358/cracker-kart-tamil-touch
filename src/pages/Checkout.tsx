@@ -1,158 +1,44 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Navbar } from "../components/Navbar";
-import { Footer } from "../components/Footer";
+import { Link } from "react-router-dom";
+import { ArrowLeft, CheckCircle } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
+import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
 import { useCart } from "../hooks/useCart";
-import { useToast } from "../hooks/use-toast";
-import { useLanguage } from "../contexts/LanguageContext";
-import { useFCM } from "../hooks/useFCM";
-import { Loader } from "../components/ui/loader";
-import { CreditCard } from "../components/ui/credit-card";
-
-interface CheckoutForm {
-  fullName: string;
-  mobile: string;
-  email: string;
-  address: string;
-  pincode: string;
-}
-
-const getFormattedDate = (): string => {
-  const now = new Date();
-  const day = String(now.getDate()).padStart(2, "0");
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const year = String(now.getFullYear());
-  return `${day}${month}${year}`;
-};
-
-const generateOrderId = (): string => {
-  const today = getFormattedDate();
-  const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
-  const random = Math.floor(Math.random() * 1000).toString().padStart(3, "0"); // Random 3-digit number
-  
-  return `${today}${timestamp}${random}`;
-};
 
 const Checkout = () => {
-  const { cartItems, getTotalItems, getTotalPrice, clearCart } = useCart();
-  const { toast } = useToast();
-  const { t } = useLanguage();
-  const navigate = useNavigate();
-  const { requestPermission } = useFCM();
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
-  const [form, setForm] = useState<CheckoutForm>({
-    fullName: "",
-    mobile: "",
+  const { cartItems, getTotalPrice, clearCart } = useCart();
+  const [formData, setFormData] = useState({
+    name: "",
     email: "",
+    phone: "",
     address: "",
+    city: "",
     pincode: "",
   });
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleInputChange = (field: keyof CheckoutForm, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (getTotalPrice() < 1000) {
-      toast({
-        title: t('minOrderButton'),
-        description: t('minOrderAlert'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!form.fullName || !form.mobile ||  !form.address || !form.pincode) {
-      toast({
-        title: "Please fill all fields",
-        description: "All fields are required to place your order.",
-        variant: "destructive",
-      });
-      return;
-    }
-    const BASE_URL = "https://km-crackers.onrender.com";
-
-
-    setIsSubmitting(true);
-
-    const orderDetails = {
-      items: cartItems,
-      total: getTotalPrice(),
-      customerDetails: form,
-      status: "confirmed",
-      createdAt: new Date().toISOString(),
-    };
-
-    try {
-      // Store customer mobile for notifications
-      localStorage.setItem('customerMobile', form.mobile);
-      
-      // Request notification permission for customer
-      await requestPermission();
-      
-      const response = await fetch(`https://km-crackers.onrender.com/api/orders/place`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderDetails),
-      });
-      
-    
-      let result = null;
-      const contentType = response.headers.get("content-type");
-
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-        throw new Error(text || "Server returned an unexpected response");
-      }
-
-      if (response.ok) {
-        const { orderId } = result;
-        clearCart();
-        toast({
-          title: "Order placed successfully!",
-          description: `Your order ID is ${orderId}. Invoice is available for download.`,
-          duration: 5000,
-        });
-
-        setInvoiceUrl(`${BASE_URL}/invoices/${orderId}.pdf`);
-        setIsSubmitting(false);
-      } else {
-        throw new Error(result.error || "Order failed");
-      }
-    } catch (error: any) {
-      toast({
-        title: "Order failed",
-        description: error.message || "Something went wrong.",
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
-    }
+    // Handle order submission here
+    setIsSubmitted(true);
+    clearCart();
   };
 
-  if (invoiceUrl) {
+  if (cartItems.length === 0 && !isSubmitted) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar cartCount={0} />
-        <div className="container mx-auto px-4 py-16 text-center">
-          <h1 className="text-2xl font-bold mb-4">Thank you for your order!</h1>
-          <p className="mb-4">Your invoice is ready to download.</p>
-          <a href={invoiceUrl} download target="_blank" rel="noopener noreferrer">
-            <Button variant="festive" className="mb-4">
-              Download Invoice PDF
-            </Button>
-          </a>
-          <br />
-          <Button variant="default" onClick={() => navigate("/track")}>
-            Track Your Order
+        <div className="w-full px-4 py-16 text-center">
+          <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
+          <p className="text-muted-foreground mb-8">Add some products to checkout</p>
+          <Button asChild>
+            <Link to="/categories">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Continue Shopping
+            </Link>
           </Button>
         </div>
         <Footer />
@@ -160,120 +46,126 @@ const Checkout = () => {
     );
   }
 
-  if (cartItems.length === 0) {
+  if (isSubmitted) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar cartCount={0} />
-        <div className="container mx-auto px-4 py-16 text-center">
-          <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
-          <Button variant="festive" onClick={() => navigate("/categories")}>Start Shopping</Button>
+        <div className="w-full px-4 py-16 text-center">
+          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-4">Thank you for your order!</h2>
+          <p className="text-muted-foreground mb-8">We'll process your order and contact you soon.</p>
+          <Button asChild>
+            <Link to="/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Link>
+          </Button>
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar cartCount={getTotalItems()} />
+      <Navbar cartCount={cartItems.length} />
       
-      {/* Full-screen loader overlay when placing order */}
-      {isSubmitting && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-background rounded-lg p-8 shadow-lg border border-border text-center">
-            <Loader size="lg" className="mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Placing Your Order</h3>
-            <p className="text-muted-foreground">Please wait while we process your order...</p>
-          </div>
+      <div className="w-full px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Checkout</h1>
+          <p className="text-muted-foreground">Complete your order</p>
         </div>
-      )}
-      
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">
-          <span className="title-styled text-primary">Checkout</span>
-        </h1>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border">
-            <h2 className="text-xl font-semibold mb-6">Delivery Information</h2>
-            
-            {/* Credit Card Preview */}
-            <div className="mb-6 flex justify-center">
-              <CreditCard 
-                orderId={generateOrderId()}
-                customerName={form.fullName}
-                orderDate={new Date().toISOString()}
-              />
-            </div>
-            
+          {/* Order Form */}
+          <div>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="fullName">Full Name *</Label>
-                <Input id="fullName" value={form.fullName} onChange={(e) => handleInputChange("fullName", e.target.value)} required />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Name</label>
+                  <Input
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Email</label>
+                  <Input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
+                </div>
               </div>
+              
               <div>
-                <Label htmlFor="mobile">{t("mobileNumber")} *</Label>
-                <Input id="mobile" type="tel" value={form.mobile} onChange={(e) => handleInputChange("mobile", e.target.value)} required />
+                <label className="block text-sm font-medium mb-2">Phone</label>
+                <Input
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
               </div>
+              
               <div>
-                <Label htmlFor="email">{t("email")} *</Label>
-                <Input id="email" type="email" value={form.email} onChange={(e) => handleInputChange("email", e.target.value)} required />
+                <label className="block text-sm font-medium mb-2">Address</label>
+                <Textarea
+                  required
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                />
               </div>
-              <div>
-                <Label htmlFor="address">Delivery Address *</Label>
-                <Textarea id="address" value={form.address} onChange={(e) => handleInputChange("address", e.target.value)} required rows={3} />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">City</label>
+                  <Input
+                    required
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Pincode</label>
+                  <Input
+                    required
+                    value={formData.pincode}
+                    onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="pincode">Pincode *</Label>
-                <Input id="pincode" value={form.pincode} onChange={(e) => handleInputChange("pincode", e.target.value)} required />
-              </div>
-              {/* Payment Method - REMOVE COD */}
-              {/* <div className="bg-muted/50 rounded-lg p-4">
-                <h3 className="font-semibold mb-2">Payment Method</h3>
-                <p className="text-sm text-muted-foreground">💵 Cash on Delivery (COD) - Pay when your order arrives</p>
-              </div> */}
-              <Button type="submit" variant="festive" className="w-full" disabled={isSubmitting || getTotalPrice() < 1000}>
-                {isSubmitting ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader size="sm" />
-                    <span>Placing Order...</span>
-                  </div>
-                ) : (
-                  t('placeOrder')
-                )}
+              
+              <Button type="submit" className="w-full">
+                Place Order
               </Button>
             </form>
           </div>
 
-          <div className="bg-gradient-card rounded-lg p-6 shadow-card border border-border h-fit">
-            <h2 className="text-xl font-semibold mb-6">Order Summary</h2>
-            <div className="space-y-3 mb-6">
-              {cartItems.map((item) => (
-                <div key={item.id} className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <p className="font-medium">{item.name_en}</p>
-                    <p className="text-sm text-muted-foreground">{item.name_ta}</p>
-                    <p className="text-sm">Qty: {item.quantity} × ₹{item.price}</p>
+          {/* Order Summary */}
+          <div>
+            <div className="bg-card p-6 rounded-lg border">
+              <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+              <div className="space-y-2 mb-4">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="flex justify-between">
+                    <span>{item.name_en} x {item.quantity}</span>
+                    <span>₹{item.price * item.quantity}</span>
                   </div>
-                  <span className="font-semibold">₹{item.price * item.quantity}</span>
+                ))}
+                <div className="border-t pt-2">
+                  <div className="flex justify-between font-semibold">
+                    <span>Total</span>
+                    <span>₹{getTotalPrice()}</span>
+                  </div>
                 </div>
-              ))}
-            </div>
-            <div className="border-t border-border pt-4 space-y-2">
-              <div className="flex justify-between">
-                <span>Subtotal ({getTotalItems()} items):</span>
-                <span>₹{getTotalPrice()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Delivery:</span>
-                <span className="text-green-500">Free</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold border-t border-border pt-2">
-                <span>Total:</span>
-                <span className="text-primary">₹{getTotalPrice()}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
+      
       <Footer />
     </div>
   );

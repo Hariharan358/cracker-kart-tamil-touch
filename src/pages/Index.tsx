@@ -23,8 +23,20 @@ const Index = () => {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [sparklerProducts, setSparklerProducts] = useState([]);
   const [loadingSparklers, setLoadingSparklers] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(false);
   const location = useLocation();
   const { resolvedTheme } = useTheme();
+
+  // Responsive hook for category display
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   const sliderImages = [
     '/banner.jpg',
@@ -85,7 +97,7 @@ const Index = () => {
       </div>
 
       {/* Hero Section with Local Video Background */}
-      <div className="relative min-h-[60vh] sm:min-h-[70vh] md:min-h-[60vh] flex flex-col justify-center items-center overflow-hidden">
+      <div className="relative min-h-[60vh] sm:min-h-[70vh] md:min-h-[60vh] flex flex-col justify-center items-center overflow-hidden w-full">
         {/* Dynamic Background based on theme */}
         <div className="absolute inset-0 z-0 w-full h-full overflow-hidden pointer-events-none">
           {resolvedTheme === 'dark' ? (
@@ -103,7 +115,7 @@ const Index = () => {
             <img
               src="/banner.jpg"
               alt="Hero Banner"
-              className="w-full h-full object-cover object-center scale-125 sm:scale-110 md:scale-100 hero-bg-image"
+              className="w-full h-full object-cover object-center"
             />
           )}
           {resolvedTheme === 'dark' && (
@@ -112,7 +124,7 @@ const Index = () => {
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 container mx-auto px-4 h-full flex items-center hero-content">
+        <div className="relative z-10 w-full px-4 h-full flex items-center hero-content">
           <div className="max-w-2xl text-center mx-auto w-full">
             <div className="flex items-center justify-center mb-4 space-x-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
               <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-primary animate-sparkle" />
@@ -148,7 +160,7 @@ const Index = () => {
 
       {/* Features Section */}
       <section className="py-12 sm:py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
+        <div className="w-full px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             <div className="text-center p-4 sm:p-6 bg-gradient-card dark:bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up dark:shadow-[0_0_24px_0_hsl(45,100%,60%,0.5)]" style={{ animationDelay: '0.2s' }}>
               <div className="flex items-center justify-center mb-3 sm:mb-4">
@@ -207,29 +219,29 @@ const Index = () => {
 
       {/* Categories Section */}
       <section className="py-12 sm:py-16">
-        <div className="container mx-auto px-4">
+        <div className="w-full px-4">
           <div className="text-center mb-8 sm:mb-12 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
-              {t('allCategories')}
+              <span className="title-styled text-primary">Categories</span>
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              {t('exploreCategories')}
-            </p>
+            <p className="text-sm sm:text-base md:text-lg text-muted-foreground">Explore our wide range of fireworks</p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 sm:gap-6">
-            {categories.slice(0, 8).map((category, idx) => (
-              <div key={category.name} className="animate-fade-in" style={{ animationDelay: `${0.1 + idx * 0.07}s` }}>
-                <CategoryCard
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
+            {categories.slice(0, isDesktop ? 8 : 6).map((category, index) => (
+              <div key={category.name} className="animate-fade-in" style={{ animationDelay: `${0.3 + index * 0.1}s` }}>
+                <CategoryCard 
                   category={category.name}
                   productCount={category.count}
                 />
               </div>
             ))}
           </div>
-          <div className="text-center mt-8 sm:mt-12 animate-fade-in" style={{ animationDelay: '1.2s' }}>
+          
+          <div className="text-center mt-8 sm:mt-12 animate-fade-in" style={{ animationDelay: '0.8s' }}>
             <Button variant="outline" size="lg" asChild className="transition-transform duration-300 hover:scale-110">
               <Link to="/categories">
-                View All Categories
+                View More Categories
               </Link>
             </Button>
           </div>
@@ -237,7 +249,7 @@ const Index = () => {
       </section>
 
       {/* Featured Products Section */}
-      <section className="container mx-auto px-4 py-8 sm:py-12">
+      <section className="w-full px-4 py-8 sm:py-12">
         <div className="text-center mb-8 sm:mb-12 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">Featured Products</h2>
           <p className="text-sm sm:text-base md:text-lg text-muted-foreground">Discover our most popular items</p>
@@ -250,7 +262,7 @@ const Index = () => {
         ) : products.length === 0 ? (
           <p className="text-center text-muted-foreground">No products found.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
             {products.map((product) => {
               const quantity = cartItems.find(item => item.id === (product._id || product.id))?.quantity || 0;
               return (
@@ -279,7 +291,7 @@ const Index = () => {
       </section>
 
       {/* Sparkler Products Section */}
-      <section className="container mx-auto px-4 py-8 sm:py-12">
+      <section className="w-full px-4 py-8 sm:py-12">
         <div className="text-center mb-8 sm:mb-12 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">Sparkler Items</h2>
           <p className="text-sm sm:text-base md:text-lg text-muted-foreground">Light up your celebrations</p>
@@ -292,7 +304,7 @@ const Index = () => {
         ) : sparklerProducts.length === 0 ? (
           <p className="text-center text-muted-foreground">No sparkler products found.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
             {sparklerProducts.map((product) => {
               const quantity = cartItems.find(item => item.id === (product._id || product.id))?.quantity || 0;
               return (

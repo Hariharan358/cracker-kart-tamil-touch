@@ -2,6 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Reset and Mobile Viewport Fixes */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+body {
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
@@ -117,8 +143,49 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
-  body {
+  html, body {
     @apply bg-background text-foreground font-sans;
+  }
+
+  /* Prevent horizontal scroll on all elements */
+  .min-h-screen {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Ensure all sections and containers don't overflow */
+  section, div, main, aside, article {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Fix for any potential grid overflow */
+  .grid {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Ensure images don't cause overflow */
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+@layer components {
+  /* Page container that matches navbar width */
+  .page-container {
+    @apply w-[98%] max-w-7xl mx-auto px-4;
+  }
+  
+  /* Page container with padding */
+  .page-container-padded {
+    @apply w-[98%] max-w-7xl mx-auto px-4 py-8;
+  }
+  
+  /* Hero container that matches navbar width */
+  .hero-container {
+    @apply w-[98%] max-w-7xl mx-auto px-4;
   }
 }
 
@@ -259,12 +326,6 @@ All colors MUST be HSL.
   .flex.flex-col.sm\\:flex-row {
     gap: 0.75rem;
   }
-  
-  /* Better image compression for mobile */
-  .hero-bg-image {
-    transform: scale(1.25);
-    object-position: center;
-  }
 }
 
 /* Additional mobile optimizations */
@@ -325,11 +386,6 @@ All colors MUST be HSL.
 
 /* Extra small mobile devices */
 @media (max-width: 480px) {
-  .hero-bg-image {
-    transform: scale(1.4);
-    object-position: center;
-  }
-  
   /* Smaller text for very small screens */
   .text-xs-mobile {
     font-size: 0.75rem;
@@ -349,11 +405,6 @@ All colors MUST be HSL.
 
 /* Very small mobile devices */
 @media (max-width: 360px) {
-  .hero-bg-image {
-    transform: scale(1.5);
-    object-position: center;
-  }
-  
   /* Even smaller text for very small screens */
   .text-xxs-mobile {
     font-size: 0.6875rem;

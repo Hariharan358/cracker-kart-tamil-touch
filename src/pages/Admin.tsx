@@ -543,7 +543,7 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-[98%] max-w-7xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <div className="flex justify-center items-center mb-4">
             <ShieldCheck className="h-8 w-8 text-primary animate-sparkle mr-2" />

@@ -103,7 +103,7 @@ const About = () => {
         </div>
         
         {/* Content */}
-        <div className="relative z-10 container mx-auto px-4">
+        <div className="relative z-10 w-[98%] max-w-7xl mx-auto px-4">
           <div className="text-center">
             {/* Happy Diwali Text */}
             <div className="mb-8">
@@ -129,7 +129,7 @@ const About = () => {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-16">
+      <div className="w-[98%] max-w-7xl mx-auto px-4 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
           <div>
             <h2 className="text-3xl font-bold mb-6 text-foreground">

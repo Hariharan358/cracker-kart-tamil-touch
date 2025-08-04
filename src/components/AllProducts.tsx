@@ -38,15 +38,19 @@ export const CategoryProducts = () => {
   }, [category]);
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full px-4 py-6">
       <h2 className="text-2xl font-bold mb-4">{category} Products</h2>
 
       {loading ? (
-        <p>Loading...</p>
+        <div className="flex justify-center items-center py-8">
+          <p>Loading...</p>
+        </div>
       ) : products.length === 0 ? (
-        <p>No products found in this category.</p>
+        <div className="flex justify-center items-center py-8">
+          <p>No products found in this category.</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {products.map((product) => (
             <ProductCard
               key={product._id}

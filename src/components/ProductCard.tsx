@@ -55,7 +55,7 @@ export const ProductCard = ({
     >
       {/* Product Image */}
       <div
-        className={`relative ${size === "sm" ? "h-28" : "h-48"} bg-muted overflow-hidden`}
+        className={`relative ${size === "sm" ? "h-24 sm:h-28" : "h-40 sm:h-48"} bg-muted overflow-hidden`}
       >
         <img
           src={product.image_url}
@@ -71,11 +71,11 @@ export const ProductCard = ({
       </div>
 
       {/* Product Details */}
-      <div className={`${size === "sm" ? "p-2 space-y-1" : "p-5 space-y-3"}`}>
+      <div className={`${size === "sm" ? "p-2 space-y-1" : "p-3 sm:p-5 space-y-2 sm:space-y-3"}`}>
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-2">
             <h3
-              className={`font-extrabold ${size === "sm" ? "text-base" : "text-xl"} text-foreground leading-tight tracking-tight`}
+              className={`font-extrabold ${size === "sm" ? "text-sm sm:text-base" : "text-lg sm:text-xl"} text-foreground leading-tight tracking-tight line-clamp-2`}
             >
               {product.name_en}
             </h3>
@@ -84,15 +84,15 @@ export const ProductCard = ({
                 href={product.youtube_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-red-600 hover:text-red-700"
+                className="text-red-600 hover:text-red-700 flex-shrink-0"
                 title="Watch on YouTube"
               >
-                <FaYoutube size={size === "sm" ? 16 : 20} />
+                <FaYoutube size={size === "sm" ? 14 : 18} />
               </a>
             )}
           </div>
           <p
-            className={`text-[0.97rem] text-accent font-medium ${size === "sm" ? "truncate" : ""}`}
+            className={`text-accent font-medium ${size === "sm" ? "text-xs sm:text-sm truncate" : "text-sm sm:text-base line-clamp-1"}`}
           >
             {product.name_ta}
           </p>
@@ -100,49 +100,49 @@ export const ProductCard = ({
 
         {/* Price and Add to Cart */}
         <div className="flex items-end justify-between mt-2">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
               {isDiscount && (
                 <span
-                  className={`text-muted-foreground line-through ${size === "sm" ? "text-xs" : "text-base"}`}
+                  className={`text-muted-foreground line-through ${size === "sm" ? "text-xs" : "text-sm sm:text-base"}`}
                 >
                   ₹{product.original_price}
                 </span>
               )}
               <span
-                className={`font-bold text-primary ${size === "sm" ? "text-sm" : "text-2xl"}`}
+                className={`font-bold text-primary ${size === "sm" ? "text-sm sm:text-base" : "text-lg sm:text-2xl"}`}
               >
                 ₹{product.price}
               </span>
             </div>
-            <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide mt-1">
+            <span className={`text-muted-foreground font-medium uppercase tracking-wide ${size === "sm" ? "text-xs" : "text-xs sm:text-sm"}`}>
               {product.category}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-1 sm:gap-2 mt-2 flex-shrink-0">
             <Button
               variant="cart"
               size="cart-icon"
               onClick={handleRemoveFromCart}
-              className={`relative ${isRemoving ? "cart-bounce" : ""}`}
+              className={`relative ${isRemoving ? "cart-bounce" : ""} ${size === "sm" ? "h-7 w-7" : "h-8 w-8"}`}
               disabled={isRemoving || quantity === 0}
               aria-label="Remove from cart"
             >
-              -
+              <span className="text-xs sm:text-sm">-</span>
             </Button>
-            <span className="font-semibold text-base w-6 text-center select-none">
+            <span className={`font-semibold text-center select-none ${size === "sm" ? "text-xs w-4" : "text-sm w-6"}`}>
               {quantity}
             </span>
             <Button
               variant="cart"
               size="cart-icon"
               onClick={handleAddToCart}
-              className={`relative ${isAdding ? "cart-bounce" : ""}`}
+              className={`relative ${isAdding ? "cart-bounce" : ""} ${size === "sm" ? "h-7 w-7" : "h-8 w-8"}`}
               disabled={isAdding}
               aria-label="Add to cart"
             >
-              <Plus className={size === "sm" ? "h-4 w-4" : "h-5 w-5"} />
+              <Plus className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />
               {isAdding && (
                 <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
               )}

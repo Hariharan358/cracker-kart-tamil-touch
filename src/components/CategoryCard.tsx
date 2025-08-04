@@ -14,15 +14,15 @@ export const CategoryCard = ({ category, productCount }: CategoryCardProps) => {
   
   return (
     <Link to={`/category/${encodeURIComponent(category)}`}>
-      <div className="group relative bg-gradient-card rounded-lg p-6 hover-lift shadow-card hover:shadow-glow transition-all duration-300 border border-border">
+      <div className="group relative bg-gradient-card rounded-lg p-3 sm:p-4 md:p-6 hover-lift shadow-card hover:shadow-glow transition-all duration-300 border border-border">
         {/* Sparkle effect */}
-        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Sparkles className="h-5 w-5 text-primary animate-sparkle" />
+        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-sparkle" />
         </div>
         
-        <div className="flex flex-col items-center text-center space-y-3">
+        <div className="flex flex-col items-center text-center space-y-2 sm:space-y-3">
           {/* Category Image */}
-          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary group-hover:animate-bounce-gentle">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden border-2 border-primary group-hover:animate-bounce-gentle">
             <img 
               src={categoryImages[category] || sparklerImg}
               alt={category}
@@ -31,11 +31,14 @@ export const CategoryCard = ({ category, productCount }: CategoryCardProps) => {
           </div>
           
           {/* Category Name */}
-          <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-sm sm:text-base md:text-lg text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
             {category}
           </h3>
           
-
+          {/* Product Count */}
+          <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+            {productCount} {productCount === 1 ? 'item' : 'items'}
+          </p>
         </div>
       </div>
     </Link>

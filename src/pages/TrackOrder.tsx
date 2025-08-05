@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Package, Truck, CheckCircle, Clock } from "lucide-react";
+import { Search, Package, Truck, CheckCircle, Clock, UserCheck } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Navbar } from "../components/Navbar";
@@ -19,7 +19,7 @@ const TrackOrder = () => {
     
     setLoading(true);
     try {
-      const response = await fetch(`/api/orders/track?orderId=${encodeURIComponent(orderId)}&mobile=${encodeURIComponent(mobile)}`);
+      const response = await fetch(`https://km-crackers.onrender.com/api/orders/track?orderId=${encodeURIComponent(orderId)}&mobile=${encodeURIComponent(mobile)}`);
       const data = await response.json();
       setOrderStatus(data);
     } catch (error) {
@@ -31,17 +31,82 @@ const TrackOrder = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status?.toLowerCase()) {
+      case "booked":
+        return <UserCheck className="h-6 w-6 text-blue-500" />;
       case "confirmed":
-        return <CheckCircle className="h-6 w-6 text-green-500" />;
-      case "processing":
-        return <Package className="h-6 w-6 text-blue-500" />;
-      case "shipped":
-        return <Truck className="h-6 w-6 text-orange-500" />;
-      case "delivered":
         return <CheckCircle className="h-6 w-6 text-green-500" />;
       default:
         return <Clock className="h-6 w-6 text-gray-500" />;
     }
+  };
+
+  const getStatusStep = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "booked":
+        return 1;
+      case "confirmed":
+        return 2;
+      default:
+        return 0;
+    }
+  };
+
+  const renderProgressBar = (currentStatus: string) => {
+    const steps = [
+      { name: "Booked", icon: <UserCheck className="h-5 w-5" /> },
+      { name: "Confirmed", icon: <CheckCircle className="h-5 w-5" /> }
+    ];
+
+    const currentStep = getStatusStep(currentStatus);
+
+    return (
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-4">Order Progress</h3>
+        <div className="relative">
+          {/* Progress Line */}
+          <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200 rounded-full">
+            <div 
+              className="h-1 bg-primary rounded-full transition-all duration-500"
+              style={{ width: `${(currentStep / 2) * 100}%` }}
+            ></div>
+          </div>
+          
+          {/* Steps */}
+          <div className="relative flex justify-between">
+            {steps.map((step, index) => {
+              const isCompleted = index < currentStep;
+              const isCurrent = index === currentStep - 1;
+              
+              return (
+                <div key={index} className="flex flex-col items-center">
+                  <div className={`
+                    w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300
+                    ${isCompleted 
+                      ? 'bg-primary border-primary text-white' 
+                      : isCurrent 
+                        ? 'bg-primary/20 border-primary text-primary' 
+                        : 'bg-gray-100 border-gray-300 text-gray-400'
+                    }
+                  `}>
+                    {isCompleted ? (
+                      <CheckCircle className="h-6 w-6" />
+                    ) : (
+                      step.icon
+                    )}
+                  </div>
+                  <span className={`
+                    text-sm font-medium mt-2 text-center
+                    ${isCompleted ? 'text-primary' : 'text-gray-500'}
+                  `}>
+                    {step.name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -93,6 +158,11 @@ const TrackOrder = () => {
               ) : (
                 <div>
                   <h2 className="text-xl font-semibold mb-4">Order Details</h2>
+                  
+                  {/* Progress Bar */}
+                  {renderProgressBar(orderStatus.status)}
+                  
+                  {/* Order Information */}
                   <div className="space-y-4">
                     <div className="flex justify-between">
                       <span className="font-medium">Order ID:</span>
@@ -121,6 +191,27 @@ const TrackOrder = () => {
                       <span className="font-medium">Order Date:</span>
                       <span>{new Date(orderStatus.createdAt).toLocaleDateString()}</span>
                     </div>
+                    
+                    {/* Shipping Information */}
+                    {(orderStatus.transportName || orderStatus.lrNumber) && (
+                      <>
+                        <div className="border-t pt-4 mt-4">
+                          <h4 className="font-semibold mb-3 text-primary">Shipping Information</h4>
+                          {orderStatus.transportName && (
+                            <div className="flex justify-between">
+                              <span className="font-medium">Transport Name:</span>
+                              <span>{orderStatus.transportName}</span>
+                            </div>
+                          )}
+                          {orderStatus.lrNumber && (
+                            <div className="flex justify-between">
+                              <span className="font-medium">LR Number:</span>
+                              <span className="font-mono">{orderStatus.lrNumber}</span>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}

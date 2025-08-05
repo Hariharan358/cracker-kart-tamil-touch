@@ -150,9 +150,9 @@ const Index = () => {
               </span>
             </h1>
             
-            {/* Minimum Order */}
+            {/* Crackers Available 365 Days */}
             <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white mb-6 md:mb-8 animate-fade-in font-semibold" style={{ animationDelay: '0.5s' }}>
-              Minimum Order ₹2,500
+              Crackers Available 365 Days
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center animate-fade-in px-4 sm:mb-10" style={{ animationDelay: '0.6s' }}>

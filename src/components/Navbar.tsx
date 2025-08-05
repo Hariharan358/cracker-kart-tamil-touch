@@ -233,13 +233,6 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                   Upload Payment
                 </Link>
                 <Link 
-                  to="/upload-screenshot" 
-                  className="text-foreground/80 hover:text-primary transition-all duration-300 font-medium py-2 px-3"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Upload Screenshot
-                </Link>
-                <Link 
                   to="/about" 
                   className="text-foreground/80 hover:text-primary transition-all duration-300 font-medium py-2 px-3"
                   onClick={() => setIsMobileMenuOpen(false)}

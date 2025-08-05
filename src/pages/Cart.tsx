@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Trash2, ShoppingCart, ArrowLeft, Plus, Minus } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Navbar } from "../components/Navbar";
@@ -10,12 +10,20 @@ import { useLanguage } from "../contexts/LanguageContext";
 const Cart = () => {
   const { cartItems, removeFromCart, updateQuantity, getTotalItems, getTotalPrice } = useCart();
   const { t } = useLanguage();
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const navigate = useNavigate();
 
   const handleCheckout = () => {
-    setIsCheckingOut(true);
-    // Add any checkout logic here
+    if (getTotalPrice() < 2500) {
+      // Show minimum order alert
+      alert(t('minOrderAlert'));
+      return;
+    }
+    // Navigate to checkout page
+    navigate('/checkout');
   };
+
+  const totalPrice = getTotalPrice();
+  const isMinimumOrderMet = totalPrice >= 2500;
 
   if (cartItems.length === 0) {
     return (
@@ -118,11 +126,16 @@ const Cart = () => {
               </div>
               <Button 
                 onClick={handleCheckout} 
-                disabled={isCheckingOut}
+                disabled={!isMinimumOrderMet}
                 className="w-full"
               >
-                {isCheckingOut ? "Processing..." : "Proceed to Checkout"}
+                {isMinimumOrderMet ? "Proceed to Checkout" : t('minOrderButton')}
               </Button>
+              {!isMinimumOrderMet && (
+                <p className="text-sm text-muted-foreground mt-2 text-center">
+                  {t('minOrderAlert')}
+                </p>
+              )}
             </div>
           </div>
         </div>

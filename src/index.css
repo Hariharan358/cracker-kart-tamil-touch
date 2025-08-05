@@ -34,14 +34,14 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Festive KMPyrotech Theme */
-    --background: 0 0% 100%; /* white */
+    /* Enhanced Light Theme - Festive KMPyrotech Theme */
+    --background: 45 30% 98%; /* Warm off-white instead of pure white */
     --foreground: 0 0% 0%;   /* black */
 
-    --card: 0 0% 100%;
+    --card: 45 25% 99%;
     --card-foreground: 0 0% 0%;
 
-    --popover: 0 0% 100%;
+    --popover: 45 25% 99%;
     --popover-foreground: 0 0% 0%;
 
     /* Festival Gold Primary */
@@ -53,7 +53,7 @@ All colors MUST be HSL.
     --secondary: 0 75% 55%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 96%;
+    --muted: 45 20% 95%;
     --muted-foreground: 0 0% 40%;
 
     /* Vibrant Orange Accent */
@@ -63,34 +63,35 @@ All colors MUST be HSL.
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 96%;
+    --border: 45 25% 88%;
+    --input: 45 20% 95%;
     --ring: 45 100% 55%;
 
-    /* Fireworks Gradients */
+    /* Enhanced Fireworks Gradients for Light Theme */
     --gradient-primary: linear-gradient(135deg, hsl(45 100% 55%), hsl(25 100% 60%));
     --gradient-secondary: linear-gradient(135deg, hsl(0 75% 55%), hsl(340 75% 55%));
-    --gradient-hero: radial-gradient(circle at center, hsl(45 100% 55% / 0.3), hsl(0 0% 100%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(0 0% 98%));
+    --gradient-hero: radial-gradient(circle at center, hsl(45 100% 55% / 0.3), hsl(45 30% 98%));
+    --gradient-card: linear-gradient(145deg, hsl(45 25% 99%), hsl(45 20% 96%));
+    --gradient-background: linear-gradient(135deg, hsl(45 30% 98%), hsl(45 25% 95%), hsl(45 30% 98%));
 
     /* Sparkle Animation Colors */
     --sparkle-gold: 45 100% 70%;
     --sparkle-orange: 25 100% 65%;
     --sparkle-red: 0 75% 60%;
 
-    /* Shadows with festival glow */
+    /* Enhanced Shadows with festival glow */
     --shadow-glow: 0 10px 40px hsl(45 100% 55% / 0.12);
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.06);
 
     --radius: 12px;
 
-    --sidebar-background: 0 0% 100%;
+    --sidebar-background: 45 25% 99%;
     --sidebar-foreground: 0 0% 0%;
-    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary: 45 20% 96%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent: 45 15% 94%;
     --sidebar-accent-foreground: 0 0% 0%;
-    --sidebar-border: 0 0% 90%;
+    --sidebar-border: 45 25% 88%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -130,11 +131,20 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Enhanced dark theme gradients for video compatibility */
     --gradient-card: linear-gradient(145deg, hsl(220 20% 16%), hsl(220 15% 10%));
     --gradient-primary: linear-gradient(135deg, hsl(45 100% 40%), hsl(25 100% 35%));
+    --gradient-secondary: linear-gradient(135deg, hsl(0 75% 45%), hsl(340 75% 45%));
     --gradient-hero: radial-gradient(circle at center, hsl(45 100% 55% / 0.15), hsl(222.2 84% 4.9%));
+    
+    /* Enhanced shadows for dark theme */
     --shadow-glow: 0 0 32px 0 hsl(45 100% 60% / 0.25);
     --shadow-card: 0 8px 32px hsl(45 100% 60% / 0.10);
+    
+    /* Video overlay colors */
+    --video-overlay: 0 0% 0% / 0.6;
+    --video-overlay-secondary: 0 0% 0% / 0.4;
   }
 }
 
@@ -223,6 +233,11 @@ All colors MUST be HSL.
   .bg-gradient-card {
     background: var(--gradient-card);
   }
+
+  .bg-gradient-background {
+    background: var(--gradient-background);
+  }
+
   .bg-gradient-card.dark {
     background: var(--gradient-card);
   }
@@ -261,6 +276,155 @@ All colors MUST be HSL.
   /* Cart animations */
   .cart-bounce {
     animation: cart-bounce 0.6s ease-out;
+  }
+
+  /* Video background utilities */
+  .video-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+
+  .video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.6),
+      rgba(0, 0, 0, 0.4),
+      rgba(0, 0, 0, 0.7)
+    );
+    z-index: 1;
+  }
+
+  .video-overlay-light {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.2),
+      transparent,
+      rgba(0, 0, 0, 0.3)
+    );
+    z-index: 1;
+  }
+
+  /* Dark theme specific utilities */
+  .dark .hero-title-contrast {
+    text-shadow: 0 2px 16px rgba(255, 200, 50, 0.3), 0 4px 32px rgba(255, 200, 50, 0.2);
+  }
+
+  .dark .video-background {
+    filter: brightness(0.8) contrast(1.1);
+  }
+
+  /* Video background enhancements for both themes */
+  .hero-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+
+  /* Light theme video adjustments */
+  .light .hero-video {
+    filter: brightness(1.1) contrast(1.05);
+  }
+
+  /* Dark theme video adjustments */
+  .dark .hero-video {
+    filter: brightness(0.9) contrast(1.15);
+  }
+
+  /* Enhanced text shadows for video backgrounds */
+  .hero-title-video {
+    text-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.8),
+      0 4px 8px rgba(0, 0, 0, 0.6),
+      0 8px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  .dark .hero-title-video {
+    text-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.9),
+      0 4px 8px rgba(0, 0, 0, 0.7),
+      0 8px 16px rgba(0, 0, 0, 0.5),
+      0 0 20px rgba(255, 200, 50, 0.3);
+  }
+
+  /* Enhanced light theme styling */
+  .light-theme-enhanced {
+    background: linear-gradient(135deg, 
+      hsl(45 30% 98%) 0%, 
+      hsl(45 25% 96%) 25%, 
+      hsl(45 30% 98%) 50%, 
+      hsl(45 25% 96%) 75%, 
+      hsl(45 30% 98%) 100%
+    );
+  }
+
+  /* Subtle pattern overlay for light theme */
+  .light-pattern {
+    background-image: 
+      radial-gradient(circle at 25% 25%, hsl(45 100% 55% / 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, hsl(25 100% 60% / 0.03) 0%, transparent 50%);
+  }
+
+  /* Enhanced card styling for light theme */
+  .card-enhanced {
+    background: linear-gradient(145deg, 
+      hsl(45 25% 99%) 0%, 
+      hsl(45 20% 97%) 100%
+    );
+    border: 1px solid hsl(45 25% 88%);
+  }
+
+  /* Section background enhancement */
+  .section-enhanced {
+    background: linear-gradient(to bottom,
+      hsl(45 20% 95% / 0.4) 0%,
+      hsl(45 20% 95% / 0.2) 100%
+    );
+  }
+
+  /* Hide scroll indicators and unwanted UI elements */
+  button::-webkit-inner-spin-button,
+  button::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button,
+  input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  button[type="number"]::-webkit-inner-spin-button,
+  button[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Remove any default scroll indicators */
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
   }
 }
 

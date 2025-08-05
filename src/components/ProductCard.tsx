@@ -1,6 +1,5 @@
 import { Plus } from "lucide-react";
 import { Button } from "./ui/button";
-import { useState } from "react";
 import { FaYoutube } from "react-icons/fa";
 
 interface Product {
@@ -29,20 +28,17 @@ export const ProductCard = ({
   quantity = 0,
   size = "md",
 }: ProductCardProps) => {
-  const [isAdding, setIsAdding] = useState(false);
-  const [isRemoving, setIsRemoving] = useState(false);
-
-  const handleAddToCart = () => {
-    setIsAdding(true);
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     onAddToCart(product);
-    setTimeout(() => setIsAdding(false), 600);
   };
 
-  const handleRemoveFromCart = () => {
+  const handleRemoveFromCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (onRemoveFromCart) {
-      setIsRemoving(true);
       onRemoveFromCart(product);
-      setTimeout(() => setIsRemoving(false), 600);
     }
   };
 
@@ -51,7 +47,7 @@ export const ProductCard = ({
 
   return (
     <div
-      className={`bg-gradient-card rounded-xl shadow-card hover:shadow-glow hover:scale-[1.025] transition-all duration-300 border-2 border-primary/40 hover:border-primary/80 overflow-hidden group ${size === "sm" ? "p-2" : "p-0"}`}
+      className={`bg-gradient-card rounded-xl shadow-card hover:shadow-glow transition-all duration-300 border-2 border-primary/40 hover:border-primary/80 overflow-hidden group ${size === "sm" ? "p-2" : "p-0"}`}
     >
       {/* Product Image */}
       <div
@@ -60,7 +56,7 @@ export const ProductCard = ({
         <img
           src={product.image_url}
           alt={product.name_en}
-          className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${size === "sm" ? "rounded-md" : ""}`}
+          className={`w-full h-full object-cover transition-transform duration-300 ${size === "sm" ? "rounded-md" : ""}`}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src =
@@ -75,7 +71,7 @@ export const ProductCard = ({
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-2">
             <h3
-              className={`font-extrabold ${size === "sm" ? "text-sm sm:text-base" : "text-lg sm:text-xl"} text-foreground leading-tight tracking-tight line-clamp-2`}
+              className={`font-extrabold ${size === "sm" ? "text-sm sm:text-base" : "text-lg sm:text-xl"} text-foreground leading-tight tracking-tight truncate`}
             >
               {product.name_en}
             </h3>
@@ -92,7 +88,7 @@ export const ProductCard = ({
             )}
           </div>
           <p
-            className={`text-accent font-medium ${size === "sm" ? "text-xs sm:text-sm truncate" : "text-sm sm:text-base line-clamp-1"}`}
+            className={`text-accent font-medium ${size === "sm" ? "text-xs sm:text-sm truncate" : "text-sm sm:text-base truncate"}`}
           >
             {product.name_ta}
           </p>
@@ -125,9 +121,10 @@ export const ProductCard = ({
               variant="cart"
               size="cart-icon"
               onClick={handleRemoveFromCart}
-              className={`relative ${isRemoving ? "cart-bounce" : ""} ${size === "sm" ? "h-7 w-7" : "h-8 w-8"}`}
-              disabled={isRemoving || quantity === 0}
+              className={`${size === "sm" ? "h-7 w-7" : "h-8 w-8"} transition-none hover:scale-100`}
+              disabled={quantity === 0}
               aria-label="Remove from cart"
+              type="button"
             >
               <span className="text-xs sm:text-sm">-</span>
             </Button>
@@ -138,14 +135,11 @@ export const ProductCard = ({
               variant="cart"
               size="cart-icon"
               onClick={handleAddToCart}
-              className={`relative ${isAdding ? "cart-bounce" : ""} ${size === "sm" ? "h-7 w-7" : "h-8 w-8"}`}
-              disabled={isAdding}
+              className={`${size === "sm" ? "h-7 w-7" : "h-8 w-8"} transition-none hover:scale-100`}
               aria-label="Add to cart"
+              type="button"
             >
               <Plus className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />
-              {isAdding && (
-                <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
-              )}
             </Button>
           </div>
         </div>

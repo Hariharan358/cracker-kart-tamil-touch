@@ -31,14 +31,9 @@ export const CategoryCard = ({ category, productCount }: CategoryCardProps) => {
           </div>
           
           {/* Category Name */}
-          <h3 className="font-semibold text-sm sm:text-base md:text-lg text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
+          <h3 className="font-semibold text-sm sm:text-base md:text-lg text-foreground group-hover:text-primary transition-colors truncate leading-tight">
             {category}
           </h3>
-          
-          {/* Product Count */}
-          <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-            {productCount} {productCount === 1 ? 'item' : 'items'}
-          </p>
         </div>
       </div>
     </Link>

@@ -446,11 +446,21 @@ app.post('/api/orders/place', async (req, res) => {
     }
 
     // Generate unique order ID on the backend
-    const generateOrderId = () => {
-      const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-      const timestamp = Date.now().toString().slice(-6);
-      const random = Math.floor(Math.random() * 1000).toString().padStart(3, "0");
-      return `${today}${timestamp}${random}`;
+    const generateOrderId = async () => {
+      // Get the latest order to determine the next sequential number
+      const latestOrder = await Order.findOne().sort({ orderId: -1 });
+      
+      let nextNumber = 1;
+      if (latestOrder && latestOrder.orderId) {
+        // Extract the number from the latest order ID
+        const match = latestOrder.orderId.match(/^KM-(\d+)$/);
+        if (match) {
+          nextNumber = parseInt(match[1]) + 1;
+        }
+      }
+      
+      // Format as KM-0001, KM-0002, etc.
+      return `KM-${nextNumber.toString().padStart(4, '0')}`;
     };
 
     let orderId;
@@ -459,7 +469,7 @@ app.post('/api/orders/place', async (req, res) => {
     
     // Try to generate a unique order ID
     do {
-      orderId = generateOrderId();
+      orderId = await generateOrderId();
       attempts++;
       if (attempts > maxAttempts) {
         return res.status(500).json({ error: 'Failed to generate unique order ID' });

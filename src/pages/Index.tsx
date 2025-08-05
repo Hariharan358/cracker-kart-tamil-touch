@@ -85,7 +85,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-background light-pattern">
       <Navbar cartCount={getTotalItems()} />
 
       {/* Discount Marquee Banner */}
@@ -96,30 +96,32 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Hero Section with Local Video Background */}
+      {/* Hero Section with Video Background for Both Themes */}
       <div className="relative min-h-[60vh] sm:min-h-[70vh] md:min-h-[60vh] flex flex-col justify-center items-center overflow-hidden w-full">
-        {/* Dynamic Background based on theme */}
+        {/* Video Background for Both Themes */}
         <div className="absolute inset-0 z-0 w-full h-full overflow-hidden pointer-events-none">
+          <video
+            className="w-full h-full object-cover object-center"
+            src="/dark_bg.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+          />
+          {/* Theme-specific overlays */}
           {resolvedTheme === 'dark' ? (
-            // Dark theme: Video background
-            <video
-              className="w-full h-full object-cover object-center"
-              src="/dark_bg.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
+            // Dark theme overlay - stronger overlay for better text readability
+            <>
+              <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40"></div>
+            </>
           ) : (
-            // Light theme: Banner image background
-            <img
-              src="/banner.jpg"
-              alt="Hero Banner"
-              className="w-full h-full object-cover object-center"
-            />
-          )}
-          {resolvedTheme === 'dark' && (
-            <div className="absolute inset-0 bg-black/50"></div>
+            // Light theme overlay - lighter overlay to maintain video visibility
+            <>
+              <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20"></div>
+            </>
           )}
         </div>
 
@@ -131,17 +133,29 @@ const Index = () => {
               <Zap className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-accent animate-bounce-gentle" />
               <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-primary animate-sparkle" />
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 md:mb-6 animate-slide-up hero-title" style={{ animationDelay: '0.3s' }}>
-              <span className="title-styled text-white hero-title-contrast">
-                {t('heroTitle')}
+            
+            {/* Logo */}
+            <div className="flex justify-center mb-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <img 
+                src="/logonew.jpg" 
+                alt="KM Pyrotech Logo" 
+                className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 lg:h-48 lg:w-48 rounded-full shadow-2xl border-1 border-white/30 backdrop-blur-sm"
+              />
+            </div>
+            
+            {/* Company Name */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 md:mb-6 animate-slide-up hero-title hero-title-video" style={{ animationDelay: '0.4s' }}>
+              <span className="title-styled text-white">
+                KM PYROTECH
               </span>
             </h1>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-white mb-4 sm:mb-6 md:mb-8 leading-relaxed animate-fade-in px-2 hero-description" style={{ animationDelay: '0.5s' }}>
-              Minimum Order Rs 1,000/-<br/>
-              The Product Image is only for your reference, the packing and brand may change<br/>
-              Crackers In Sivakasi,Best Crackers Sivakasi,Crackers in India
+            
+            {/* Minimum Order */}
+            <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white mb-6 md:mb-8 animate-fade-in font-semibold" style={{ animationDelay: '0.5s' }}>
+              Minimum Order ₹2,500
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center animate-fade-in px-4" style={{ animationDelay: '0.7s' }}>
+            
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center animate-fade-in px-4 sm:mb-10" style={{ animationDelay: '0.6s' }}>
               <Button variant="festive" size="lg" asChild className="transition-transform duration-300 hover:scale-110 text-sm md:text-base">
                 <Link to="/categories">
                   <Gift className="mr-2 h-4 w-4 md:h-5 md:w-5" />
@@ -159,35 +173,35 @@ const Index = () => {
       </div>
 
       {/* Features Section */}
-      <section className="py-12 sm:py-16 bg-muted/30">
+      <section className="py-8 sm:py-12 bg-gradient-to-b from-muted/40 to-muted/20">
         <div className="w-full px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-            <div className="text-center p-4 sm:p-6 bg-gradient-card dark:bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up dark:shadow-[0_0_24px_0_hsl(45,100%,60%,0.5)]" style={{ animationDelay: '0.2s' }}>
-              <div className="flex items-center justify-center mb-3 sm:mb-4">
-                <span className="inline-flex items-center justify-center h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-yellow-100 dark:bg-yellow-900/40 shadow-[0_0_16px_0_hsl(45,100%,60%,0.3)]">
-                  <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 md:h-12 md:w-12 text-yellow-500 dark:text-yellow-300 animate-glow" />
+          <div className="grid grid-cols-3 md:grid-cols-3 gap-2 sm:gap-6">
+            <div className="text-center p-2 sm:p-4 md:p-6 bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+              <div className="flex items-center justify-center mb-2 sm:mb-3 md:mb-4">
+                <span className="inline-flex items-center justify-center h-8 w-8 sm:h-12 sm:w-12 md:h-16 md:w-16 rounded-full bg-yellow-100 dark:bg-yellow-900/40 shadow-[0_0_16px_0_hsl(45,100%,60%,0.3)]">
+                  <Sparkles className="h-4 w-4 sm:h-6 sm:w-6 md:h-8 md:w-8 text-yellow-500 dark:text-yellow-300 animate-glow" />
                 </span>
               </div>
-              <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-yellow-100">{t('featureQuality')}</h3>
-              <p className="text-xs sm:text-sm md:text-base text-muted-foreground dark:text-yellow-200/80">{t('featureQualityDesc')}</p>
+              <h3 className="text-xs sm:text-sm md:text-lg lg:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-yellow-100">{t('featureQuality')}</h3>
+              <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-muted-foreground dark:text-yellow-200/80 hidden sm:block">{t('featureQualityDesc')}</p>
             </div>
-            <div className="text-center p-4 sm:p-6 bg-gradient-card dark:bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up dark:shadow-[0_0_24px_0_hsl(210,100%,60%,0.4)]" style={{ animationDelay: '0.4s' }}>
-              <div className="flex items-center justify-center mb-3 sm:mb-4">
-                <span className="inline-flex items-center justify-center h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-blue-100 dark:bg-blue-900/40 shadow-[0_0_16px_0_hsl(210,100%,60%,0.3)]">
-                  <Zap className="h-6 w-6 sm:h-8 sm:w-8 md:h-12 md:w-12 text-blue-500 dark:text-blue-300 animate-bounce-gentle" />
+            <div className="text-center p-2 sm:p-4 md:p-6 bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+              <div className="flex items-center justify-center mb-2 sm:mb-3 md:mb-4">
+                <span className="inline-flex items-center justify-center h-8 w-8 sm:h-12 sm:w-12 md:h-16 md:w-16 rounded-full bg-blue-100 dark:bg-blue-900/40 shadow-[0_0_16px_0_hsl(210,100%,60%,0.3)]">
+                  <Zap className="h-4 w-4 sm:h-6 sm:w-6 md:h-8 md:w-8 text-blue-500 dark:text-blue-300 animate-bounce-gentle" />
                 </span>
               </div>
-              <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-blue-100">{t('featureDelivery')}</h3>
-              <p className="text-xs sm:text-sm md:text-base text-muted-foreground dark:text-blue-200/80">{t('featureDeliveryDesc')}</p>
+              <h3 className="text-xs sm:text-sm md:text-lg lg:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-blue-100">{t('featureDelivery')}</h3>
+              <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-muted-foreground dark:text-blue-200/80 hidden sm:block">{t('featureDeliveryDesc')}</p>
             </div>
-            <div className="text-center p-4 sm:p-6 bg-gradient-card dark:bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up dark:shadow-[0_0_24px_0_hsl(0,100%,60%,0.4)]" style={{ animationDelay: '0.6s' }}>
-              <div className="flex items-center justify-center mb-3 sm:mb-4">
-                <span className="inline-flex items-center justify-center h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-red-100 dark:bg-red-900/40 shadow-[0_0_16px_0_hsl(0,100%,60%,0.3)]">
-                  <Gift className="h-6 w-6 sm:h-8 sm:w-8 md:h-12 md:w-12 text-red-500 dark:text-red-300 animate-glow" />
+            <div className="text-center p-2 sm:p-4 md:p-6 bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+              <div className="flex items-center justify-center mb-2 sm:mb-3 md:mb-4">
+                <span className="inline-flex items-center justify-center h-8 w-8 sm:h-12 sm:w-12 md:h-16 md:w-16 rounded-full bg-red-100 dark:bg-red-900/40 shadow-[0_0_16px_0_hsl(0,100%,60%,0.3)]">
+                  <Gift className="h-4 w-4 sm:h-6 sm:w-6 md:h-8 md:w-8 text-red-500 dark:text-red-300 animate-glow" />
                 </span>
               </div>
-              <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-red-100">{t('featureOffers')}</h3>
-              <p className="text-xs sm:text-sm md:text-base text-muted-foreground dark:text-red-200/80">{t('featureOffersDesc')}</p>
+              <h3 className="text-xs sm:text-sm md:text-lg lg:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-red-100">{t('featureOffers')}</h3>
+              <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-muted-foreground dark:text-red-200/80 hidden sm:block">{t('featureOffersDesc')}</p>
             </div>
           </div>
           

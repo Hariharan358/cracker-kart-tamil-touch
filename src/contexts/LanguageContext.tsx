@@ -47,8 +47,8 @@ const translations = {
     continueShopping: 'Continue Shopping',
     proceedToCheckout: 'Proceed to Checkout',
     total: 'Total',
-    minOrderAlert: 'Minimum order is ₹1,000. Please add more items to proceed to checkout.',
-    minOrderButton: 'Minimum order ₹1,000 required',
+    minOrderAlert: 'Minimum order is ₹2,500. Please add more items to proceed to checkout.',
+    minOrderButton: 'Minimum order ₹2,500 required',
     
     // Checkout
     checkout: 'Checkout',
@@ -186,8 +186,8 @@ const translations = {
     continueShopping: 'வாங்குதலைத் தொடரவும்',
     proceedToCheckout: 'செக்அவுட்டுக்கு செல்லவும்',
     total: 'மொத்தம்',
-    minOrderAlert: 'குறைந்தபட்ச ஆர்டர் ₹1,000. தொடர மேலும் பொருட்களைச் சேர்க்கவும்.',
-    minOrderButton: 'குறைந்தபட்சம் ₹1,000 தேவை',
+    minOrderAlert: 'குறைந்தபட்ச ஆர்டர் ₹2,500. தொடர மேலும் பொருட்களைச் சேர்க்கவும்.',
+    minOrderButton: 'குறைந்தபட்சம் ₹2,500 தேவை',
     
     // Checkout
     checkout: 'செக்அவுட்',

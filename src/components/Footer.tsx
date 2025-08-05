@@ -110,7 +110,7 @@ export const Footer = () => {
               <a href="#" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Return Policy
               </a>
-             <Link to="/adminlogin"> <a href="#" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+             <Link to="/safetyguidelines"> <a href="#" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Safety Guidelines
               </a> </Link>
             </nav>

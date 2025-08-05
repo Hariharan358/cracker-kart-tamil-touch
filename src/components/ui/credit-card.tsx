@@ -1,65 +1,82 @@
-import React from 'react';
+import { Sparkles } from "lucide-react";
 
 interface CreditCardProps {
   orderId: string;
   customerName: string;
-  orderDate: string;
+  className?: string;
 }
 
-export const CreditCard: React.FC<CreditCardProps> = ({ orderId, customerName, orderDate }) => {
-  // Format order ID to look like a credit card number
+export const CreditCard = ({ orderId, customerName, className = "" }: CreditCardProps) => {
+  // Format order ID to look like a credit card number (4 groups of 4 digits)
   const formatCardNumber = (id: string) => {
-    if (!id) return '0000 0000 0000 0000';
-    const padded = id.padEnd(16, '0');
-    return padded.match(/.{1,4}/g)?.join(' ') || '0000 0000 0000 0000';
-  };
-
-  // Format date to MM/YY format
-  const formatDate = (date: string) => {
-    if (!date) return '12/24';
-    const d = new Date(date);
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = String(d.getFullYear()).slice(-2);
-    return `${month}/${year}`;
-  };
-
-  // Format customer name
-  const formatName = (name: string) => {
-    if (!name) return 'CUSTOMER NAME';
-    return name.toUpperCase();
+    // Remove any non-digit characters and pad to 16 digits
+    const cleanId = id.replace(/\D/g, '').padEnd(16, '0').slice(0, 16);
+    return cleanId.match(/.{1,4}/g)?.join(' ') || '0000 0000 0000 0000';
   };
 
   return (
-    <div className="flip-card">
-      <div className="flip-card-inner">
-        <div className="flip-card-front">
-          <p className="heading_8264">MASTERCARD</p>
-          <svg className="logo" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="36" height="36" viewBox="0 0 48 48">
-            <path fill="#ff9800" d="M32 10A14 14 0 1 0 32 38A14 14 0 1 0 32 10Z"></path>
-            <path fill="#d50000" d="M16 10A14 14 0 1 0 16 38A14 14 0 1 0 16 10Z"></path>
-            <path fill="#ff3d00" d="M18,24c0,4.755,2.376,8.95,6,11.48c3.624-2.53,6-6.725,6-11.48s-2.376-8.95-6-11.48 C20.376,15.05,18,19.245,18,24z"></path>
-          </svg>
-          <svg version="1.1" className="chip" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="30px" height="30px" viewBox="0 0 50 50" xmlSpace="preserve">
-            <image id="image0" width="50" height="50" x="0" y="0" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAB6VBMVEUAAACNcTiVeUKVeUOYfEaafEeUeUSYfEWZfEaykleyklaXe0SWekSZZjOYfEWYe0WXfUWXe0WcgEicfkiXe0SVekSXekSWekKYe0a9nF67m12ZfUWUeEaXfESVekOdgEmVeUWWekSniU+VeUKVeUOrjFKYfEWliE6WeESZe0GSe0WYfES7ml2Xe0WXeESUeEOWfEWcf0eWfESXe0SXfEWYekSVeUKXfEWxklawkVaZfEWWekOUekOWekSYfESZe0eXekWYfEWZe0WZe0eVeUSWeETAnmDCoWLJpmbxy4P1zoXwyoLIpWbjvXjivnjgu3bfu3beunWvkFWxkle/nmDivXiWekTnwXvkwHrCoWOuj1SXe0TEo2TDo2PlwHratnKZfEbQrWvPrWua fUfbt3PJp2agg0v0zYX0zYSfgkvKp2frxX7mwHrlv3rsxn/yzIPgvHfduXWXe0XuyIDzzISsjVO1lVm0lFitjVPzzIPqxX7duna0lVncuHTLqGjvyIHeuXXxyYGZfUayk1iyk1e2lln1zYTEomO2llrbtnOafkjFpGSbfkfZtXLhvHfkv3nqxH3mwXujhU3KqWizlFilh06khk2fgkqsjlPHpWXJp2erjVOhg0yWe0SliE+XekShhEvAn2D///+gx8TWAAAARnRSTlMACVCTtsRl7Pv7+vxkBab7pZv5+ZlL/UnU/f3SJCVe+Fx39naA9/75XSMh0/3SSkia+pil/KRj7Pr662JPkrbP7OLQ0JFOijI1MwAAAAFiS0dEorDd34wAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfnAg0IDx2lsiuJAAACLElEQVRIx2NgGAXkAUYmZhZWPICFmYkRVQcbOwenmzse4MbFzc6DpIGXj8PD04sA8PbhF+CFaxEU8iWkAQT8hEVgOkTF/InR4eUVICYO1SIhCRMLDAoKDvFDVhUaEhwUFAjjSUlDdMiEhcOEItzdI6OiYxA6YqODIt3dI2DcuDBZsBY5eVTr4xMSYcyk5BRUOXkFsBZFJTQnp6alQxgZmVloUkrKYC0qqmji2WE5EEZuWB6alKoKdi35YQUQRkFYPpFaCouKIYzi6EDitJSUlsGY5RWVRGjJLyxNy4ZxqtIqqvOxaVELQwZFZdkIJVU1RSiSalAt6rUwUBdWG1CP6pT6gNqwOrgCdQyHNYR5YQFhDXj8MiK1IAeyN6aORiyBjByVTc0FqBoKWpqwRCVSgilOaY2OaUPw29qjOzqLvTAchpos47u6EZyYnngUSRwpuTe6D+6qaFQdOPNLRzOM1dzhRZyW+CZouHk3dWLXglFcFIflQhj9YWjJGlZcaKAVSvjyPrRQ0oQVKDAQHlYFYUwIm4gqExGmBSkutaVQJeomwViTJqPK6OhCy2Q9sQBk8cY0DxjTJw0lAQWK6cOKfgNhpKK7ZMpUeF3jPa28BCETamiEqJKM+X1gxvWXpoUjVIVPnwErw71nmpgiqiQGBjNzbgs3j1nus+fMndc+Cwm0T52/oNR9lsdCS24ra7Tq1cbWjpXV3sHRCb1idXZ0sGdltXNxRateRwHRAACYHutzk/2I5QAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wMi0xM1QwODoxNToyOSswMDowMEUnN7UAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDItMTNUMDg6MTU6MjkrMDA6MDA0eo8JAAAAKHRFWHRkYXRlOnRpbWVzdGFtcAAyMDIzLTAyLTEzVDA4OjE1OjI5KzAwOjAwY2+u1gAAAABJRU5ErkJggg=="></image>
-          </svg>
-          <svg version="1.1" className="contactless" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px" height="20px" viewBox="0 0 50 50" xmlSpace="preserve">
-            <image id="image0" width="50" height="50" x="0" y="0" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAQAAAC0NkA6AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0QA/4ePzL8AAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfnAg0IEzgIwaKTAAADDklEQVRYw+1XS0iUURQ+f5qPyjQflGRFEEFK76koKGxRbWyVVLSOgsCgwjZBJJYuKogSIoOonUK4q3U0WVBWFPZYiIE6kuArG3VGzK/FfPeMM/MLt99/NuHdfPd888/57jn3nvsQWWj/VcMlvMMd5KRTogqx9iCdIjUUmcGR9ImUYowyP3xNGQJoRLVaZ2DaZf8kyjEJALhI28ELioyiwC+Rc3QZwRYyO/DH51hQgWm6DMIh10KmD4u9O16K49itVoPOAmcGAWWOepXIRScAoJZ2Frro8oN+EyTT6lWkkg6msZfMSR35QTJmjU0g15tIGSJ08ZZMJkJkHpNZgSkyXosS13TkJpZ62mPIJvOSzC1bp8vRhhCakEk7G9/o4gmZdbpsTcKu0m63FbnBP9Qrc15z bkbemfgNDtEOI8NO5L5O9VYyRYgmJayZ9nPaxZrSjW4+F6Uw9yQqIiIZwhp2huQTf6OIvCZyGM6gDJBZbyXifJXr7FZjGXsdxADxI7HUJFB6iWvsIhFpkoiIiGTJfjJfiCuJg2ZEspq9EHGVpYgzKqwJqSAOEwuJQ/pxPvE3cYltJCLdxBLiSKKIE5HxJKcTRNeadxfhDiuYw44zVs1dxKwRk/uCxIiQkxKBsSctRVAge9g1E15EHE6yRUaJecRxcWlukdRIbGFOSZCMWQA/iWauIP3slREHXPyliqBcrrD71AmzZ+rD1Mt2Yr8TZc/UR4/YtFnbijnHi3UrN9vKQ9rPaJf867ZiaqDB+czeKYmd3pNa6fuI75MiC0uXXSR5aEMf7s7a6r/PudVXkjFb/SsrCRfROk0Fx6+H1i9kkTGn/E1vEmt1m089fh+RKdQ5O+xNJPUi cUIjO0Dm7HwvErEr0YxeibL1StSh37STafE4I7zcBdRq1DiOkdmlTJVnkQTBTS7X1FYyvfO4piaInKbDCDaT2anLudYXCRFsQBgAcIF2/Okwgvz5+Z4tsw118dzruvIvjhTB+HOuWy8UvovEH6beitBKxDyxm9MmISKCWrzB7bSlaqGlsf0FC0gMjzTg6GgAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDItMTNUMDg6MTk6NTYrMDA6MDCjlq7LAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTAyLTEzVDA4OjE5OjU2KzAwOjAw0ssWdwAAACh0RVh0ZGF0ZTp0aW1lc3RhbXAAMjAyMy0wMi0xM1QwODoxOTo1NiswMDowMIXeN6gAAAAASUVORK5CYII="></image>
-          </svg>
-          <p className="number">{formatCardNumber(orderId)}</p>
-          <p className="valid_thru">VALID THRU</p>
-          <p className="date_8264">{formatDate(orderDate)}</p>
-          <p className="name">{formatName(customerName)}</p>
+    <div className={`relative w-full max-w-sm mx-auto ${className}`}>
+      {/* Credit Card */}
+      <div className="relative bg-gradient-to-br from-primary via-accent to-secondary rounded-xl p-6 text-white shadow-2xl transform transition-all duration-300 hover:scale-105">
+        {/* Sparkle effects */}
+        <div className="absolute top-2 right-2 opacity-60">
+          <Sparkles className="h-4 w-4 animate-sparkle" />
         </div>
-        <div className="flip-card-back">
-          <div className="strip"></div>
-          <div className="mstrip"></div>
-          <div className="sstrip">
-            <p className="code">***</p>
+        <div className="absolute bottom-2 left-2 opacity-40">
+          <Sparkles className="h-3 w-3 animate-sparkle" style={{ animationDelay: '0.5s' }} />
+        </div>
+        
+        {/* Card Header */}
+        <div className="flex justify-between items-start mb-8">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-sm font-medium opacity-90">KM PYROTECH</span>
+          </div>
+          <div className="text-right">
+            <div className="text-xs opacity-75">VALID THRU</div>
+            <div className="text-sm font-semibold">12/25</div>
           </div>
         </div>
+
+        {/* Card Number */}
+        <div className="mb-6">
+          <div className="text-xs opacity-75 mb-1">CARD NUMBER</div>
+          <div className="text-xl font-mono font-bold tracking-wider">
+            {formatCardNumber(orderId)}
+          </div>
+        </div>
+
+        {/* Card Footer */}
+        <div className="flex justify-between items-end">
+          <div>
+            <div className="text-xs opacity-75 mb-1">CARD HOLDER</div>
+            <div className="text-sm font-semibold uppercase">
+              {customerName || 'CUSTOMER NAME'}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-xs opacity-75 mb-1">CVV</div>
+            <div className="text-sm font-mono">123</div>
+          </div>
+        </div>
+
+        {/* Chip */}
+        <div className="absolute top-1/2 left-6 transform -translate-y-1/2">
+          <div className="w-8 h-6 bg-yellow-400/80 rounded-sm"></div>
+        </div>
+      </div>
+
+      {/* Card Label */}
+      <div className="text-center mt-4">
+        <p className="text-sm text-muted-foreground font-medium">
+          KM PYROTECH Payment Card
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Order ID: {orderId}
+        </p>
       </div>
     </div>
   );
-};
-
-export default CreditCard; 
+}; 

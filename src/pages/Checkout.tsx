@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
+import { CreditCard } from "../components/ui/credit-card";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { useCart } from "../hooks/useCart";
@@ -19,12 +20,65 @@ const Checkout = () => {
     pincode: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderId, setOrderId] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Generate a temporary order ID for display
+  const generateTempOrderId = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, "0");
+    return `KM-${timestamp}${random}`;
+  };
+
+  const tempOrderId = generateTempOrderId();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle order submission here
-    setIsSubmitted(true);
-    clearCart();
+    
+    if (cartItems.length === 0) {
+      alert("Your cart is empty!");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const orderData = {
+        items: cartItems,
+        total: getTotalPrice(),
+        customerDetails: {
+          fullName: formData.name,
+          email: formData.email,
+          mobile: formData.phone,
+          address: formData.address,
+          pincode: formData.pincode,
+        },
+        status: "confirmed",
+        createdAt: new Date().toISOString(),
+      };
+
+      const response = await fetch('/api/orders/place', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to place order');
+      }
+
+      const result = await response.json();
+      setOrderId(result.orderId);
+      setIsSubmitted(true);
+      clearCart();
+    } catch (error) {
+      console.error('Error placing order:', error);
+      alert('Failed to place order. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (cartItems.length === 0 && !isSubmitted) {
@@ -53,7 +107,10 @@ const Checkout = () => {
         <div className="w-full px-4 py-16 text-center">
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-4">Thank you for your order!</h2>
-          <p className="text-muted-foreground mb-8">We'll process your order and contact you soon.</p>
+          <p className="text-muted-foreground mb-4">We'll process your order and contact you soon.</p>
+          {orderId && (
+            <p className="text-primary font-semibold mb-4">Order ID: {orderId}</p>
+          )}
           <Button asChild>
             <Link to="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -137,8 +194,12 @@ const Checkout = () => {
                 </div>
               </div>
               
-              <Button type="submit" className="w-full">
-                Place Order
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Placing Order..." : "Place Order"}
               </Button>
             </form>
           </div>
@@ -147,6 +208,15 @@ const Checkout = () => {
           <div>
             <div className="bg-card p-6 rounded-lg border">
               <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+              
+              {/* Credit Card Display */}
+              <div className="mb-6">
+                <CreditCard
+                  orderId={tempOrderId}
+                  customerName={formData.name}
+                />
+              </div>
+              
               <div className="space-y-2 mb-4">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex justify-between">

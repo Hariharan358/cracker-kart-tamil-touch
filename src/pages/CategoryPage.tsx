@@ -24,7 +24,7 @@ const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const { addToCart } = useCart();
+  const { addToCart, removeFromCart, cartItems } = useCart();
 
   useEffect(() => {
     const fetchCategoryProducts = async () => {
@@ -43,7 +43,7 @@ const CategoryPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar cartCount={0} />
+      <Navbar cartCount={cartItems.reduce((total, item) => total + item.quantity, 0)} />
       
       <div className="w-full px-4 py-8">
         <div className="mb-8">
@@ -67,22 +67,29 @@ const CategoryPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
-            {products.map((product) => (
-              <ProductCard
-                key={product._id}
-                product={{
-                  id: product._id,
-                  name_en: product.name_en,
-                  name_ta: product.name_ta,
-                  price: product.price,
-                  original_price: product.original_price,
-                  image_url: product.imageUrl,
-                  category: product.category,
-                  youtube_url: product.youtube_url,
-                }}
-                onAddToCart={addToCart}
-              />
-            ))}
+            {products.map((product) => {
+              const cartItem = cartItems.find(item => item.id === product._id);
+              const quantity = cartItem ? cartItem.quantity : 0;
+              
+              return (
+                <ProductCard
+                  key={product._id}
+                  product={{
+                    id: product._id,
+                    name_en: product.name_en,
+                    name_ta: product.name_ta,
+                    price: product.price,
+                    original_price: product.original_price,
+                    image_url: product.imageUrl,
+                    category: product.category,
+                    youtube_url: product.youtube_url,
+                  }}
+                  onAddToCart={addToCart}
+                  onRemoveFromCart={removeFromCart}
+                  quantity={quantity}
+                />
+              );
+            })}
           </div>
         )}
       </div>

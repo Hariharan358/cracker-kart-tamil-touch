@@ -346,7 +346,7 @@ const Index = () => {
         )}
       </section>
 
-      <Footer />
+      <Footer showQRCodes={true} />
     </div>
   );
 };

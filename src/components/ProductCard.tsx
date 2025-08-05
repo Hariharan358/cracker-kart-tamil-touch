@@ -16,7 +16,7 @@ interface Product {
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
-  onRemoveFromCart?: (product: Product) => void;
+  onRemoveFromCart?: (productId: string) => void;
   quantity?: number;
   size?: "sm" | "md";
 }
@@ -38,7 +38,7 @@ export const ProductCard = ({
     e.preventDefault();
     e.stopPropagation();
     if (onRemoveFromCart) {
-      onRemoveFromCart(product);
+      onRemoveFromCart(product.id);
     }
   };
 

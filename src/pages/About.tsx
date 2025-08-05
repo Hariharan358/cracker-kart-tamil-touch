@@ -189,7 +189,7 @@ const About = () => {
               <h3 className="text-lg font-semibold mb-2">Feel Free to Contact us via email:</h3>
               <div className="flex items-center justify-center gap-2 text-primary">
                 <Mail className="h-5 w-5" />
-                <span>kmcrackers24@gmail.com</span>
+                <span>kmpyrotech2025@gmail.com</span>
               </div>
             </div>
             <div className="text-center">

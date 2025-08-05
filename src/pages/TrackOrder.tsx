@@ -7,19 +7,23 @@ import { Footer } from "../components/Footer";
 
 const TrackOrder = () => {
   const [orderId, setOrderId] = useState("");
+  const [mobile, setMobile] = useState("");
   const [orderStatus, setOrderStatus] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const handleTrackOrder = async () => {
-    if (!orderId.trim()) return;
+    if (!orderId.trim() || !mobile.trim()) {
+      alert("Please enter both Order ID and Mobile Number");
+      return;
+    }
     
     setLoading(true);
     try {
-      const response = await fetch(`https://km-crackers.onrender.com/api/orders/track/${orderId}`);
+      const response = await fetch(`/api/orders/track?orderId=${encodeURIComponent(orderId)}&mobile=${encodeURIComponent(mobile)}`);
       const data = await response.json();
       setOrderStatus(data);
     } catch (error) {
-      setOrderStatus({ error: "Order not found" });
+      setOrderStatus({ error: "Order not found or mobile number does not match" });
     } finally {
       setLoading(false);
     }
@@ -52,15 +56,24 @@ const TrackOrder = () => {
           </div>
 
           <div className="bg-card p-6 rounded-lg border mb-8">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Enter Order ID"
-                value={orderId}
-                onChange={(e) => setOrderId(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleTrackOrder()}
-              />
-              <Button onClick={handleTrackOrder} disabled={loading}>
-                <Search className="h-4 w-4" />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  placeholder="Enter Order ID"
+                  value={orderId}
+                  onChange={(e) => setOrderId(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleTrackOrder()}
+                />
+                <Input
+                  placeholder="Enter Mobile Number"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleTrackOrder()}
+                />
+              </div>
+              <Button onClick={handleTrackOrder} disabled={loading} className="w-full">
+                <Search className="h-4 w-4 mr-2" />
+                {loading ? "Searching..." : "Track Order"}
               </Button>
             </div>
           </div>
@@ -84,6 +97,14 @@ const TrackOrder = () => {
                     <div className="flex justify-between">
                       <span className="font-medium">Order ID:</span>
                       <span>{orderStatus.orderId}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Customer Name:</span>
+                      <span>{orderStatus.customerDetails?.fullName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Mobile Number:</span>
+                      <span>{orderStatus.customerDetails?.mobile}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Status:</span>

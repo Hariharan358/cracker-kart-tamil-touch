@@ -57,7 +57,7 @@ const Checkout = () => {
         createdAt: new Date().toISOString(),
       };
 
-      const response = await fetch('/api/orders/place', {
+      const response = await fetch('https://km-crackers.onrender.com/api/orders/place', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

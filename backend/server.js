@@ -447,20 +447,30 @@ app.post('/api/orders/place', async (req, res) => {
 
     // Generate unique order ID on the backend
     const generateOrderId = async () => {
-      // Get the latest order to determine the next sequential number
-      const latestOrder = await Order.findOne().sort({ orderId: -1 });
+      const today = new Date();
+      const dateStr = today.getDate().toString().padStart(2, '0') + 
+                     (today.getMonth() + 1).toString().padStart(2, '0') + 
+                     today.getFullYear().toString().slice(-2);
+      
+      // Get the latest order for today to determine the next sequential number
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      
+      const latestOrder = await Order.findOne({
+        createdAt: { $gte: startOfDay, $lte: endOfDay }
+      }).sort({ orderId: -1 });
       
       let nextNumber = 1;
       if (latestOrder && latestOrder.orderId) {
-        // Extract the number from the latest order ID
-        const match = latestOrder.orderId.match(/^KM-(\d+)$/);
-        if (match) {
-          nextNumber = parseInt(match[1]) + 1;
+        // Extract the number from the latest order ID (last 2 digits)
+        const match = latestOrder.orderId.match(/^(\d{8})(\d{2})$/);
+        if (match && match[1] === dateStr) {
+          nextNumber = parseInt(match[2]) + 1;
         }
       }
       
-      // Format as KM-0001, KM-0002, etc.
-      return `KM-${nextNumber.toString().padStart(4, '0')}`;
+      // Format as DDMMYYYYNN (date + 2-digit sequential number)
+      return `${dateStr}${nextNumber.toString().padStart(2, '0')}`;
     };
 
     let orderId;

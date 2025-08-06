@@ -50,7 +50,7 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
             <Link to="/" className="flex items-center space-x-2 sm:space-x-3 group flex-shrink-0">
               <div className="relative">
                 <img 
-                  src="/logonew.jpg" 
+                  src="/logonew.png" 
                   alt="KMPyrotech Logo" 
                   className="h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 object-cover rounded-full shadow-lg"
                   onError={(e) => {
@@ -151,7 +151,7 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                   {cartCount > 0 && (
                     <Badge 
                       variant="destructive" 
-                      className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] animate-bounce-gentle bg-gradient-to-r from-red-500 to-pink-500"
+                      className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] bg-gradient-to-r from-red-500 to-pink-500"
                     >
                       {cartCount}
                     </Badge>
@@ -172,7 +172,7 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                   {cartCount > 0 && (
                     <Badge 
                       variant="destructive" 
-                      className="absolute -top-1 -right-1 h-3 w-3 p-0 flex items-center justify-center text-[8px] animate-bounce-gentle bg-gradient-to-r from-red-500 to-pink-500"
+                      className="absolute -top-1 -right-1 h-3 w-3 p-0 flex items-center justify-center text-[8px] bg-gradient-to-r from-red-500 to-pink-500"
                     >
                       {cartCount}
                     </Badge>

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { NotificationHandler } from "./components/NotificationHandler";
+import { QRCodeOverlay } from "./components/QRCodeOverlay";
 import Index from "./pages/Index";
 import Categories from "./pages/Categories";
 import CategoryPage from "./pages/CategoryPage";
@@ -30,6 +31,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <NotificationHandler />
+            <QRCodeOverlay />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/categories" element={<Categories />} />

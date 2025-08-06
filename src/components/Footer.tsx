@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
-import { Facebook, Instagram, Twitter, Phone, Mail, MapPin } from "lucide-react";
+import { Facebook, Instagram, Twitter, Phone, Mail, MapPin, X } from "lucide-react";
+import { useState } from "react";
 
 interface FooterProps {
   showQRCodes?: boolean;
@@ -8,6 +9,16 @@ interface FooterProps {
 
 export const Footer = ({ showQRCodes = false }: FooterProps) => {
   const { t } = useLanguage();
+  const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null);
+
+  const handleImageClick = (src: string, alt: string) => {
+    console.log('QR code clicked:', src, alt);
+    setPreviewImage({ src, alt });
+  };
+
+  const closePreview = () => {
+    setPreviewImage(null);
+  };
 
   return (
     <>
@@ -22,12 +33,13 @@ export const Footer = ({ showQRCodes = false }: FooterProps) => {
             <div className="flex flex-col md:flex-row justify-center items-center gap-6 md:gap-12">
               {/* Vimali QR Code */}
               <div className="text-center">
-                <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-                  <div className="w-40 h-40 md:w-48 md:h-48 mx-auto bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+                <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border border-gray-100 dark:border-gray-600">
+                  <div className="w-40 h-40 md:w-48 md:h-48 mx-auto bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center cursor-pointer hover:scale-105 transition-transform">
                     <img 
                       src="/vimali.jpg" 
                       alt="Vimali QR Code" 
                       className="w-36 h-36 md:w-44 md:h-44 object-contain rounded-xl"
+                      onClick={() => handleImageClick("/vimali.jpg", "Vimali QR Code")}
                       onError={(e) => {
                         const target = e.currentTarget as HTMLImageElement;
                         target.style.display = 'none';
@@ -43,12 +55,13 @@ export const Footer = ({ showQRCodes = false }: FooterProps) => {
 
               {/* QR Code */}
               <div className="text-center">
-                <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-                  <div className="w-40 h-40 md:w-48 md:h-48 mx-auto bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+                <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border border-gray-100 dark:border-gray-600">
+                  <div className="w-40 h-40 md:w-48 md:h-48 mx-auto bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center cursor-pointer hover:scale-105 transition-transform">
                     <img 
                       src="/2aqrcode.jpg"
                       alt="QR Code" 
                       className="w-36 h-36 md:w-44 md:h-44 object-contain rounded-xl"
+                      onClick={() => handleImageClick("/2aqrcode.jpg", "QR Code")}
                       onError={(e) => {
                         const target = e.currentTarget as HTMLImageElement;
                         target.style.display = 'none';

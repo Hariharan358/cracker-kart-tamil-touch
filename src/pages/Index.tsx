@@ -137,7 +137,7 @@ const Index = () => {
             {/* Logo */}
             <div className="flex justify-center mb-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <img 
-                src="/logonew.jpg" 
+                src="/logo-h.png" 
                 alt="KM Pyrotech Logo" 
                 className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 lg:h-48 lg:w-48 rounded-full shadow-2xl border-1 border-white/30 backdrop-blur-sm"
               />
@@ -152,7 +152,7 @@ const Index = () => {
             
             {/* Crackers Available 365 Days */}
             <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white mb-6 md:mb-8 animate-fade-in font-semibold" style={{ animationDelay: '0.5s' }}>
-              Crackers Available 365 Days
+            Light up your festivals with our crackers
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center animate-fade-in px-4 sm:mb-10" style={{ animationDelay: '0.6s' }}>

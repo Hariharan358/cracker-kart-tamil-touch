@@ -22,13 +22,56 @@ export const Footer = ({ showQRCodes = false }: FooterProps) => {
 
   return (
     <>
+      {/* QR Code Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-4 max-w-sm w-full">
+            {/* Close Button */}
+            <button
+              onClick={closePreview}
+              className="absolute top-2 right-2 p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            
+            {/* QR Code Image */}
+            <div className="text-center">
+              <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-3 mb-3">
+                <img 
+                  src={previewImage.src}
+                  alt={previewImage.alt}
+                  className="w-full h-auto max-w-xs mx-auto object-contain"
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = '<div class="w-full h-48 bg-gray-200 dark:bg-gray-600 rounded-xl flex items-center justify-center text-gray-500 text-sm">QR Code Not Found</div>';
+                    }
+                  }}
+                />
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                Scan this QR code with your payment app
+              </p>
+              <button
+                onClick={closePreview}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* QR Code Section Above Footer - Only show when showQRCodes is true */}
       {showQRCodes && (
         <section className="bg-gradient-to-r from-primary/10 to-secondary/10 py-12 mt-16">
           <div className="w-full px-4">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-foreground mb-2">Payment QR Codes</h2>
-              <p className="text-muted-foreground">Scan any QR code to make payment</p>
+              <p className="text-muted-foreground">Click on any QR code to view it larger for easy scanning</p>
             </div>
             <div className="flex flex-col md:flex-row justify-center items-center gap-6 md:gap-12">
               {/* Vimali QR Code */}

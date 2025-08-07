@@ -21,7 +21,13 @@ export const auth = getAuth(app);
 // Initialize Firebase Cloud Messaging with error handling
 export const messaging = (() => {
   try {
-    return getMessaging(app);
+    // Check if messaging is supported
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      return getMessaging(app);
+    } else {
+      console.warn('Firebase messaging not supported in this environment');
+      return null;
+    }
   } catch (error) {
     console.warn('Messaging not available:', error);
     return null;
@@ -42,6 +48,12 @@ export const analytics = (() => {
 // FCM Token management
 export const requestNotificationPermission = async () => {
   try {
+    // Check if notifications are supported
+    if (!('Notification' in window)) {
+      console.warn('Notifications not supported');
+      return false;
+    }
+
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       console.log('Notification permission granted.');
@@ -63,14 +75,28 @@ export const getFCMToken = async () => {
       return null;
     }
 
+    // Check if service worker is registered
+    if (!('serviceWorker' in navigator)) {
+      console.warn('Service Worker not supported');
+      return null;
+    }
+
     const permission = await requestNotificationPermission();
     if (!permission) {
       console.log('Notification permission not granted');
       return null;
     }
 
+    // Check if service worker is ready
+    const registration = await navigator.serviceWorker.ready;
+    if (!registration) {
+      console.warn('Service Worker not ready');
+      return null;
+    }
+
     const token = await getToken(messaging, {
-      vapidKey: 'BK0pPHvAJtaVIRIqFhGG4JKXfjheQqvp1RtsxlnvbUFGUXn8DNlqwlpLwZCeEEaPyp2DM2jMEZ_nhqjZcreAcDk'
+      vapidKey: 'BK0pPHvAJtaVIRIqFhGG4JKXfjheQqvp1RtsxlnvbUFGUXn8DNlqwlpLwZCeEEaPyp2DM2jMEZ_nhqjZcreAcDk',
+      serviceWorkerRegistration: registration
     });
 
     if (token) {
@@ -84,6 +110,7 @@ export const getFCMToken = async () => {
     }
   } catch (error) {
     console.error('Error getting FCM token:', error);
+    // Don't throw the error, just return null
     return null;
   }
 };
@@ -97,10 +124,15 @@ export const onMessageListener = () => {
       return;
     }
     
-    onMessage(messaging, (payload) => {
-      console.log('Message received in foreground:', payload);
-      resolve(payload);
-    });
+    try {
+      onMessage(messaging, (payload) => {
+        console.log('Message received in foreground:', payload);
+        resolve(payload);
+      });
+    } catch (error) {
+      console.error('Error setting up message listener:', error);
+      resolve(null);
+    }
   });
 };
 

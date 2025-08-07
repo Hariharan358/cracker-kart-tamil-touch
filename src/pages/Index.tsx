@@ -135,25 +135,44 @@ const Index = () => {
             </div>
             
             {/* Logo */}
-            <div className="flex justify-center mb-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="flex justify-center mb-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <img 
-                src="/logo-h.png" 
+                src="/edited.jpg" 
                 alt="KM Pyrotech Logo" 
-                className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 lg:h-48 lg:w-48 rounded-full shadow-2xl border-1 border-white/30 backdrop-blur-sm"
+                className="h-32 w-32 sm:h-40 sm:w-40 md:h-48 md:w-48 lg:h-56 lg:w-56 rounded-full shadow-2xl border-2 border-yellow-500/50 backdrop-blur-sm object-cover"
               />
             </div>
             
             {/* Company Name */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 md:mb-6 animate-slide-up hero-title hero-title-video" style={{ animationDelay: '0.4s' }}>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 md:mb-6 animate-slide-up hero-title hero-title-video" style={{ animationDelay: '0.4s' }}>
               <span className="title-styled text-white">
                 KM PYROTECH
               </span>
             </h1>
             
+            {/* Minimum Order Amount */}
+            <div className="mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.45s' }}>
+              <div className="inline-flex items-center px-4 py-2 bg-orange-500/90 backdrop-blur-sm rounded-full border border-orange-400/50 shadow-lg">
+                <span className="text-white font-bold text-sm sm:text-base md:text-lg">
+                  💰 Minimum Order: ₹2,500
+                </span>
+              </div>
+            </div>
+            
             {/* Crackers Available 365 Days */}
-            <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white mb-6 md:mb-8 animate-fade-in font-semibold" style={{ animationDelay: '0.5s' }}>
-            Light up your festivals with our crackers
+            <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white mb-4 md:mb-6 animate-fade-in font-semibold" style={{ animationDelay: '0.5s' }}>
+            Light up your festivals with our crackers
             </p>
+            
+            {/* Contact Information */}
+            <div className="mb-6 md:mb-8 animate-fade-in" style={{ animationDelay: '0.55s' }}>
+              <div className="flex justify-center">
+                <div className="flex items-center space-x-2 bg-orange-500/20 backdrop-blur-sm px-3 py-1 rounded-full border border-orange-400/30">
+                  <span className="text-orange-400">📞</span>
+                  <span className="font-bold text-sm sm:text-base text-orange-100">+91  9940891416</span>
+                </div>
+              </div>
+            </div>
             
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center animate-fade-in px-4 sm:mb-10" style={{ animationDelay: '0.6s' }}>
               <Button variant="festive" size="lg" asChild className="transition-transform duration-300 hover:scale-110 text-sm md:text-base">

@@ -30,6 +30,12 @@ export const useFCM = () => {
     // Request permission and get token
     const initializeFCM = async () => {
       try {
+        // Check if we're in a browser environment
+        if (typeof window === 'undefined') {
+          console.warn('Not in browser environment, skipping FCM initialization');
+          return;
+        }
+
         const permission = await requestNotificationPermission();
         if (permission) {
           const fcmToken = await getFCMToken();
@@ -43,35 +49,46 @@ export const useFCM = () => {
         }
       } catch (error) {
         console.error('Error initializing FCM:', error);
+        // Don't throw the error, just log it
       }
     };
 
-    // Only initialize if we're in a browser environment
+    // Only initialize if we're in a browser environment with service worker support
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       initializeFCM();
+    } else {
+      console.warn('Service Worker not supported, skipping FCM initialization');
     }
   }, []);
 
   // Listen for foreground messages
   useEffect(() => {
-    const unsubscribe = onMessageListener().then((payload: any) => {
-      setNotification(payload);
-      
-      // Show toast notification
-      if (payload?.notification) {
-        toast({
-          title: payload.notification.title,
-          description: payload.notification.body,
-          duration: 5000,
-        });
+    const setupMessageListener = async () => {
+      try {
+        // onMessageListener returns a Promise that resolves when a message is received
+        const payload = await onMessageListener() as NotificationPayload | null;
+        if (payload) {
+          setNotification(payload);
+          
+          // Show toast notification
+          if (payload?.notification) {
+            toast({
+              title: payload.notification.title,
+              description: payload.notification.body,
+              duration: 5000,
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error receiving foreground message:', err);
+        // Don't throw the error, just log it
       }
-    }).catch((err) => {
-      console.error('Error receiving foreground message:', err);
-    });
-
-    return () => {
-      // Cleanup if needed
     };
+
+    // Only setup listener if we're in a browser environment
+    if (typeof window !== 'undefined') {
+      setupMessageListener();
+    }
   }, [toast]);
 
   // Send token to backend
@@ -100,16 +117,16 @@ export const useFCM = () => {
       });
 
       if (response.ok) {
-        console.log('FCM token sent to server successfully for user:', userId);
+        console.log('FCM token registered with server');
       } else {
-        console.error('Failed to send FCM token to server');
+        console.warn('Failed to register FCM token with server');
       }
     } catch (error) {
-      console.error('Error sending FCM token to server:', error);
+      console.error('Error sending token to server:', error);
+      // Don't throw the error, just log it
     }
   };
 
-  // Request notification permission manually
   const requestPermission = async () => {
     try {
       const permission = await requestNotificationPermission();

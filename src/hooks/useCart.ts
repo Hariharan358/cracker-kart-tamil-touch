@@ -5,7 +5,7 @@ interface Product {
   name_en: string;
   name_ta: string;
   price: number;
-  image_url: string;
+  imageUrl: string;
   category: string;
 }
 

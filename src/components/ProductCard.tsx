@@ -8,7 +8,7 @@ interface Product {
   name_ta: string;
   price: number;
   original_price?: number;
-  image_url: string;
+  imageUrl: string;
   category: string;
   youtube_url?: string;
 }
@@ -54,7 +54,7 @@ export const ProductCard = ({
         className={`relative ${size === "sm" ? "h-24 sm:h-28" : "h-40 sm:h-48"} bg-muted overflow-hidden`}
       >
         <img
-          src={product.image_url}
+          src={product.imageUrl}
           alt={product.name_en}
           className={`w-full h-full object-cover transition-transform duration-300 ${size === "sm" ? "rounded-md" : ""}`}
           onError={(e) => {

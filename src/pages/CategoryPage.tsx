@@ -80,7 +80,7 @@ const CategoryPage = () => {
                     name_ta: product.name_ta,
                     price: product.price,
                     original_price: product.original_price,
-                    image_url: product.imageUrl,
+                    imageUrl: product.imageUrl,
                     category: product.category,
                     youtube_url: product.youtube_url,
                   }}

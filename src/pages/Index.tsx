@@ -24,7 +24,6 @@ const Index = () => {
   const [sparklerProducts, setSparklerProducts] = useState([]);
   const [loadingSparklers, setLoadingSparklers] = useState(true);
   const [isDesktop, setIsDesktop] = useState(false);
-  const location = useLocation();
   const { resolvedTheme } = useTheme();
 
   // Responsive hook for category display

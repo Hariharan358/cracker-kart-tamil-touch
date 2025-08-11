@@ -376,6 +376,9 @@ app.post('/api/products', upload.single('image'), async (req, res) => {
 
 
 
+
+
+
 // ✅ BULK DISCOUNT: Apply discount to all products in all categories
 app.post('/api/products/apply-discount', async (req, res) => {
   try {
@@ -673,6 +676,40 @@ app.get('/api/products/category/:category', cache('2 minutes'), async (req, res)
   } catch (error) {
     console.error('❌ Error fetching category products:', error);
     res.status(500).json({ error: 'Failed to fetch products by category' });
+  }
+});
+
+// ✅ GET: All Products across all categories (cached)
+app.get('/api/products/all', cache('5 minutes'), async (req, res) => {
+  try {
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    const categoryCollectionNames = collections
+      .map((c) => c.name)
+      .filter((name) => /^[A-Z0-9_]+$/.test(name));
+
+    // Fetch all collections in parallel and attach category field
+    const allProductsArrays = await Promise.all(
+      categoryCollectionNames.map(async (collectionName) => {
+        const Model = mongoose.model(collectionName, productSchema, collectionName);
+        // lean() for faster plain objects; project only needed fields
+        const docs = await Model.find({}, {
+          name_en: 1,
+          name_ta: 1,
+          price: 1,
+          original_price: 1,
+          imageUrl: 1,
+          youtube_url: 1,
+        }).lean();
+        const category = collectionName.replace(/_/g, ' ');
+        return docs.map((doc) => ({ ...doc, category }));
+      })
+    );
+
+    const allProducts = ([]).concat(...allProductsArrays);
+    res.json(allProducts);
+  } catch (error) {
+    console.error('❌ Error fetching all products:', error);
+    res.status(500).json({ error: 'Failed to fetch all products' });
   }
 });
 

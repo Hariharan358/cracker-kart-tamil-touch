@@ -4,7 +4,6 @@ import { ArrowLeft, CheckCircle } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
-import { CreditCard } from "../components/ui/credit-card";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { useCart } from "../hooks/useCart";
@@ -209,12 +208,22 @@ const Checkout = () => {
             <div className="bg-card p-6 rounded-lg border">
               <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
               
-              {/* Credit Card Display */}
-              <div className="mb-6">
-                <CreditCard
-                  orderId={tempOrderId}
-                  customerName={formData.name}
+              {/* Payment QR + Upload Screenshot */}
+              <div className="mb-6 text-center">
+                <h3 className="text-lg font-semibold mb-2">Scan & Pay</h3>
+                <img
+                  src="/2aqrcode.jpg"
+                  alt="Payment QR"
+                  className="w-56 h-56 mx-auto rounded-md border object-contain"
                 />
+                <div className="mt-3">
+                  <Button asChild variant="outline">
+                    <Link to="/payment-upload">Upload Payment Screenshot</Link>
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  After payment, upload the screenshot to verify your order.
+                </p>
               </div>
               
               <div className="space-y-2 mb-4">

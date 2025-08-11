@@ -22,7 +22,11 @@ const orderSchema = new mongoose.Schema({
     address: String,
     pincode: String,
   },
-  status: { type: String, default: "confirmed" },
+  status: { 
+    type: String, 
+    enum: ['confirmed', 'payment_verified', 'booked'], 
+    default: "confirmed" 
+  },
   transportName: { type: String, default: "" },
   lrNumber: { type: String, default: "" },
   // Payment screenshot fields

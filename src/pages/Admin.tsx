@@ -72,6 +72,7 @@ const Admin = () => {
   const orderStatuses = [
     { value: 'all', label: 'All' },
     { value: 'confirmed', label: 'Confirmed' },
+    { value: 'payment_verified', label: 'Payment Verified' },
     { value: 'booked', label: 'Booked' },
   ];
   const paymentFilters = [
@@ -525,7 +526,7 @@ const Admin = () => {
       if (response.ok) {
         toast({ 
           title: "✅ Success", 
-          description: `Payment ${verified ? 'verified' : 'rejected'} successfully` 
+          description: `Payment ${verified ? 'verified' : 'rejected'} successfully. Order status updated to ${verified ? 'payment_verified' : 'confirmed'}.` 
         });
         // Refresh orders to show updated status
         fetchOrders();

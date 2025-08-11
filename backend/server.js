@@ -172,7 +172,9 @@ app.patch('/api/orders/verify-payment/:orderId', async (req, res) => {
     const updateFields = {
       'paymentScreenshot.verified': verified,
       'paymentScreenshot.verifiedBy': verifiedBy || 'admin',
-      'paymentScreenshot.verifiedAt': new Date()
+      'paymentScreenshot.verifiedAt': new Date(),
+      // Update order status to 'payment_verified' when payment is verified
+      status: verified ? 'payment_verified' : 'confirmed'
     };
 
     const order = await Order.findOneAndUpdate(
@@ -489,12 +491,13 @@ app.post('/api/orders/place', async (req, res) => {
       }
     } while (await Order.findOne({ orderId }));
 
+    // Always start with 'confirmed' status when order is placed
     const newOrder = new Order({
       orderId,
       items,
       total,
       customerDetails,
-      status: status || 'confirmed',
+      status: 'confirmed', // Always start with confirmed
       createdAt: createdAt || new Date().toISOString(),
     });
     await newOrder.save();
@@ -602,13 +605,32 @@ app.patch('/api/orders/update-status/:orderId', async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status, transportName, lrNumber } = req.body;
-    // If transportName and lrNumber are provided, set status to 'booked'
+    // Handle status updates with proper flow validation
     let updateFields = {};
     if (transportName || lrNumber) {
       updateFields.transportName = transportName || '';
       updateFields.lrNumber = lrNumber || '';
       updateFields.status = 'booked';
     } else if (status) {
+      // Validate status transitions
+      const currentOrder = await Order.findOne({ orderId });
+      if (!currentOrder) {
+        return res.status(404).json({ error: "Order not found." });
+      }
+      
+      const currentStatus = currentOrder.status;
+      const validTransitions = {
+        'confirmed': ['payment_verified', 'booked'],
+        'payment_verified': ['booked'],
+        'booked': ['booked'] // Can stay booked
+      };
+      
+      if (!validTransitions[currentStatus] || !validTransitions[currentStatus].includes(status)) {
+        return res.status(400).json({ 
+          error: `Invalid status transition from '${currentStatus}' to '${status}'. Valid transitions: ${validTransitions[currentStatus].join(', ')}` 
+        });
+      }
+      
       updateFields.status = status;
     } else {
       return res.status(400).json({ error: "Status or transport details required." });
@@ -633,6 +655,9 @@ app.patch('/api/orders/update-status/:orderId', async (req, res) => {
         if (updateFields.status === 'confirmed') {
           notificationTitle = '✅ Order Confirmed!';
           notificationBody = `Your order ${orderId} has been confirmed and is being processed.`;
+        } else if (updateFields.status === 'payment_verified') {
+          notificationTitle = '✅ Payment Verified!';
+          notificationBody = `Your payment for order ${orderId} has been verified successfully.`;
         } else if (updateFields.status === 'booked') {
           notificationTitle = '🚚 Order Booked for Delivery!';
           notificationBody = `Your order ${orderId} has been booked for delivery. Transport: ${updateFields.transportName}`;

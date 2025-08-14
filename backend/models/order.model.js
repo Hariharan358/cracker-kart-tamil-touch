@@ -25,7 +25,11 @@ const orderSchema = new mongoose.Schema({
   status: { 
     type: String, 
     enum: ['confirmed', 'payment_verified', 'booked'], 
-    default: "confirmed" 
+    default: "confirmed",
+    // Status Flow: confirmed → payment_verified → booked
+    // - confirmed: Order placed, waiting for payment verification
+    // - payment_verified: Payment screenshot verified by admin
+    // - booked: Order booked for delivery with transport details
   },
   transportName: { type: String, default: "" },
   lrNumber: { type: String, default: "" },

@@ -56,7 +56,7 @@ const Index = () => {
     const fetchProducts = async () => {
       try {
         // Example: fetch from 'ATOM BOMB' category, or change as needed
-        const res = await fetch("https://km-crackers.onrender.com/api/products/category/ATOM%20BOMB");
+        const res = await fetch("https://crackerbackend-production.up.railway.app/api/products/category/ATOM%20BOMB");
         const data = await res.json();
         setProducts(data.slice(0, 8)); // Show 8 featured products
       } catch (err) {
@@ -71,7 +71,7 @@ const Index = () => {
   useEffect(() => {
     const fetchSparklers = async () => {
       try {
-        const res = await fetch("https://km-crackers.onrender.com/api/products/category/SPARKLER%20ITEMS");
+        const res = await fetch("https://crackerbackend-production.up.railway.app/api/products/category/SPARKLER%20ITEMS");
         const data = await res.json();
         setSparklerProducts(data.slice(0, 8)); // Show 8 sparkler products
       } catch (err) {

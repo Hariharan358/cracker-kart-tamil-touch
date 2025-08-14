@@ -601,6 +601,10 @@ app.get('/api/analytics', cache('2 minutes'), async (req, res) => {
 });
 
 // ✅ PATCH: Update Order Status and Transport Details
+// Order Status Flow: confirmed → payment_verified → booked
+// - confirmed: Order placed, waiting for payment verification
+// - payment_verified: Payment screenshot verified by admin  
+// - booked: Order booked for delivery with transport details
 app.patch('/api/orders/update-status/:orderId', async (req, res) => {
   try {
     const { orderId } = req.params;

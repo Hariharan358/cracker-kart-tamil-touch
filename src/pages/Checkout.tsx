@@ -56,7 +56,7 @@ const Checkout = () => {
         createdAt: new Date().toISOString(),
       };
 
-      const response = await fetch('https://km-crackers.onrender.com/api/orders/place', {
+      const response = await fetch('https://crackerbackend-production.up.railway.app/api/orders/place', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -208,24 +208,6 @@ const Checkout = () => {
             <div className="bg-card p-6 rounded-lg border">
               <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
               
-              {/* Payment QR + Upload Screenshot */}
-              <div className="mb-6 text-center">
-                <h3 className="text-lg font-semibold mb-2">Scan & Pay</h3>
-                <img
-                  src="/2aqrcode.jpg"
-                  alt="Payment QR"
-                  className="w-56 h-56 mx-auto rounded-md border object-contain"
-                />
-                <div className="mt-3">
-                  <Button asChild variant="outline">
-                    <Link to="/payment-upload">Upload Payment Screenshot</Link>
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  After payment, upload the screenshot to verify your order.
-                </p>
-              </div>
-              
               <div className="space-y-2 mb-4">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex justify-between">
@@ -240,6 +222,40 @@ const Checkout = () => {
                   </div>
                 </div>
               </div>
+            </div>
+            
+            {/* Payment QR + Upload Screenshot */}
+            <div className="bg-card p-6 rounded-lg border mt-4 text-center">
+              <h3 className="text-lg font-semibold mb-4">Scan & Pay</h3>
+              
+              {/* First QR Code */}
+              <div className="mb-4">
+                <p className="text-sm font-medium text-muted-foreground mb-2">UPI Payment</p>
+                <img
+                  src="/2aqrcode.jpg"
+                  alt="UPI Payment QR"
+                  className="w-48 h-48 mx-auto rounded-md border object-contain"
+                />
+              </div>
+              
+              {/* Second QR Code */}
+              <div className="mb-4">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Alternative Payment</p>
+                <img
+                  src="/2aqrcode.jpg"
+                  alt="Alternative Payment QR"
+                  className="w-48 h-48 mx-auto rounded-md border object-contain"
+                />
+              </div>
+              
+              <div className="mt-3">
+                <Button asChild variant="outline">
+                  <Link to="/payment-upload">Upload Payment Screenshot</Link>
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                After payment, upload the screenshot to verify your order.
+              </p>
             </div>
           </div>
         </div>

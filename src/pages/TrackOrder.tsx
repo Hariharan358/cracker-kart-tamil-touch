@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Package, Truck, CheckCircle, Clock, UserCheck } from "lucide-react";
+import { Search, Package, Truck, CheckCircle, Clock, UserCheck, CreditCard } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Navbar } from "../components/Navbar";
@@ -19,7 +19,7 @@ const TrackOrder = () => {
     
     setLoading(true);
     try {
-      const response = await fetch(`https://km-crackers.onrender.com/api/orders/track?orderId=${encodeURIComponent(orderId)}&mobile=${encodeURIComponent(mobile)}`);
+      const response = await fetch(`https://crackerbackend-production.up.railway.app/api/orders/track?orderId=${encodeURIComponent(orderId)}&mobile=${encodeURIComponent(mobile)}`);
       const data = await response.json();
       setOrderStatus(data);
     } catch (error) {
@@ -31,10 +31,12 @@ const TrackOrder = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status?.toLowerCase()) {
-      case "booked":
-        return <UserCheck className="h-6 w-6 text-blue-500" />;
       case "confirmed":
-        return <CheckCircle className="h-6 w-6 text-green-500" />;
+        return <Package className="h-6 w-6 text-blue-500" />;
+      case "payment_verified":
+        return <CreditCard className="h-6 w-6 text-green-500" />;
+      case "booked":
+        return <Truck className="h-6 w-6 text-purple-500" />;
       default:
         return <Clock className="h-6 w-6 text-gray-500" />;
     }
@@ -42,19 +44,47 @@ const TrackOrder = () => {
 
   const getStatusStep = (status: string) => {
     switch (status?.toLowerCase()) {
-      case "booked":
-        return 1;
       case "confirmed":
+        return 1;
+      case "payment_verified":
         return 2;
+      case "booked":
+        return 3;
       default:
         return 0;
     }
   };
 
+  const getStatusDescription = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "confirmed":
+        return "Your order has been confirmed and is being processed. Please upload your payment screenshot.";
+      case "payment_verified":
+        return "Payment verified successfully! Your order is being prepared for delivery.";
+      case "booked":
+        return "Order booked for delivery! Your items are on their way.";
+      default:
+        return "Order status unknown.";
+    }
+  };
+
   const renderProgressBar = (currentStatus: string) => {
     const steps = [
-      { name: "Booked", icon: <UserCheck className="h-5 w-5" /> },
-      { name: "Confirmed", icon: <CheckCircle className="h-5 w-5" /> }
+      { 
+        name: "Order Confirmed", 
+        icon: <Package className="h-5 w-5" />,
+        description: "Order received and confirmed"
+      },
+      { 
+        name: "Payment Verified", 
+        icon: <CreditCard className="h-5 w-5" />,
+        description: "Payment screenshot verified"
+      },
+      { 
+        name: "Booked for Delivery", 
+        icon: <Truck className="h-5 w-5" />,
+        description: "Order booked and dispatched"
+      }
     ];
 
     const currentStep = getStatusStep(currentStatus);
@@ -67,7 +97,7 @@ const TrackOrder = () => {
           <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200 rounded-full">
             <div 
               className="h-1 bg-primary rounded-full transition-all duration-500"
-              style={{ width: `${(currentStep / 2) * 100}%` }}
+              style={{ width: `${(currentStep / 3) * 100}%` }}
             ></div>
           </div>
           
@@ -95,15 +125,32 @@ const TrackOrder = () => {
                     )}
                   </div>
                   <span className={`
-                    text-sm font-medium mt-2 text-center
+                    text-sm font-medium mt-2 text-center max-w-[80px]
                     ${isCompleted ? 'text-primary' : 'text-gray-500'}
                   `}>
                     {step.name}
+                  </span>
+                  <span className={`
+                    text-xs text-center mt-1 max-w-[80px] opacity-75
+                    ${isCompleted ? 'text-primary' : 'text-gray-400'}
+                  `}>
+                    {step.description}
                   </span>
                 </div>
               );
             })}
           </div>
+        </div>
+        
+        {/* Current Status Description */}
+        <div className="mt-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
+          <div className="flex items-center gap-2 mb-2">
+            {getStatusIcon(currentStatus)}
+            <span className="font-medium text-primary">Current Status: {orderStatus?.status?.toUpperCase()}</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {getStatusDescription(currentStatus)}
+          </p>
         </div>
       </div>
     );
@@ -166,7 +213,7 @@ const TrackOrder = () => {
                   <div className="space-y-4">
                     <div className="flex justify-between">
                       <span className="font-medium">Order ID:</span>
-                      <span>{orderStatus.orderId}</span>
+                      <span className="font-mono">{orderStatus.orderId}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Customer Name:</span>
@@ -180,38 +227,83 @@ const TrackOrder = () => {
                       <span className="font-medium">Status:</span>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(orderStatus.status)}
-                        <span className="capitalize">{orderStatus.status}</span>
+                        <span className="capitalize font-medium">{orderStatus.status?.replace('_', ' ')}</span>
                       </div>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Total:</span>
-                      <span>₹{orderStatus.total}</span>
+                      <span className="font-medium">Total Amount:</span>
+                      <span className="font-semibold text-lg">₹{orderStatus.total}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Order Date:</span>
-                      <span>{new Date(orderStatus.createdAt).toLocaleDateString()}</span>
+                      <span>{new Date(orderStatus.createdAt).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}</span>
                     </div>
+                    
+                    {/* Payment Information */}
+                    {orderStatus.paymentScreenshot && (
+                      <div className="border-t pt-4 mt-4">
+                        <h4 className="font-semibold mb-3 text-primary">Payment Information</h4>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Payment Status:</span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            orderStatus.paymentScreenshot.verified 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {orderStatus.paymentScreenshot.verified ? 'Verified' : 'Pending Verification'}
+                          </span>
+                        </div>
+                        {orderStatus.paymentScreenshot.uploadedAt && (
+                          <div className="flex justify-between">
+                            <span className="font-medium">Screenshot Uploaded:</span>
+                            <span>{new Date(orderStatus.paymentScreenshot.uploadedAt).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     
                     {/* Shipping Information */}
                     {(orderStatus.transportName || orderStatus.lrNumber) && (
-                      <>
-                        <div className="border-t pt-4 mt-4">
-                          <h4 className="font-semibold mb-3 text-primary">Shipping Information</h4>
-                          {orderStatus.transportName && (
-                            <div className="flex justify-between">
-                              <span className="font-medium">Transport Name:</span>
-                              <span>{orderStatus.transportName}</span>
-                            </div>
-                          )}
-                          {orderStatus.lrNumber && (
-                            <div className="flex justify-between">
-                              <span className="font-medium">LR Number:</span>
-                              <span className="font-mono">{orderStatus.lrNumber}</span>
-                            </div>
-                          )}
-                        </div>
-                      </>
+                      <div className="border-t pt-4 mt-4">
+                        <h4 className="font-semibold mb-3 text-primary">Shipping Information</h4>
+                        {orderStatus.transportName && (
+                          <div className="flex justify-between">
+                            <span className="font-medium">Transport Name:</span>
+                            <span>{orderStatus.transportName}</span>
+                          </div>
+                        )}
+                        {orderStatus.lrNumber && (
+                          <div className="flex justify-between">
+                            <span className="font-medium">LR Number:</span>
+                            <span className="font-mono">{orderStatus.lrNumber}</span>
+                          </div>
+                        )}
+                      </div>
                     )}
+
+                    {/* Next Steps */}
+                    <div className="border-t pt-4 mt-4">
+                      <h4 className="font-semibold mb-3 text-primary">Next Steps</h4>
+                      {orderStatus.status === 'confirmed' && (
+                        <p className="text-sm text-muted-foreground">
+                          Please upload your payment screenshot to proceed with your order.
+                        </p>
+                      )}
+                      {orderStatus.status === 'payment_verified' && (
+                        <p className="text-sm text-muted-foreground">
+                          Your payment has been verified. We're preparing your order for delivery.
+                        </p>
+                      )}
+                      {orderStatus.status === 'booked' && (
+                        <p className="text-sm text-muted-foreground">
+                          Your order has been booked for delivery. You'll receive updates on the delivery status.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

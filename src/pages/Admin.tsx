@@ -296,7 +296,7 @@ const Admin = () => {
 
     setIsAddingProduct(true);
     try {
-      const res = await fetch("https://crackerbackend-production.up.railway.app/api/products", {
+  const res = await fetch("https://api.kmpyrotech.com/api/products", {
         method: "POST",
         body: formData,
       });
@@ -466,7 +466,7 @@ const Admin = () => {
     }
     setIsApplyingDiscount(true);
     try {
-      const res = await fetch("https://crackerbackend-production.up.railway.app/api/products/apply-discount", {
+  const res = await fetch("https://api.kmpyrotech.com/api/products/apply-discount", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ discount: Number(discount) }),
@@ -495,7 +495,7 @@ const Admin = () => {
     }
     setIsSendingNotification(true);
     try {
-      const res = await fetch("https://crackerbackend-production.up.railway.app/api/notifications/send-to-all", {
+  const res = await fetch("https://api.kmpyrotech.com/api/notifications/send-to-all", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(notificationForm),

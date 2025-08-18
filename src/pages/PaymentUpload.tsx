@@ -89,7 +89,7 @@ const PaymentUpload = () => {
       formDataToSend.append('mobile', formData.mobile);
       formDataToSend.append('screenshot', formData.screenshot);
 
-      const response = await fetch('https://crackerbackend-production.up.railway.app/api/orders/upload-payment', {
+  const response = await fetch('https://api.kmpyrotech.com/api/orders/upload-payment', {
         method: 'POST',
         body: formDataToSend,
       });

@@ -56,7 +56,7 @@ const Checkout = () => {
         createdAt: new Date().toISOString(),
       };
 
-      const response = await fetch('https://crackerbackend-production.up.railway.app/api/orders/place', {
+  const response = await fetch('https://api.kmpyrotech.com/api/orders/place', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 5173, // different from backend to avoid conflicts
     proxy: {
       "/api": {
-        target: "https://crackerbackend-production.up.railway.app",
+        target: "https://api.kmpyrotech.com",
         changeOrigin: true,
         secure: true,
       },

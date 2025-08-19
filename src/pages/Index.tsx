@@ -100,13 +100,14 @@ const Index = () => {
         {/* Video Background for Both Themes */}
         <div className="absolute inset-0 z-0 w-full h-full overflow-hidden pointer-events-none">
           <video
-            className="w-full h-full object-cover object-center"
-            src="/dark_bg.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
+           className="w-full h-full object-cover object-center"
+           src="/dark_bg.mp4"
+           autoPlay
+           muted
+           loop
+           playsInline
+           preload="auto"
+           poster="/Screenshot 2025-08-19 185033.png"  // 👈 fallback image
           />
           {/* Theme-specific overlays */}
           {resolvedTheme === 'dark' ? (

@@ -132,23 +132,23 @@ const Index = () => {
               <Zap className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-accent animate-bounce-gentle" />
               <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-primary animate-sparkle" />
             </div>
-            
             {/* Logo */}
-            <div className="flex justify-center items-center -mt-7  -mb-16 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="flex flex-col items-center justify-center -mt-7 mb-[-8px] animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <img 
                 src="/center-logo.png" 
                 alt="KM Pyrotech Logo" 
-                className="h-40 w-40 sm:h-56 sm:w-56 md:h-64 md:w-64 lg:h-72 lg:w-72 xl:h-80 xl:w-80  object-cover shadow-2xl"
+                className="h-40 w-40 sm:h-56 sm:w-56 md:h-64 md:w-64 lg:h-72 lg:w-72 xl:h-80 xl:w-80 object-cover shadow-2xl"
                 style={{ maxWidth: '90vw' }}
               />
             </div>
-            
-            {/* Company Name */}
-            <h1 className="text-4xl sm:text-5xl -mb-7 md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 md:mb-6 animate-slide-up hero-title hero-title-video" style={{ animationDelay: '0.4s' }}>
-              <span className="title-styled text-white">
-                KM PYROTECH
-              </span>
-            </h1>
+            {/* Company Name - moved further down */}
+            <div className="flex flex-col items-center justify-center mt-[-8px] mb-0 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold hero-title hero-title-video">
+                <span className="title-styled text-white">
+                  KM PYROTECH
+                </span>
+              </h1>
+            </div>
             
             {/* Minimum Order Amount */}
             <div className="mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.45s' }}>

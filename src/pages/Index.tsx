@@ -100,14 +100,13 @@ const Index = () => {
         {/* Video Background for Both Themes */}
         <div className="absolute inset-0 z-0 w-full h-full overflow-hidden pointer-events-none">
           <video
-           className="w-full h-full object-cover object-center"
-           src="/dark_bg.mp4"
-           autoPlay
-           muted
-           loop
-           playsInline
-           preload="auto"
-           poster="/Screenshot 2025-08-19 185033.png"  // 👈 fallback image
+            className="w-full h-full object-cover object-center"
+            src="/dark_bg.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
           />
           {/* Theme-specific overlays */}
           {resolvedTheme === 'dark' ? (
@@ -135,16 +134,17 @@ const Index = () => {
             </div>
             
             {/* Logo */}
-            <div className="flex justify-center mb-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="flex justify-center items-center -mt-7  -mb-16 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <img 
-                src="/edited.jpg" 
+                src="/center-logo.png" 
                 alt="KM Pyrotech Logo" 
-                className="h-32 w-32 sm:h-40 sm:w-40 md:h-48 md:w-48 lg:h-56 lg:w-56 rounded-full shadow-2xl border-2 border-yellow-500/50 backdrop-blur-sm object-cover"
+                className="h-40 w-40 sm:h-56 sm:w-56 md:h-64 md:w-64 lg:h-72 lg:w-72 xl:h-80 xl:w-80  object-cover shadow-2xl"
+                style={{ maxWidth: '90vw' }}
               />
             </div>
             
             {/* Company Name */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 md:mb-6 animate-slide-up hero-title hero-title-video" style={{ animationDelay: '0.4s' }}>
+            <h1 className="text-4xl sm:text-5xl -mb-7 md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 md:mb-6 animate-slide-up hero-title hero-title-video" style={{ animationDelay: '0.4s' }}>
               <span className="title-styled text-white">
                 KM PYROTECH
               </span>

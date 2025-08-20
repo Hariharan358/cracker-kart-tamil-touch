@@ -17,7 +17,7 @@ const AdminLogin = () => {
     e.preventDefault();
 
     try {
-          const res = await fetch(`https://crackerbackend-production.up.railway.app/api/admin/login`, {  
+          const res = await fetch(`https://api.kmpyrotech.com/api/admin/login`, {  
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),

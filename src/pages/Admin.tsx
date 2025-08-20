@@ -138,7 +138,7 @@ const Admin = () => {
       return;
     }
     try {
-      const res = await fetch(`https://crackerbackend-production.up.railway.app/api/orders/update-status/${orderId}`, {
+      const res = await fetch(`https://api.kmpyrotech.com/api/orders/update-status/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transportName, lrNumber }),
@@ -162,7 +162,7 @@ const Admin = () => {
       if (searchDate.trim()) queryParams.append("date", searchDate);
       if (searchOrderId.trim()) queryParams.append("orderId", searchOrderId);
 
-      const res = await fetch(`https://crackerbackend-production.up.railway.app/api/orders?${queryParams.toString()}`);
+      const res = await fetch(`https://api.kmpyrotech.com/api/orders?${queryParams.toString()}`);
       const data = await res.json();
 
       if (res.ok) {
@@ -185,7 +185,7 @@ const Admin = () => {
 
   const fetchAnalytics = async (date = "") => {
     try {
-      let url = "https://crackerbackend-production.up.railway.app/api/analytics";
+      let url = "https://api.kmpyrotech.com/api/analytics";
       if (date) url += `?date=${date}`;
       const res = await fetch(url);
       const data = await res.json();
@@ -203,7 +203,7 @@ const Admin = () => {
   const fetchCategoryProducts = async (category) => {
     setLoadingCategoryProducts(true);
     try {
-      const res = await fetch(`https://crackerbackend-production.up.railway.app/api/products/category/${encodeURIComponent(category)}`);
+  const res = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(category)}`);
       const data = await res.json();
       setCategoryProducts(data);
     } catch (err) {
@@ -219,7 +219,7 @@ const Admin = () => {
       const counts = {};
       for (const category of categories) {
         try {
-          const res = await fetch(`https://crackerbackend-production.up.railway.app/api/products/category/${encodeURIComponent(category)}`);
+          const res = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(category)}`);
           const data = await res.json();
           counts[category] = data.length;
         } catch (err) {
@@ -237,7 +237,7 @@ const Admin = () => {
   const handleDeleteProduct = async (productId) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
-      const res = await fetch(`https://crackerbackend-production.up.railway.app/api/products/${productId}`, {
+      const res = await fetch(`https://api.kmpyrotech.com/api/products/${productId}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -324,7 +324,7 @@ const Admin = () => {
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      const res = await fetch(`https://crackerbackend-production.up.railway.app/api/orders/update-status/${orderId}`, {
+      const res = await fetch(`https:/api.kmpytoyech/api/orders/update-status/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),

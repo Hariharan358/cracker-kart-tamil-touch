@@ -29,7 +29,7 @@ const CategoryPage = () => {
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
-        const res = await axios.get(`https://crackerbackend-production.up.railway.app/api/products/category/${encodeURIComponent(category!)}`);
+  const res = await axios.get(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(category!)}`);
         setProducts(res.data);
       } catch (err) {
         console.error("❌ Error fetching products:", err);

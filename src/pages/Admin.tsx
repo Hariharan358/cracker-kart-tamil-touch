@@ -324,7 +324,7 @@ const Admin = () => {
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      const res = await fetch(`https:/api.kmpytoyech/api/orders/update-status/${orderId}`, {
+      const res = await fetch(`https://api.kmpyrotech.com/api/orders/update-status/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),

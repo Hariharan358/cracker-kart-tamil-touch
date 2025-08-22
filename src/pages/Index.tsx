@@ -91,7 +91,7 @@ const Index = () => {
       <div className="relative w-full overflow-hidden bg-primary py-2">
         <div className="marquee whitespace-nowrap text-white font-bold text-sm sm:text-lg tracking-wide">
           <span className="mx-4 sm:mx-8">🔥 Festival Offer: 10% OFF on all products! 🔥</span>
-          <span className="mx-4 sm:mx-8">🔥 Festival Offer: 10% OFF on all products! 🔥</span>
+          <span className="mx-4 sm:mx-8">🔥 DELIVERY AVAILABLE ALL OVER TAMILNADU! 🔥</span>
         </div>
       </div>
 
@@ -143,20 +143,11 @@ const Index = () => {
             </div>
             {/* Company Name - moved further down */}
             <div className="flex flex-col items-center justify-center mt-[-8px] mb-0 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold hero-title hero-title-video">
+              <h1 className="text-6xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold hero-title hero-title-video">
                 <span className="title-styled text-white">
                   KM PYROTECH
                 </span>
               </h1>
-            </div>
-            
-            {/* Minimum Order Amount */}
-            <div className="mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.45s' }}>
-              <div className="inline-flex items-center px-4 py-2 bg-orange-500/90 backdrop-blur-sm rounded-full border border-orange-400/50 shadow-lg">
-                <span className="text-white font-bold text-sm sm:text-base md:text-lg">
-                  💰 Minimum Order: ₹2,500
-                </span>
-              </div>
             </div>
             
             {/* Crackers Available 365 Days */}
@@ -165,7 +156,7 @@ const Index = () => {
             </p>
             
             {/* Contact Information */}
-            <div className="mb-6 md:mb-8 animate-fade-in" style={{ animationDelay: '0.55s' }}>
+            <div className="mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '0.55s' }}>
               <div className="flex justify-center">
                 <div className="flex items-center space-x-2 bg-orange-500/20 backdrop-blur-sm px-3 py-1 rounded-full border border-orange-400/30">
                   <span className="text-orange-400">📞</span>
@@ -174,7 +165,16 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center animate-fade-in px-4 sm:mb-10" style={{ animationDelay: '0.6s' }}>
+            {/* Minimum Order Amount - moved below mobile number */}
+            <div className="mb-6 md:mb-8 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+              <div className="inline-flex items-center px-4 py-2 bg-orange-500/90 backdrop-blur-sm rounded-full border border-orange-400/50 shadow-lg">
+                <span className="text-white font-bold text-sm sm:text-base md:text-lg">
+                  💰 Minimum Order: ₹2,500
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center animate-fade-in px-4 sm:mb-10" style={{ animationDelay: '0.7s' }}>
               <Button variant="festive" size="lg" asChild className="transition-transform duration-300 hover:scale-110 text-sm md:text-base">
                 <Link to="/categories">
                   <Gift className="mr-2 h-4 w-4 md:h-5 md:w-5" />

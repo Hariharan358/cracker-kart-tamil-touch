@@ -27,18 +27,65 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(helmet());
-app.use(compression());
+
+// Configure Helmet with CORS-friendly settings
 app.set("trust proxy", 1);
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+
+// 1️⃣ Helmet with CORS-friendly settings
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginEmbedderPolicy: false
+}));
+
+// 2️⃣ Compression
+app.use(compression());
+
+// 3️⃣ Allowed origins
+const allowedOrigins = [
+  "https://www.kmpyrotech.com",
+  "https://kmpyrotech.com",
+   "https://kmcrackers.vercel.app",
+  "http://localhost:5000",
+  "https://api.kmpyrotech.com",
+  "http://localhost:5173"
+];
+
+// 4️⃣ CORS setup with logging
+app.use(cors({
+  origin: (origin, callback) => {
+    console.log(`🌐 CORS Request from: ${origin || "Unknown"}`);
+    if (!origin || allowedOrigins.includes(origin)) {
+      console.log(`✅ Origin allowed: ${origin}`);
+      callback(null, true);
+    } else {
+      console.log(`❌ Origin blocked: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+}));
+
+// Preflight requests
+app.options("*", cors());
+
+// 5️⃣ Rate limiting
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
-});
-app.use(limiter);
-app.use(cors());
+}));
+
+// 6️⃣ JSON body parsing
 app.use(express.json());
+
+// 7️⃣ Health check (Railway ping)
+app.get("/", (req, res) => {
+  res.json({ status: "Backend is running ✅" });
+});
+
 const cache = apicache.middleware;
 
 mongoose.connect(process.env.MONGODB_URI)
@@ -88,6 +135,13 @@ const productSchema = new mongoose.Schema({
   youtube_url: String, // Add this field
   category: String,    // Add this field for completeness
 }, { timestamps: true });
+
+// Atomic per-day counter for order IDs
+const orderCounterSchema = new mongoose.Schema({
+  _id: String,   // DDMMYY
+  seq: { type: Number, default: 0 }
+});
+const OrderCounter = mongoose.models.OrderCounter || mongoose.model('OrderCounter', orderCounterSchema, 'order_counters');
 
 function getProductModelByCategory(category) {
   const modelName = category.replace(/\s+/g, '_').toUpperCase();
@@ -451,48 +505,52 @@ app.post('/api/orders/place', async (req, res) => {
       return res.status(400).json({ error: 'Missing required order fields.' });
     }
 
-    // Generate unique order ID on the backend
-    const generateOrderId = async () => {
+    // Generate unique order ID using atomic per-day counter (DDMMYY + 3 digits)
+    const getNextOrderIdForToday = async () => {
       const today = new Date();
-      const dateStr = today.getDate().toString().padStart(2, '0') + 
-                     (today.getMonth() + 1).toString().padStart(2, '0') + 
+      const dateStr = today.getDate().toString().padStart(2, '0') +
+                     (today.getMonth() + 1).toString().padStart(2, '0') +
                      today.getFullYear().toString().slice(-2);
       
-      // Get the latest order for today to determine the next sequential number
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      console.log('🔢 Generating order ID for date:', dateStr);
+      // Use OrderCounter model to guarantee increment returns across driver versions
+      const counter = await OrderCounter.findOneAndUpdate(
+        { _id: dateStr },
+        { $inc: { seq: 1 } },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      const seq = counter?.seq || 1;
+      const suffix = String(seq).padStart(3, '0');
+      const orderId = `${dateStr}${suffix}`;
       
-      const latestOrder = await Order.findOne({
-        createdAt: { $gte: startOfDay, $lte: endOfDay }
-      }).sort({ orderId: -1 });
-      
-      let nextNumber = 1;
-      if (latestOrder && latestOrder.orderId) {
-        // Extract the number from the latest order ID (last 2 digits)
-        const match = latestOrder.orderId.match(/^(\d{8})(\d{2})$/);
-        if (match && match[1] === dateStr) {
-          nextNumber = parseInt(match[2]) + 1;
-        }
-      }
-      
-      // Format as DDMMYYYYNN (date + 2-digit sequential number)
-      return `${dateStr}${nextNumber.toString().padStart(2, '0')}`;
+      console.log('🔢 Generated order ID:', orderId);
+      return orderId;
     };
 
+    // Generate a unique order ID with minimal retries (in case of rare collision)
     let orderId;
-    let attempts = 0;
-    const maxAttempts = 10;
-    
-    // Try to generate a unique order ID
-    do {
-      orderId = await generateOrderId();
-      attempts++;
-      if (attempts > maxAttempts) {
-        return res.status(500).json({ error: 'Failed to generate unique order ID' });
+    {
+      let attempts = 0;
+      const maxAttempts = 5;
+      while (true) {
+        orderId = await getNextOrderIdForToday();
+        console.log('🔍 Checking if order ID exists:', orderId);
+        const exists = await Order.findOne({ orderId });
+        if (!exists) {
+          console.log('✅ Order ID is unique:', orderId);
+          break;
+        }
+        console.log('⚠️ Order ID collision detected, retrying...');
+        attempts++;
+        if (attempts >= maxAttempts) {
+          console.error('❌ Failed to generate unique order ID after', maxAttempts, 'attempts');
+          return res.status(500).json({ error: 'Failed to generate unique order ID' });
+        }
       }
-    } while (await Order.findOne({ orderId }));
+    }
 
     // Always start with 'confirmed' status when order is placed
+    console.log('📝 Creating new order with ID:', orderId);
     const newOrder = new Order({
       orderId,
       items,
@@ -501,7 +559,10 @@ app.post('/api/orders/place', async (req, res) => {
       status: 'confirmed', // Always start with confirmed
       createdAt: createdAt || new Date().toISOString(),
     });
+    
+    console.log('📝 Order object created, saving to database...');
     await newOrder.save();
+    console.log('✅ Order saved successfully');
     
     // Generate invoice path
     const invoicePath = path.join(invoiceDir, `${orderId}.pdf`);
@@ -557,7 +618,11 @@ app.post('/api/orders/place', async (req, res) => {
     res.status(201).json({ message: '✅ Order placed successfully', orderId });
   } catch (error) {
     console.error('❌ Order placement error:', error);
-    res.status(500).json({ error: 'Failed to place order' });
+    res.status(500).json({ 
+      error: 'Failed to place order', 
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
@@ -939,6 +1004,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('❌ Server error:', err);
+  
+  // Handle CORS errors specifically
+  if (err.message && err.message.includes('CORS')) {
+    console.error('🌐 CORS Error Details:', {
+      origin: req.headers.origin,
+      method: req.method,
+      path: req.path,
+      userAgent: req.headers['user-agent']
+    });
+  }
+  
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
+});
+
 // ✅ GET: Performance metrics
 app.get('/api/performance', (req, res) => {
   res.json({
@@ -954,10 +1039,41 @@ app.get('/api/performance', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
+// ✅ Health check endpoint for Railway
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    cors: 'enabled',
+    allowedOrigins: [
+      'https://www.kmpyrotech.com',
+      'https://kmpyrotech.com',
+      'http://localhost:3000',
+      'http://localhost:5173'
+    ]
+  });
 });
+
+// ✅ Test CORS endpoint
+app.get('/api/test-cors', (req, res) => {
+  console.log('🧪 Test CORS endpoint called');
+  console.log('📋 Request headers:', req.headers);
+  res.json({
+    message: 'CORS test successful',
+    timestamp: new Date().toISOString(),
+    origin: req.headers.origin,
+    method: req.method
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`🌐 CORS enabled for origins: https://www.kmpyrotech.com, https://kmpyrotech.com`);
+  console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📊 Railway deployment: ${process.env.RAILWAY_ENVIRONMENT ? 'Yes' : 'No'}`);
+});
+
 
 // Performance optimization: Add database indexes for faster queries
 const setupDatabaseIndexes = async () => {

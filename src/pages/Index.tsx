@@ -133,7 +133,7 @@ const Index = () => {
               <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-primary animate-sparkle" />
             </div>
             {/* Logo */}
-            <div className="flex flex-col items-center justify-center -mt-7 mb-[-8px] animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="flex flex-col items-center justify-center sm:mt-[-80px] mb-[-8px] animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <img 
                 src="/center-logo.png" 
                 alt="KM Pyrotech Logo" 
@@ -142,11 +142,9 @@ const Index = () => {
               />
             </div>
             {/* Company Name - moved further down */}
-            <div className="flex flex-col items-center justify-center mt-[-8px] mb-0 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-              <h1 className="text-6xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold hero-title hero-title-video">
-                <span className="title-styled text-white">
-                  KM PYROTECH
-                </span>
+            <div className="flex flex-col items-center justify-center sm:mt-[-50px] mb-0 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <h1 className="alter-text font-bold hero-title text-white hero-title-video">
+                 KM PYROTECH
               </h1>
             </div>
             
@@ -174,7 +172,7 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center animate-fade-in px-4 sm:mb-10" style={{ animationDelay: '0.7s' }}>
+            <div className="flex flex-col sm:flex-row gap-3 mb-10 md:gap-4 justify-center animate-fade-in px-4 sm:mb-10" style={{ animationDelay: '0.7s' }}>
               <Button variant="festive" size="lg" asChild className="transition-transform duration-300 hover:scale-110 text-sm md:text-base">
                 <Link to="/categories">
                   <Gift className="mr-2 h-4 w-4 md:h-5 md:w-5" />

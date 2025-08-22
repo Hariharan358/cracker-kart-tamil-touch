@@ -79,10 +79,10 @@ export const Footer = ({ showQRCodes = false }: FooterProps) => {
                 <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg border border-gray-100 dark:border-gray-600">
                   <div className="w-40 h-40 md:w-48 md:h-48 mx-auto bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center cursor-pointer hover:scale-105 transition-transform">
                     <img 
-                      src="/qrcode2.jpg" 
+                      src="/qrcode1.jpg" 
                       alt="Vimali QR Code" 
                       className="w-36 h-36 md:w-44 md:h-44 object-contain rounded-xl"
-                      onClick={() => handleImageClick("/vimali.jpg", "Vimali QR Code")}
+                      onClick={() => handleImageClick("/qrcode1.jpg", "Vimali QR Code")}
                       onError={(e) => {
                         const target = e.currentTarget as HTMLImageElement;
                         target.style.display = 'none';
@@ -104,7 +104,7 @@ export const Footer = ({ showQRCodes = false }: FooterProps) => {
                       src="/qrcode2.jpg"
                       alt="QR Code" 
                       className="w-36 h-36 md:w-44 md:h-44 object-contain rounded-xl"
-                      onClick={() => handleImageClick("/2aqrcode.jpg", "QR Code")}
+                      onClick={() => handleImageClick("/qrcode2.jpg", "QR Code")}
                       onError={(e) => {
                         const target = e.currentTarget as HTMLImageElement;
                         target.style.display = 'none';

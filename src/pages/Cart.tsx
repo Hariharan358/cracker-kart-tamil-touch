@@ -129,7 +129,7 @@ const Cart = () => {
                 disabled={!isMinimumOrderMet}
                 className="w-full"
               >
-                {isMinimumOrderMet ? "Proceed to Checkout" : t('minOrderButton')}
+                {isMinimumOrderMet ? "Continue to Place Order" : t('minOrderButton')}
               </Button>
               {!isMinimumOrderMet && (
                 <p className="text-sm text-muted-foreground mt-2 text-center">

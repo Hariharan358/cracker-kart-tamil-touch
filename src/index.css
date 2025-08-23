@@ -1006,3 +1006,14 @@ All colors MUST be HSL.
     transform: translateX(-50%);
   }
 }
+
+.alter-text{
+  font-size: 78px;
+}
+
+@media screen and (max-width: 300px) {
+  .alter-text{
+    font-size: 300px;
+  }
+  
+}

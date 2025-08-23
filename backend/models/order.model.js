@@ -44,4 +44,11 @@ const orderSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Atomic per-day counter for order IDs
+const orderCounterSchema = new mongoose.Schema({
+  _id: String,   // DDMMYY
+  seq: { type: Number, default: 0 }
+});
+
 export const Order = mongoose.model('Order', orderSchema);
+export const OrderCounter = mongoose.models.OrderCounter || mongoose.model('OrderCounter', orderCounterSchema, 'order_counters');

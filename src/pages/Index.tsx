@@ -24,6 +24,7 @@ const Index = () => {
   const [sparklerProducts, setSparklerProducts] = useState([]);
   const [loadingSparklers, setLoadingSparklers] = useState(true);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [videoError, setVideoError] = useState(false);
   const { resolvedTheme } = useTheme();
 
   // Responsive hook for category display
@@ -99,15 +100,28 @@ const Index = () => {
       <div className="relative min-h-[60vh] sm:min-h-[70vh] md:min-h-[60vh] flex flex-col justify-center items-center overflow-hidden w-full">
         {/* Video Background for Both Themes */}
         <div className="absolute inset-0 z-0 w-full h-full overflow-hidden pointer-events-none">
-          <video
-            className="w-full h-full object-cover object-center"
-            src="/dark_bg.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-          />
+          {!videoError ? (
+            <video
+              className="w-full h-full object-cover object-center"
+              src="https://res.cloudinary.com/down1eunj/video/upload/v1755967133/u2ao5lvbbyuv3fbnheba.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              onError={() => setVideoError(true)}
+            />
+          ) : (
+            <img 
+              src="https://res.cloudinary.com/down1eunj/image/upload/v1755966762/ptcwt0dr0myvyj1geizh.png" 
+              alt="Dark Background" 
+              className="w-full h-full object-cover object-center"
+              onError={() => {
+                // If both video and image fail, show a gradient background
+                console.warn('Both video and fallback image failed to load');
+              }}
+            />
+          )}
           {/* Theme-specific overlays */}
           {resolvedTheme === 'dark' ? (
             // Dark theme overlay - stronger overlay for better text readability

@@ -30,8 +30,7 @@ import { useCart } from "../hooks/useCart";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useToast } from "../hooks/use-toast";
 import { useFCM } from "../hooks/useFCM";
-import { categories } from "../data/mockData";
-import { ShieldCheck, Package, TrendingUp, Eye, CheckCircle, XCircle } from "lucide-react";
+import { ShieldCheck, Package, TrendingUp, Eye, CheckCircle, XCircle, FolderPlus, FolderOpen } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
 
@@ -118,6 +117,13 @@ const Admin = () => {
   const [paymentViewOrder, setPaymentViewOrder] = useState(null);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
+  // Category management state
+  const [categories, setCategories] = useState([]);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [isDeletingCategory, setIsDeletingCategory] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+
   // Add state for transportName and lrNumber per order
   const [transportInputs, setTransportInputs] = useState({});
 
@@ -153,6 +159,140 @@ const Admin = () => {
       }
     } catch (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  // Category management functions
+  const fetchCategories = async () => {
+    setLoadingCategories(true);
+    try {
+      const res = await fetch('https://api.kmpyrotech.com/api/categories');
+      const data = await res.json();
+      if (res.ok) {
+        setCategories(data);
+      } else {
+        toast({
+          title: "❌ Failed to fetch categories",
+          description: data.error || "Server error",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "❌ Network error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  const fetchDetailedCategories = async () => {
+    try {
+      const res = await fetch('https://api.kmpyrotech.com/api/categories/detailed');
+      const data = await res.json();
+      if (res.ok) {
+        // Update category product counts
+        const counts = {};
+        data.forEach(cat => {
+          counts[cat.name] = cat.productCount;
+        });
+        setCategoryProductCounts(counts);
+      }
+    } catch (error) {
+      console.error('Error fetching detailed categories:', error);
+    }
+  };
+
+  const handleAddCategory = async (e) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) {
+      toast({
+        title: "❌ Category name required",
+        description: "Please enter a category name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAddingCategory(true);
+    try {
+      const res = await fetch('https://api.kmpyrotech.com/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: newCategoryName.trim()
+        }),
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        toast({
+          title: "✅ Category Added!",
+          description: `${data.category} added successfully.`,
+        });
+        setNewCategoryName("");
+        fetchCategories();
+        fetchDetailedCategories();
+      } else {
+        toast({
+          title: "❌ Failed to Add Category",
+          description: data.error || "Something went wrong.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "❌ Server Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingCategory(false);
+    }
+  };
+
+  const handleDeleteCategory = async (categoryName) => {
+    if (!window.confirm(`Are you sure you want to delete the category "${categoryName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeletingCategory(true);
+    try {
+      const res = await fetch(`https://api.kmpyrotech.com/api/categories/${encodeURIComponent(categoryName)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        toast({
+          title: "✅ Category Deleted!",
+          description: `${categoryName} removed successfully.`,
+        });
+        fetchCategories();
+        fetchDetailedCategories();
+        
+        // If the deleted category was selected in product management, clear it
+        if (productManagementCategory === categoryName) {
+          setProductManagementCategory("");
+          setCategoryProducts([]);
+        }
+      } else {
+        toast({
+          title: "❌ Failed to Delete Category",
+          description: data.error || "Something went wrong.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "❌ Server Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingCategory(false);
     }
   };
 
@@ -262,6 +402,8 @@ const Admin = () => {
   useEffect(() => {
     fetchAnalytics();
     fetchCategoryProductCounts();
+    fetchCategories();
+    fetchDetailedCategories();
   }, []);
 
   useEffect(() => {
@@ -558,7 +700,7 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="products">
-          <TabsList className="grid grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-5 w-full">
             <TabsTrigger value="products">
               <Package className="h-4 w-4 mr-2" />
               {t("addProduct")}
@@ -566,6 +708,10 @@ const Admin = () => {
             <TabsTrigger value="product-management">
               <Package className="h-4 w-4 mr-2" />
               Product Management
+            </TabsTrigger>
+            <TabsTrigger value="categories">
+              <FolderOpen className="h-4 w-4 mr-2" />
+              Categories
             </TabsTrigger>
             <TabsTrigger value="orders">
               <TrendingUp className="h-4 w-4 mr-2" />
@@ -626,6 +772,115 @@ const Admin = () => {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* CATEGORIES TAB */}
+          <TabsContent value="categories">
+            <Card>
+              <CardHeader>
+                <CardTitle>Category Management</CardTitle>
+              </CardHeader>
+              <CardContent className="max-h-[70vh] overflow-y-auto">
+                {/* Add New Category Form */}
+                <div className="mb-6 p-4 border rounded-lg bg-muted/50">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center">
+                    <FolderPlus className="h-5 w-5 mr-2" />
+                    Add New Category
+                  </h3>
+                  <form onSubmit={handleAddCategory} className="flex gap-3">
+                    <Input
+                      placeholder="Enter category name (e.g., NEW CATEGORY)"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      className="flex-1"
+                      disabled={isAddingCategory}
+                    />
+                    <Button 
+                      type="submit" 
+                      disabled={isAddingCategory || !newCategoryName.trim()}
+                      className="min-w-[120px]"
+                    >
+                      {isAddingCategory ? (
+                        <span className="flex items-center justify-center">
+                          <Loader2 className="animate-spin h-4 w-4 mr-2" /> Adding...
+                        </span>
+                      ) : (
+                        "Add Category"
+                      )}
+                    </Button>
+                  </form>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Category names will be automatically converted to uppercase
+                  </p>
+                </div>
+
+                {/* Categories List */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <FolderOpen className="h-5 w-5 mr-2" />
+                      Existing Categories
+                    </h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        fetchCategories();
+                        fetchDetailedCategories();
+                      }}
+                      disabled={loadingCategories}
+                      className="ml-2"
+                    >
+                      {loadingCategories ? (
+                        <Loader2 className="animate-spin h-4 w-4" />
+                      ) : (
+                        "Refresh"
+                      )}
+                    </Button>
+                  </div>
+                  {loadingCategories ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="animate-spin h-6 w-6 mr-2" />
+                      Loading categories...
+                    </div>
+                  ) : categories.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No categories found</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {categories.map((category) => (
+                        <div 
+                          key={category} 
+                          className="bg-card rounded-lg shadow-card p-4 border border-border"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="font-semibold text-lg">{category}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {loadingCategoryCounts ? 'Loading...' : `${categoryProductCounts[category] || 0} products`}
+                              </div>
+                            </div>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteCategory(category)}
+                              disabled={isDeletingCategory}
+                              className="ml-3"
+                            >
+                              {isDeletingCategory ? (
+                                <Loader2 className="animate-spin h-4 w-4" />
+                              ) : (
+                                "Delete"
+                              )}
+                            </Button>
+                          </div>
+
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

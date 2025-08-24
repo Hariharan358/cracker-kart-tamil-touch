@@ -191,103 +191,103 @@ const Checkout = () => {
     <div className={`min-h-screen ${resolvedTheme === 'dark' ? 'bg-gradient-to-br from-gray-900 to-black' : 'bg-gradient-to-br from-orange-50 to-red-50'}`}>
       <Navbar cartCount={cartItems.length} />
       
-      <div className="w-full px-4 py-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+      <div className="w-full px-3 sm:px-4 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8 text-center">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
             Complete Your Order
           </h1>
-          <p className={`${resolvedTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Fill in your details and get ready for an amazing celebration!</p>
+          <p className={`text-xs sm:text-sm md:text-base ${resolvedTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Fill in your details and get ready for an amazing celebration!</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-7xl mx-auto">
           {/* Enhanced Order Form */}
-          <div className={`rounded-2xl shadow-lg p-8 ${resolvedTheme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'}`}>
-            <div className="flex items-center mb-6">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${resolvedTheme === 'dark' ? 'bg-orange-900' : 'bg-orange-100'}`}>
-                <User className={`h-5 w-5 ${resolvedTheme === 'dark' ? 'text-orange-400' : 'text-orange-600'}`} />
+          <div className={`rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 ${resolvedTheme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'}`}>
+            <div className="flex items-center mb-4 sm:mb-6">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mr-2 sm:mr-3 ${resolvedTheme === 'dark' ? 'bg-orange-900' : 'bg-orange-100'}`}>
+                <User className={`h-4 w-4 sm:h-5 sm:w-5 ${resolvedTheme === 'dark' ? 'text-orange-400' : 'text-orange-600'}`} />
               </div>
-              <h2 className={`text-2xl font-bold ${resolvedTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Customer Information</h2>
+              <h2 className={`text-lg sm:text-xl md:text-2xl font-bold ${resolvedTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Customer Information</h2>
             </div>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className={`block text-sm font-semibold flex items-center ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    <User className="h-4 w-4 mr-2 text-orange-500" />
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <label className={`block text-xs sm:text-sm font-semibold flex items-center ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    <User className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-orange-500" />
                     Full Name *
                   </label>
                   <Input
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className={`border-2 transition-colors ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
+                    className={`border-2 transition-colors text-xs sm:text-sm ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
                     placeholder="Enter your full name"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className={`block text-sm font-semibold flex items-center ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                    <Mail className="h-4 w-4 mr-2 text-orange-500" />
+                <div className="space-y-1 sm:space-y-2">
+                  <label className={`block text-xs sm:text-sm font-semibold flex items-center ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                    <Mail className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-orange-500" />
                     Email Address
                   </label>
                   <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className={`border-2 transition-colors ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
+                    className={`border-2 transition-colors text-xs sm:text-sm ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
                     placeholder="Enter your email (optional)"
                   />
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <label className={`block text-sm font-semibold flex items-center ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  <Phone className="h-4 w-4 mr-2 text-orange-500" />
+              <div className="space-y-1 sm:space-y-2">
+                <label className={`block text-xs sm:text-sm font-semibold flex items-center ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                  <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-orange-500" />
                   Phone Number *
                 </label>
                 <Input
                   required
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className={`border-2 transition-colors ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
+                  className={`border-2 transition-colors text-xs sm:text-sm ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
                   placeholder="Enter your phone number"
                 />
               </div>
               
-              <div className="space-y-2">
-                <label className={`block text-sm font-semibold flex items-center ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                  <MapPin className="h-4 w-4 mr-2 text-orange-500" />
+              <div className="space-y-1 sm:space-y-2">
+                <label className={`block text-xs sm:text-sm font-semibold flex items-center ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-orange-500" />
                   Delivery Address *
                 </label>
                 <Textarea
                   required
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className={`border-2 transition-colors min-h-[80px] ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
+                  className={`border-2 transition-colors min-h-[60px] sm:min-h-[80px] text-xs sm:text-sm ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
                   placeholder="Enter your complete delivery address"
                 />
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className={`block text-sm font-semibold ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <label className={`block text-xs sm:text-sm font-semibold ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                     City *
                   </label>
                   <Input
                     required
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className={`border-2 transition-colors ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
+                    className={`border-2 transition-colors text-xs sm:text-sm ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
                     placeholder="Enter your city"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className={`block text-sm font-semibold ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                <div className="space-y-1 sm:space-y-2">
+                  <label className={`block text-xs sm:text-sm font-semibold ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                     Pincode
                   </label>
                   <Input
                     value={formData.pincode}
                     onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                    className={`border-2 transition-colors ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
+                    className={`border-2 transition-colors text-xs sm:text-sm ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
                     placeholder="Enter pincode (optional)"
                   />
                 </div>

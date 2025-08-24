@@ -12,8 +12,9 @@ import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import PDFDocument from 'pdfkit';
 import nodemailer from 'nodemailer';
-import { Order, OrderCounter } from './models/order.model.js';
+import { Order } from './models/order.model.js';
 import { getProductModelByCategory } from './models/getProductModelByCategory.js';
+import { Category } from './models/category.model.js';
 import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
@@ -130,26 +131,9 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage });
 
-const modelCache = {};
-const productSchema = new mongoose.Schema({
-  name_en: String,
-  name_ta: String,
-  price: Number,
-  original_price: Number, // Add this field
-  imageUrl: String,
-  youtube_url: String, // Add this field
-  category: String,    // Add this field for completeness
-}, { timestamps: true });
 
-// OrderCounter now imported from order.model.js
 
-function getProductModelByCategory(category) {
-  const modelName = category.replace(/\s+/g, '_').toUpperCase();
-  if (!modelCache[modelName]) {
-    modelCache[modelName] = mongoose.model(modelName, productSchema, modelName);
-  }
-  return modelCache[modelName];
-}
+
 
 // ✅ GET: Track Order
 app.get('/api/orders/track', async (req, res) => {
@@ -330,7 +314,7 @@ app.post('/api/products/apply-discount', async (req, res) => {
     for (const col of collections) {
       const modelName = col.name;
       if (/^[A-Z0-9_]+$/.test(modelName)) {
-        const Model = mongoose.model(modelName, productSchema, modelName);
+        const Model = getProductModelByCategory(modelName.replace(/_/g, ' '));
         // Only update products that have an original_price
         const result = await Model.updateMany(
           { original_price: { $exists: true, $ne: null } },
@@ -600,7 +584,7 @@ app.get('/api/products/all', cache('5 minutes'), async (req, res) => {
     const allProductsArrays = await Promise.all(
       categoryCollectionNames.map(async (collectionName) => {
         try {
-          const Model = mongoose.model(collectionName, productSchema, collectionName);
+          const Model = getProductModelByCategory(collectionName.replace(/_/g, ' '));
           // Use lean() for faster plain objects, project only needed fields
           const docs = await Model.find({}, {
             name_en: 1,
@@ -639,7 +623,7 @@ app.delete('/api/products/:id', async (req, res) => {
       const modelName = col.name;
       // Only check collections that match the category naming pattern
       if (/^[A-Z0-9_]+$/.test(modelName)) {
-        const Model = mongoose.model(modelName, productSchema, modelName);
+        const Model = getProductModelByCategory(modelName.replace(/_/g, ' '));
         const result = await Model.findByIdAndDelete(id);
         if (result) {
           deleted = true;
@@ -820,6 +804,151 @@ app.get('/api/test-cors', (req, res) => {
   });
 });
 
+// ✅ CATEGORY MANAGEMENT API
+// GET: Fetch all categories
+app.get('/api/categories', async (req, res) => {
+  try {
+    const categories = await Category.find({ isActive: true })
+      .sort({ name: 1 })
+      .select('name displayName description isActive createdAt')
+      .lean();
+    
+    // Extract just the names for backward compatibility
+    const categoryNames = categories.map(cat => cat.name);
+    
+    res.json(categoryNames);
+  } catch (error) {
+    console.error('❌ Error fetching categories:', error);
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
+// POST: Add new category
+app.post('/api/categories', async (req, res) => {
+  try {
+    const { name } = req.body;
+    
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ error: 'Category name is required and must be a non-empty string' });
+    }
+    
+    const trimmedName = name.trim().toUpperCase();
+    
+    // Check if category already exists in database
+    const existingCategory = await Category.findOne({ name: trimmedName });
+    if (existingCategory) {
+      return res.status(409).json({ error: 'Category already exists' });
+    }
+    
+    // Create new category in database
+    const newCategory = new Category({
+      name: trimmedName,
+      displayName: name.trim(),
+      isActive: true
+    });
+    
+    await newCategory.save();
+    console.log(`✅ New category added to database: ${trimmedName}`);
+    
+    res.status(201).json({ 
+      message: 'Category added successfully',
+      category: trimmedName
+    });
+  } catch (error) {
+    console.error('❌ Error adding category:', error);
+    res.status(500).json({ error: 'Failed to add category' });
+  }
+});
+
+// DELETE: Remove category
+app.delete('/api/categories/:name', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const decodedName = decodeURIComponent(name);
+    
+    if (!decodedName) {
+      return res.status(400).json({ error: 'Category name is required' });
+    }
+    
+    // Check if category exists in database
+    const existingCategory = await Category.findOne({ name: decodedName });
+    if (!existingCategory) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    
+    // Soft delete by setting isActive to false
+    // This preserves existing products and prevents data loss
+    await Category.findOneAndUpdate(
+      { name: decodedName },
+      { isActive: false, updatedAt: new Date() }
+    );
+    
+    console.log(`✅ Category deactivated: ${decodedName}`);
+    
+    res.json({ 
+      message: 'Category removed successfully',
+      category: decodedName
+    });
+  } catch (error) {
+    console.error('❌ Error removing category:', error);
+    res.status(500).json({ error: 'Failed to remove category' });
+  }
+});
+
+// GET: Get categories for user side (public)
+app.get('/api/categories/public', async (req, res) => {
+  try {
+    const categories = await Category.find({ isActive: true })
+      .sort({ name: 1 })
+      .select('name displayName')
+      .lean();
+    
+    res.json(categories);
+  } catch (error) {
+    console.error('❌ Error fetching public categories:', error);
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
+// GET: Get detailed category information with product counts
+app.get('/api/categories/detailed', async (req, res) => {
+  try {
+    const categories = await Category.find({ isActive: true })
+      .sort({ name: 1 })
+      .lean();
+    
+    // Get product counts for each category
+    const categoriesWithCounts = await Promise.all(
+      categories.map(async (category) => {
+        try {
+          const ProductModel = getProductModelByCategory(category.name);
+          const count = await ProductModel.countDocuments();
+          return {
+            name: category.name,
+            displayName: category.displayName,
+            description: category.description,
+            productCount: count,
+            createdAt: category.createdAt
+          };
+        } catch (err) {
+          return {
+            name: category.name,
+            displayName: category.displayName,
+            description: category.description,
+            productCount: 0,
+            createdAt: category.createdAt
+          };
+        }
+      })
+    );
+    
+    res.json(categoriesWithCounts);
+  } catch (error) {
+    console.error('❌ Error fetching detailed categories:', error);
+    res.status(500).json({ error: 'Failed to fetch detailed categories' });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server is running on port ${PORT}`);
@@ -828,6 +957,64 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📊 Railway deployment: ${process.env.RAILWAY_ENVIRONMENT ? 'Yes' : 'No'}`);
 });
 
+
+// Initialize default categories
+const initializeDefaultCategories = async () => {
+  try {
+    const defaultCategories = [
+      "SPARKLER ITEMS",
+      "FLOWER POTS",
+      "CHAKKARS",
+      "TWINKLING",
+      "COLOUR FOUNTAIN WINDOW BIG",
+      "Color Window Fountain 3 Inch",
+      "ENJOY PENCIAL",
+      "ONE SOUND CRACKERS",
+      "BIJILI",
+      "ROCKET BOMB",
+      "ATOM BOMB",
+      "GAINT & DELUXE",
+      "RED MIRACLE (OTHER)",
+      "RED MIRACLE (Brands)",
+      "BABY FANCY NOVELTIES",
+      "MULTI COLOUR SHOT BRAND",
+      "MULTI COLOUR SHOT-Others",
+      "COLOUR PAPER MUSICAL OUT",
+      "MEGA DISPLAY SERIOUS",
+      "MEGA FOUNTAIN",
+      "MINI AERIAL CHOTTA FACNY",
+      "MEGA DISPLAY",
+      "GUJARATH FLOWER POTS",
+      "NEW COLOUR FOUNTAIN SKY",
+      "COLOUR SMOKE FOUNTAIN",
+      "MATCHES BOX",
+      "KANNAN 5 PIECE GIFT BOX",
+      "GUNS",
+      "NATTU VEDI",
+      "FAMILY PACK",
+      "GIFT BOX"
+    ];
+
+    for (const categoryName of defaultCategories) {
+      try {
+        await Category.findOneAndUpdate(
+          { name: categoryName.toUpperCase() },
+          { 
+            name: categoryName.toUpperCase(),
+            displayName: categoryName,
+            isActive: true
+          },
+          { upsert: true, new: true }
+        );
+      } catch (err) {
+        console.warn(`⚠️ Could not initialize category ${categoryName}:`, err.message);
+      }
+    }
+    console.log('✅ Default categories initialized');
+  } catch (error) {
+    console.warn('⚠️ Category initialization failed:', error.message);
+  }
+};
 
 // Performance optimization: Add database indexes for faster queries
 const setupDatabaseIndexes = async () => {
@@ -858,4 +1045,5 @@ const setupDatabaseIndexes = async () => {
 mongoose.connection.once('open', () => {
   console.log('✅ Connected to MongoDB');
   setupDatabaseIndexes();
+  initializeDefaultCategories();
 });

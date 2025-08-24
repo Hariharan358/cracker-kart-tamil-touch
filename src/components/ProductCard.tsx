@@ -8,7 +8,8 @@ interface Product {
   name_ta: string;
   price: number;
   original_price?: number;
-  imageUrl: string;
+  imageUrl?: string;
+  image_url?: string;
   category: string;
   youtube_url?: string;
 }
@@ -51,16 +52,19 @@ export const ProductCard = ({
     >
       {/* Product Image */}
       <div
-        className={`relative ${size === "sm" ? "h-24 sm:h-28" : "h-40 sm:h-48"} bg-muted overflow-hidden`}
+        className={`relative ${size === "sm" ? "h-20 sm:h-24" : "h-40 sm:h-48"} bg-muted overflow-hidden`}
       >
         <img
-          src={product.imageUrl}
+          src={product.imageUrl || product.image_url || '/placeholder.svg'}
           alt={product.name_en}
           className={`w-full h-full object-cover transition-transform duration-300 ${size === "sm" ? "rounded-md" : ""}`}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src =
-              "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=300&h=200&fit=crop";
+            console.log('🖼️ Image failed to load:', product.imageUrl || product.image_url);
+            target.src = "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=300&h=200&fit=crop";
+          }}
+          onLoad={() => {
+            console.log('✅ Image loaded successfully:', product.imageUrl || product.image_url);
           }}
         />
         <div className="absolute inset-0 bg-gradient-hero opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
@@ -69,9 +73,9 @@ export const ProductCard = ({
       {/* Product Details */}
       <div className={`${size === "sm" ? "p-2 space-y-1" : "p-3 sm:p-5 space-y-2 sm:space-y-3"}`}>
         <div className="space-y-1">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-1 sm:gap-2">
             <h3
-              className={`font-extrabold ${size === "sm" ? "text-sm sm:text-base" : "text-lg sm:text-xl"} text-foreground leading-tight tracking-tight truncate`}
+              className={`font-extrabold ${size === "sm" ? "text-xs sm:text-sm" : "text-lg sm:text-xl"} text-foreground leading-tight tracking-tight truncate`}
             >
               {product.name_en}
             </h3>
@@ -83,21 +87,21 @@ export const ProductCard = ({
                 className="text-red-600 hover:text-red-700 flex-shrink-0"
                 title="Watch on YouTube"
               >
-                <FaYoutube size={size === "sm" ? 14 : 18} />
+                <FaYoutube size={size === "sm" ? 12 : 18} />
               </a>
             )}
           </div>
           <p
-            className={`text-accent font-medium ${size === "sm" ? "text-xs sm:text-sm truncate" : "text-sm sm:text-base truncate"}`}
+            className={`text-accent font-medium ${size === "sm" ? "text-xs truncate" : "text-sm sm:text-base truncate"}`}
           >
             {product.name_ta}
           </p>
         </div>
 
         {/* Price and Add to Cart */}
-        <div className="flex items-end justify-between mt-2">
+        <div className="flex items-end justify-between mt-1 sm:mt-2">
           <div className="flex flex-col gap-1 min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
               {isDiscount && (
                 <span
                   className={`text-muted-foreground line-through ${size === "sm" ? "text-xs" : "text-sm sm:text-base"}`}
@@ -106,7 +110,7 @@ export const ProductCard = ({
                 </span>
               )}
               <span
-                className={`font-bold text-primary ${size === "sm" ? "text-sm sm:text-base" : "text-lg sm:text-2xl"}`}
+                className={`font-bold text-primary ${size === "sm" ? "text-sm" : "text-lg sm:text-2xl"}`}
               >
                 ₹{product.price}
               </span>
@@ -116,17 +120,17 @@ export const ProductCard = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-2 mt-2 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 mt-1 sm:mt-2 flex-shrink-0">
             <Button
               variant="cart"
               size="cart-icon"
               onClick={handleRemoveFromCart}
-              className={`${size === "sm" ? "h-7 w-7" : "h-8 w-8"} transition-none hover:scale-100`}
+              className={`${size === "sm" ? "h-6 w-6" : "h-8 w-8"} transition-none hover:scale-100`}
               disabled={quantity === 0}
               aria-label="Remove from cart"
               type="button"
             >
-              <span className="text-xs sm:text-sm">-</span>
+              <span className="text-xs">-</span>
             </Button>
             <span className={`font-semibold text-center select-none ${size === "sm" ? "text-xs w-4" : "text-sm w-6"}`}>
               {quantity}
@@ -135,7 +139,7 @@ export const ProductCard = ({
               variant="cart"
               size="cart-icon"
               onClick={handleAddToCart}
-              className={`${size === "sm" ? "h-7 w-7" : "h-8 w-8"} transition-none hover:scale-100`}
+              className={`${size === "sm" ? "h-6 w-6" : "h-8 w-8"} transition-none hover:scale-100`}
               aria-label="Add to cart"
               type="button"
             >

@@ -331,9 +331,6 @@ const Index = () => {
                       {/* Dropdown Button */}
                       <Button 
                         onClick={() => {
-                          console.log('🖱️ Index: Dropdown clicked!');
-                          console.log('📊 Index: Current categories:', categories);
-                          console.log('📊 Index: Categories length:', categories.length);
                           setIsCategoryDropdownOpen(!isCategoryDropdownOpen);
                         }} 
                         variant="outline" 
@@ -354,38 +351,61 @@ const Index = () => {
                       
                       {/* Dropdown Menu with Categories */}
                       {isCategoryDropdownOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                          {/* Debug Info */}
-                          <div className="p-2 bg-gray-100 text-xs text-gray-600 border-b">
-                            Categories loaded: {categories.length} | Selected: {selectedCategory}
-                          </div>
+                        <div 
+                          className="fixed top-20 left-4 right-4 bg-red-500 border-4 border-yellow-400 rounded-lg shadow-2xl z-[99999] max-h-96 overflow-y-auto"
+                          style={{
+                            position: 'fixed',
+                            top: '100px',
+                            left: '20px',
+                            right: '20px',
+                            backgroundColor: 'red',
+                            border: '4px solid yellow',
+                            borderRadius: '8px',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.8)',
+                            zIndex: 99999,
+                            maxHeight: '400px',
+                            overflowY: 'auto'
+                          }}
+                        >
+                          {/* Debug indicator */}
                           
-                          {categories.length === 0 ? (
-                            <div className="p-3 text-center text-gray-500">
-                              No categories available
+                          
+                          <div className="p-3 bg-white">
+                            <div className="text-sm text-gray-600 mb-2">
+                              Categories loaded: {categories.length}
                             </div>
-                          ) : (
-                            categories.map((category) => (
+                            
+                            {categories.map((category, index) => (
                               <button
                                 key={category.name}
                                 onClick={() => {
                                   handleCategorySelect(category.name);
                                   setIsCategoryDropdownOpen(false);
                                 }}
-                                className={`w-full text-left p-2 sm:p-3 hover:bg-gray-100 transition-colors ${
-                                  selectedCategory === category.name
-                                    ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500'
-                                    : 'text-gray-700'
-                                }`}
+                                className="w-full text-left p-3 hover:bg-blue-100 transition-colors border-b border-gray-200 last:border-b-0 bg-white"
                               >
-                                <div className="font-medium text-xs sm:text-sm">
-                                  {category.displayName || category.name}
+                                <div className="font-medium text-sm text-black">
+                                  {index + 1}. {category.displayName || category.name}
                                 </div>
                               </button>
-                            ))
-                          )}
+                            ))}
+                          </div>
                         </div>
                       )}
+                      
+                      {/* Debug Test Button */}
+                      <div className="mt-2">
+                        <Button 
+                          onClick={() => {
+                            setIsCategoryDropdownOpen(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs bg-yellow-100 hover:bg-yellow-200"
+                        >
+                          FORCE OPEN DROPDOWN
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     // Desktop: Show all categories
@@ -447,7 +467,7 @@ const Index = () => {
                         </p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4 lg:gap-5">
                         {products.map((product) => {
                           const quantity = cartItems.find(item => item.id === (product._id || product.id))?.quantity || 0;
                           return (
@@ -466,7 +486,7 @@ const Index = () => {
                                 onAddToCart={addToCart}
                                 onRemoveFromCart={() => updateQuantity(product._id || product.id, quantity - 1)}
                                 quantity={quantity}
-                                size={isMobile ? "sm" : "md"}
+                                size="sm"
                               />
                             </div>
                           );

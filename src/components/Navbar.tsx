@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Sparkles, Menu, X } from "lucide-react";
+import { ShoppingCart, Sparkles, Menu, X, Download } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { LanguageToggle } from "./LanguageToggle";
@@ -23,6 +23,19 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
   const handleThemeToggle = () => {
     setTheme(isDark ? "light" : "dark");
     setIsDark(!isDark);
+  };
+
+  const handleDownloadPriceList = () => {
+    // Replace this URL with your actual price list voucher file
+    const priceListUrl = '/Final_Net_Rate_compressed.pdf'; // Update this path to your actual file
+    
+    // Create a temporary link element to trigger download
+    const link = document.createElement('a');
+    link.href = priceListUrl;
+    link.download = 'KMPyrotech_Price_List.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Handle scroll effect for dynamic island behavior
@@ -104,6 +117,15 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                 {t('safety_Guidance')}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full"></span>
               </Link>
+              <Button 
+                onClick={handleDownloadPriceList}
+                variant="ghost"
+                className="text-foreground/80 hover:text-primary transition-all duration-300 font-medium relative group text-sm px-3 py-2 h-auto"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download Brochure
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full"></span>
+              </Button>
               <Link 
                 to="/payment-upload" 
                 className="text-foreground/80 hover:text-primary transition-all duration-300 font-medium relative group text-sm px-3 py-2"
@@ -255,6 +277,17 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                 >
                   Location
                 </a>
+                <Button 
+                  onClick={() => {
+                    handleDownloadPriceList();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  variant="ghost"
+                  className="text-foreground/80 hover:text-primary transition-all duration-300 font-medium py-2 px-3 h-auto w-full justify-start"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Brochure
+                </Button>
                 <div className="flex items-center justify-center space-x-4 pt-2 border-t border-white/10 dark:border-white/5">
                   <LanguageToggle iconSize={14} />
                   <NotificationPermission />

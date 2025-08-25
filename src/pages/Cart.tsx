@@ -51,7 +51,7 @@ const Cart = () => {
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
       
-      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">Shopping Cart</h1>
           <p className="text-xs sm:text-sm text-muted-foreground">{cartItems.length} items</p>
@@ -62,12 +62,12 @@ const Cart = () => {
           <div className="lg:col-span-2 space-y-3 sm:space-y-4">
             {cartItems.map((item) => (
               <div key={item.id} className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4 bg-card rounded-lg border">
-                <div className="w-full md:grid md:[grid-template-columns:64px_1fr_minmax(140px,auto)_120px] md:items-center md:gap-4 flex items-center">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 p-1 rounded-md border bg-white overflow-hidden flex items-center justify-center flex-shrink-0 aspect-square">
+                <div className="w-full md:grid md:[grid-template-columns:72px_1fr_minmax(140px,auto)_120px] md:items-center md:gap-4 flex items-center">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-18 md:h-18 rounded-md border bg-white overflow-hidden flex items-center justify-center flex-shrink-0 aspect-square">
                     <img
                       src={item.imageUrl}
                       alt={item.name_en}
-                      className="max-w-full max-h-full object-contain"
+                      className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="flex-1 min-w-0 px-2 sm:px-4 md:px-0">

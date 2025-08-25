@@ -524,7 +524,7 @@ const Admin = () => {
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm("Are you sure you want to delete/cancel this order?")) return;
     try {
-      const res = await fetch(`https://crackerbackend-production.up.railway.app/api/orders/cancel/${orderId}`, {
+      const res = await fetch(`https://api.kmpyrotech.com/api/orders/cancel/${orderId}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -607,7 +607,7 @@ const Admin = () => {
     if (editForm.imageUrl) formData.append("imageUrl", editForm.imageUrl);
     if (editForm.youtube_url) formData.append("youtube_url", editForm.youtube_url);
     try {
-      const res = await fetch(`https://crackerbackend-production.up.railway.app/api/products/${editProduct._id || editProduct.id}`, {
+      const res = await fetch(`https://api.kmpyrotech.com/api/products/${editProduct._id || editProduct.id}`, {
         method: "PUT",
         body: formData,
       });
@@ -686,7 +686,7 @@ const Admin = () => {
   const handleVerifyPayment = async (orderId, verified) => {
     setIsVerifyingPayment(true);
     try {
-      const response = await fetch(`https://crackerbackend-production.up.railway.app/api/orders/verify-payment/${orderId}`, {
+      const response = await fetch(`https://api.kmpyrotech.com/api/orders/verify-payment/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ verified, verifiedBy: "admin" }),

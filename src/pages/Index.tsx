@@ -1,117 +1,102 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '../components/ui/button';
-import { Loader } from '../components/ui/loader';
-import { ProductCard } from '../components/ProductCard';
-import { useCart } from '../hooks/useCart';
-import { useIsMobile } from '../hooks/use-mobile';
-import { useLanguage } from '../contexts/LanguageContext';
-import { Navbar } from '../components/Navbar';
-import { Footer } from '../components/Footer';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { 
-  Sparkles, 
-  Zap, 
-  Gift, 
-  Users, 
-  ArrowRight,
-  Star,
-  Shield,
-  Truck,
-  Clock,
-  Phone,
-  Mail,
-  MapPin
-} from 'lucide-react';
-
+import { Link } from "react-router-dom";
+import { Sparkles, Zap, Gift, Users } from "lucide-react";
+import { Button } from "../components/ui/button";
+import { CategoryCard } from "../components/CategoryCard";
+import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
+import { useEffect, useState } from "react";
+import { ProductCard } from "../components/ProductCard";
+import { useCart } from "../hooks/useCart";
+import { useLanguage } from "../contexts/LanguageContext";
+import { getCategoriesWithCount } from "../data/mockData";
+import heroImage from "../assets/hero-fireworks.jpg";
+import { useLocation } from "react-router-dom";
 import '../index.css'; // Ensure global styles are loaded
 import { useTheme } from "next-themes";
+import { Loader } from "../components/ui/loader";
 
 const Index = () => {
-  const { addToCart, cartItems, updateQuantity, getTotalItems } = useCart();
-  const { t, language } = useLanguage();
-  const isMobile = useIsMobile();
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const { getTotalItems, addToCart, cartItems, updateQuantity } = useCart();
+  const { t } = useLanguage();
+  const categories = getCategoriesWithCount();
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingProducts, setLoadingProducts] = useState(false);
-  const [error, setError] = useState(null);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [sparklerProducts, setSparklerProducts] = useState([]);
+  const [loadingSparklers, setLoadingSparklers] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(false);
   const { resolvedTheme } = useTheme();
   const [videoError, setVideoError] = useState(false);
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
 
+  // Responsive hook for category display
   useEffect(() => {
-    fetchCategories();
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
+  const sliderImages = [
+    '/banner.jpg',
+    '/banner1.jpg',
+    '/banner2.jpg',
+  ];
+  const [currentSlide, setCurrentSlide] = useState(0);
   useEffect(() => {
-    if (selectedCategory) {
-      fetchProducts(selectedCategory);
-    }
-  }, [selectedCategory]);
+    if (resolvedTheme === 'dark') return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [resolvedTheme]);
 
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      console.log('🔄 Index: Fetching categories...');
-      const res = await fetch('https://api.kmpyrotech.com/api/categories/public');
-      const data = await res.json();
-      
-      console.log('📋 Index: Categories response:', data);
-      console.log('📊 Index: Categories count:', data.length);
-      
-      if (res.ok) {
-        setCategories(data);
-        setError(null);
-        console.log('✅ Index: Categories set successfully');
+  useEffect(() => {
+    // First: Fetch home page products for immediate user impression
+    const fetchHomeProducts = async () => {
+      try {
+        setLoadingProducts(true);
+        const res = await fetch("https://api.kmpyrotech.com/api/products/home");
+        const data = await res.json();
         
-        // Auto-select first category if available
-        if (data.length > 0 && !selectedCategory) {
-          console.log('✅ Index: Auto-selecting first category:', data[0].name);
-          setSelectedCategory(data[0].name);
-        }
-      } else {
-        console.error('❌ Index: Categories fetch failed:', data.error);
-        setError(data.error || 'Failed to fetch categories');
+        // Separate products by category for display
+        const atomBombProducts = data.filter(p => p.category === 'ATOM BOMB').slice(0, 8);
+        const sparklerProducts = data.filter(p => p.category === 'SPARKLER ITEMS').slice(0, 8);
+        
+        setProducts(atomBombProducts);
+        setSparklerProducts(sparklerProducts);
+      } catch (err) {
+        console.error("Error fetching home products:", err);
+        // Fallback: fetch individual categories if home endpoint fails
+        fetchFallbackProducts();
+      } finally {
+        setLoadingProducts(false);
+        setLoadingSparklers(false);
       }
-    } catch (err) {
-      console.error('❌ Index: Categories fetch error:', err);
-      setError('Network error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const fetchProducts = async (categoryName) => {
-    try {
-      setLoadingProducts(true);
-      console.log('🔄 Fetching products for category:', categoryName);
-      const res = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(categoryName)}`);
-      const data = await res.json();
-      
-      console.log('📦 Products response:', data);
-      
-      if (res.ok) {
-        setProducts(data);
-        console.log(`✅ Loaded ${data.length} products for ${categoryName}`);
-      } else {
-        console.error('❌ Products fetch failed:', data.error);
+    // Fallback method for individual category fetching
+    const fetchFallbackProducts = async () => {
+      try {
+        // Fetch ATOM BOMB products
+        const atomRes = await fetch("https://api.kmpyrotech.com/api/products/category/ATOM%20BOMB");
+        const atomData = await atomRes.json();
+        setProducts(atomData.slice(0, 8));
+        
+        // Fetch SPARKLER ITEMS products
+        const sparklerRes = await fetch("https://api.kmpyrotech.com/api/products/category/SPARKLER%20ITEMS");
+        const sparklerData = await sparklerRes.json();
+        setSparklerProducts(sparklerData.slice(0, 8));
+      } catch (err) {
+        console.error("Fallback fetch failed:", err);
         setProducts([]);
+        setSparklerProducts([]);
       }
-    } catch (err) {
-      console.error('❌ Products fetch error:', err);
-      setProducts([]);
-    } finally {
-      setLoadingProducts(false);
-    }
-  };
+    };
 
-  const handleCategorySelect = (categoryName) => {
-    console.log('🎯 Category selected:', categoryName);
-    setSelectedCategory(categoryName);
-    fetchProducts(categoryName);
-  };
+    fetchHomeProducts();
+  }, [location]);
 
   return (
     <div className="min-h-screen bg-gradient-background light-pattern">
@@ -121,7 +106,7 @@ const Index = () => {
       <div className="relative w-full overflow-hidden bg-primary py-2">
         <div className="marquee whitespace-nowrap text-white font-bold text-sm sm:text-lg tracking-wide">
           <span className="mx-4 sm:mx-8">🔥 Festival Offer: 10% OFF on all products! 🔥</span>
-          <span className="mx-4 sm:mx-8">🔥 DELIVERY AVAILABLE ALL OVER TAMILNADU! 🔥</span>
+          <span className="mx-4 sm:mx-8">🔥 Festival Offer: 10% OFF on all products! 🔥</span>
         </div>
       </div>
 
@@ -143,7 +128,7 @@ const Index = () => {
           ) : (
             <img 
               src="https://res.cloudinary.com/down1eunj/image/upload/v1755966762/ptcwt0dr0myvyj1geizh.png" 
-              alt="Dark Background" 
+              alt="Dark Background"
               className="w-full h-full object-cover object-center"
               onError={() => {
                 // If both video and image fail, show a gradient background
@@ -156,6 +141,7 @@ const Index = () => {
             // Dark theme overlay - stronger overlay for better text readability
             <>
               <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80"></div>
+              
               <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40"></div>
             </>
           ) : (
@@ -175,6 +161,7 @@ const Index = () => {
               <Zap className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-accent animate-bounce-gentle" />
               <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-primary animate-sparkle" />
             </div>
+            
             {/* Logo */}
             <div className="flex flex-col items-center justify-center sm:mt-[-80px] mb-[-8px] animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <img 
@@ -233,46 +220,46 @@ const Index = () => {
       </div>
 
       {/* Features Section */}
-      <section className="py-6 sm:py-8 lg:py-12 bg-gradient-to-b from-muted/40 to-muted/20">
-        <div className="w-full px-3 sm:px-4">
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
-            <div className="text-center p-2 sm:p-3 md:p-4 lg:p-6 bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+      <section className="py-8 sm:py-12 bg-gradient-to-b from-muted/40 to-muted/20">
+        <div className="w-full px-4">
+          <div className="grid grid-cols-3 md:grid-cols-3 gap-2 sm:gap-6">
+            <div className="text-center p-2 sm:p-4 md:p-6 bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up" style={{ animationDelay: '0.2s' }}>
               <div className="flex items-center justify-center mb-2 sm:mb-3 md:mb-4">
-                <span className="inline-flex items-center justify-center h-6 w-6 sm:h-8 sm:w-8 md:h-12 md:w-12 lg:h-16 lg:w-16 rounded-full bg-yellow-100 dark:bg-yellow-900/40 shadow-[0_0_16px_0_hsl(45,100%,60%,0.3)]">
-                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 md:h-6 md:w-6 lg:h-8 lg:w-8 text-yellow-500 dark:text-yellow-300 animate-glow" />
+                <span className="inline-flex items-center justify-center h-8 w-8 sm:h-12 sm:w-12 md:h-16 md:w-16 rounded-full bg-yellow-100 dark:bg-yellow-900/40 shadow-[0_0_16px_0_hsl(45,100%,60%,0.3)]">
+                  <Sparkles className="h-4 w-4 sm:h-6 sm:w-6 md:h-8 md:w-8 text-yellow-500 dark:text-yellow-300 animate-glow" />
                 </span>
               </div>
-              <h3 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-yellow-100">{t('featureQuality')}</h3>
+              <h3 className="text-xs sm:text-sm md:text-lg lg:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-yellow-100">{t('featureQuality')}</h3>
               <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-muted-foreground dark:text-yellow-200/80 hidden sm:block">{t('featureQualityDesc')}</p>
             </div>
-            <div className="text-center p-2 sm:p-3 md:p-4 lg:p-6 bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+            <div className="text-center p-2 sm:p-4 md:p-6 bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up" style={{ animationDelay: '0.4s' }}>
               <div className="flex items-center justify-center mb-2 sm:mb-3 md:mb-4">
-                <span className="inline-flex items-center justify-center h-6 w-6 sm:h-8 sm:w-8 md:h-12 md:w-12 lg:h-16 lg:w-16 rounded-full bg-blue-100 dark:bg-blue-900/40 shadow-[0_0_16px_0_hsl(210,100%,60%,0.3)]">
-                  <Zap className="h-3 w-3 sm:h-4 sm:w-4 md:h-6 md:w-6 lg:h-8 lg:w-8 text-blue-500 dark:text-blue-300 animate-bounce-gentle" />
+                <span className="inline-flex items-center justify-center h-8 w-8 sm:h-12 sm:w-12 md:h-16 md:w-16 rounded-full bg-blue-100 dark:bg-blue-900/40 shadow-[0_0_16px_0_hsl(210,100%,60%,0.3)]">
+                  <Zap className="h-4 w-4 sm:h-6 sm:w-6 md:h-8 md:w-8 text-blue-500 dark:text-blue-300 animate-bounce-gentle" />
                 </span>
               </div>
-              <h3 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-blue-100">{t('featureDelivery')}</h3>
+              <h3 className="text-xs sm:text-sm md:text-lg lg:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-blue-100">{t('featureDelivery')}</h3>
               <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-muted-foreground dark:text-blue-200/80 hidden sm:block">{t('featureDeliveryDesc')}</p>
             </div>
-            <div className="text-center p-2 sm:p-3 md:p-4 lg:p-6 bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+            <div className="text-center p-2 sm:p-4 md:p-6 bg-gradient-card rounded-lg shadow-card hover:shadow-glow transition-all duration-300 animate-slide-up" style={{ animationDelay: '0.6s' }}>
               <div className="flex items-center justify-center mb-2 sm:mb-3 md:mb-4">
-                <span className="inline-flex items-center justify-center h-6 w-6 sm:h-8 sm:w-8 md:h-12 md:w-12 lg:h-16 lg:w-16 rounded-full bg-red-100 dark:bg-red-900/40 shadow-[0_0_16px_0_hsl(0,100%,60%,0.3)]">
-                  <Gift className="h-3 w-3 sm:h-4 sm:w-4 md:h-6 md:w-6 lg:h-8 lg:w-8 text-red-500 dark:text-red-300 animate-glow" />
+                <span className="inline-flex items-center justify-center h-8 w-8 sm:h-12 sm:w-12 md:h-16 md:w-16 rounded-full bg-red-100 dark:bg-red-900/40 shadow-[0_0_16px_0_hsl(0,100%,60%,0.3)]">
+                  <Gift className="h-4 w-4 sm:h-6 sm:w-6 md:h-8 md:w-8 text-red-500 dark:text-red-300 animate-glow" />
                 </span>
               </div>
-              <h3 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-red-100">{t('featureOffers')}</h3>
+              <h3 className="text-xs sm:text-sm md:text-lg lg:text-xl font-semibold mb-1 sm:mb-2 text-foreground dark:text-red-100">{t('featureOffers')}</h3>
               <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-muted-foreground dark:text-red-200/80 hidden sm:block">{t('featureOffersDesc')}</p>
             </div>
           </div>
           
           {/* Special Category Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mt-6 sm:mt-8 lg:mt-12 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 sm:mt-12 animate-fade-in" style={{ animationDelay: '0.8s' }}>
             <Link to="/category/FAMILY%20PACK" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
-                className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
+                className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
               >
-                <Users className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 mr-2 sm:mr-3 group-hover:scale-110 transition-transform duration-300" />
+                <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 group-hover:scale-110 transition-transform duration-300" />
                 {t('familyPack')}
               </Button>
             </Link>
@@ -281,9 +268,9 @@ const Index = () => {
               <Button 
                 size="lg" 
                 variant="outline"
-                className="w-full sm:w-auto border-2 border-primary text-primary hover:bg-primary hover:text-white font-semibold px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
+                className="w-full sm:w-auto border-2 border-primary text-primary hover:bg-primary hover:text-white font-semibold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
               >
-                <Gift className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 mr-2 sm:mr-3 group-hover:scale-110 transition-transform duration-300" />
+                <Gift className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 group-hover:scale-110 transition-transform duration-300" />
                 {t('giftBox')}
               </Button>
             </Link>
@@ -291,220 +278,140 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Categories and Products Section */}
-      <section className="py-8 sm:py-12 lg:py-16">
-        <div className="w-full px-3 sm:px-4">
-          <div className="text-center mb-6 sm:mb-8 lg:mb-12 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">
-              <span className="title-styled text-primary">Shop by Category</span>
+      {/* Categories Section */}
+      <section className="py-12 sm:py-16">
+        <div className="w-full px-4">
+          <div className="text-center mb-8 sm:mb-12 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
+              <span className="title-styled text-primary">Categories</span>
             </h2>
-            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-muted-foreground">Browse our products by category</p>
+            <p className="text-sm sm:text-base md:text-lg text-muted-foreground">Explore our wide range of fireworks</p>
           </div>
           
-          {loading ? (
-            <div className="flex items-center justify-center py-8 sm:py-12">
-              <Loader className="h-6 w-6 sm:h-8 sm:w-8" />
-              <span className="ml-2 text-muted-foreground text-xs sm:text-sm">Loading categories...</span>
-            </div>
-          ) : error ? (
-            <div className="text-center py-8 sm:py-12">
-              <p className="text-red-500 mb-3 sm:mb-4 text-xs sm:text-sm">{error}</p>
-              <Button onClick={() => window.location.reload()} variant="outline" size="sm" className="text-xs sm:text-sm">
-                Try Again
-              </Button>
-            </div>
-          ) : categories.length === 0 ? (
-            <div className="text-center py-8 sm:py-12">
-              <h3 className="text-base sm:text-lg font-semibold mb-2">No Categories Found</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground">Check back later for available categories.</p>
-            </div>
-          ) : (
-            <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
-              {/* Left Sidebar - Categories */}
-              <div className="w-full lg:w-64 bg-card border border-border rounded-lg p-3 sm:p-4 overflow-y-auto">
-                <div className="mb-4 sm:mb-6">
-                  <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Categories</h3>
-                  
-                  {/* Mobile Dropdown for Categories */}
-                  {isMobile ? (
-                    <div className="relative">
-                      {/* Dropdown Button */}
-                      <Button 
-                        onClick={() => {
-                          setIsCategoryDropdownOpen(!isCategoryDropdownOpen);
-                        }} 
-                        variant="outline" 
-                        className="w-full justify-between bg-white hover:bg-gray-50 text-xs sm:text-sm"
-                      >
-                        <span className="text-left">
-                          {selectedCategory ? 
-                            categories.find(c => c.name === selectedCategory)?.displayName : 
-                            'Select a category'
-                          }
-                        </span>
-                        {isCategoryDropdownOpen ? (
-                          <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 ml-2" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 ml-2" />
-                        )}
-                      </Button>
-                      
-                      {/* Dropdown Menu with Categories */}
-                      {isCategoryDropdownOpen && (
-                        <div 
-                          className="fixed top-20 left-4 right-4 bg-red-500 border-4 border-yellow-400 rounded-lg shadow-2xl z-[99999] max-h-96 overflow-y-auto"
-                          style={{
-                            position: 'fixed',
-                            top: '100px',
-                            left: '20px',
-                            right: '20px',
-                            backgroundColor: 'red',
-                            border: '4px solid yellow',
-                            borderRadius: '8px',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.8)',
-                            zIndex: 99999,
-                            maxHeight: '400px',
-                            overflowY: 'auto'
-                          }}
-                        >
-                          {/* Debug indicator */}
-                          
-                          
-                          <div className="p-3 bg-white">
-                            <div className="text-sm text-gray-600 mb-2">
-                              Categories loaded: {categories.length}
-                            </div>
-                            
-                            {categories.map((category, index) => (
-                              <button
-                                key={category.name}
-                                onClick={() => {
-                                  handleCategorySelect(category.name);
-                                  setIsCategoryDropdownOpen(false);
-                                }}
-                                className="w-full text-left p-3 hover:bg-blue-100 transition-colors border-b border-gray-200 last:border-b-0 bg-white"
-                              >
-                                <div className="font-medium text-sm text-black">
-                                  {index + 1}. {category.displayName || category.name}
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Debug Test Button */}
-                      <div className="mt-2">
-                        <Button 
-                          onClick={() => {
-                            setIsCategoryDropdownOpen(true);
-                          }}
-                          variant="outline"
-                          size="sm"
-                          className="w-full text-xs bg-yellow-100 hover:bg-yellow-200"
-                        >
-                          FORCE OPEN DROPDOWN
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    // Desktop: Show all categories
-                    <>
-                      <Button 
-                        onClick={() => window.location.reload()} 
-                        variant="outline" 
-                        size="sm"
-                        className="w-full text-xs sm:text-sm"
-                      >
-                        Refresh
-                      </Button>
-                      
-                      <div className="space-y-2 mt-3 sm:mt-4">
-                        {categories.map((category) => (
-                          <button
-                            key={category.name}
-                            onClick={() => handleCategorySelect(category.name)}
-                            className={`w-full text-left p-2 sm:p-3 rounded-lg transition-all duration-200 hover:bg-accent ${
-                              selectedCategory === category.name
-                                ? 'bg-primary text-primary-foreground shadow-md'
-                                : 'bg-background hover:bg-accent'
-                            }`}
-                          >
-                            <div className={`font-medium text-xs sm:text-sm ${
-                              selectedCategory === category.name ? 'text-primary-foreground' : 'text-foreground'
-                            }`}>
-                              {category.displayName}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
+            {categories.slice(0, isDesktop ? 8 : 6).map((category, index) => (
+              <div key={category.name} className="animate-fade-in" style={{ animationDelay: `${0.3 + index * 0.1}s` }}>
+                <CategoryCard 
+                  category={category.name}
+                  productCount={category.count}
+                />
+              </div>
+            ))}
+          </div>
+          
+          <div className="text-center mt-8 sm:mt-12 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+            <Button variant="outline" size="lg" asChild className="transition-transform duration-300 hover:scale-110">
+              <Link to="/categories">
+                View More Categories
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Atom Bomb Products Section */}
+      <section className="w-full px-4 py-8 sm:py-12">
+        <div className="text-center mb-8 sm:mb-12 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
+            <span className="title-styled text-primary">Atom Bomb Fireworks</span>
+          </h2>
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground">Powerful explosions for grand celebrations</p>
+        </div>
+        
+        {loadingProducts ? (
+          <div className="py-12">
+            <Loader size="md" />
+          </div>
+        ) : products.length === 0 ? (
+          <p className="text-center text-muted-foreground">No atom bomb products found.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+            {products.map((product) => {
+              const quantity = cartItems.find(item => item.id === (product._id || product.id))?.quantity || 0;
+              return (
+                <div key={product._id || product.id}>
+                  <ProductCard
+                    product={{
+                      id: product._id || product.id,
+                      name_en: product.name_en,
+                      name_ta: product.name_ta,
+                      price: product.price,
+                      original_price: product.original_price,
+                      imageUrl: product.imageUrl,
+                      category: product.category,
+                      youtube_url: product.youtube_url,
+                    }}
+                    onAddToCart={addToCart}
+                    onRemoveFromCart={() => updateQuantity(product._id || product.id, quantity - 1)}
+                    quantity={quantity}
+                    size="sm"
+                  />
                 </div>
-              </div>
+              );
+            })}
+          </div>
+        )}
+        
+        {/* View More Button for Atom Bomb */}
+        <div className="text-center mt-8 sm:mt-12 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+          <Button variant="outline" size="lg" asChild className="transition-transform duration-300 hover:scale-110">
+            <Link to="/category/ATOM%20BOMB">
+              View All Atom Bomb Products
+            </Link>
+          </Button>
+        </div>
+      </section>
 
-              {/* Right Side - Products */}
-              <div className="flex-1">
-                {selectedCategory ? (
-                  <div>
-                    <div className="mb-4 sm:mb-6">
-                      <h2 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">{selectedCategory}</h2>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Browse products in this category
-                      </p>
-                    </div>
-
-                    {loadingProducts ? (
-                      <div className="flex items-center justify-center py-8 sm:py-12">
-                        <Loader className="h-6 w-6 sm:h-8 sm:w-8" />
-                        <span className="ml-2 text-muted-foreground text-xs sm:text-sm">Loading products...</span>
-                      </div>
-                    ) : products.length === 0 ? (
-                      <div className="text-center py-8 sm:py-12">
-                        <h3 className="text-base sm:text-lg font-semibold mb-2">No Products Found</h3>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          No products available in {selectedCategory} category yet.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4 lg:gap-5">
-                        {products.map((product) => {
-                          const quantity = cartItems.find(item => item.id === (product._id || product.id))?.quantity || 0;
-                          return (
-                            <div key={product._id || product.id}>
-                              <ProductCard
-                                product={{
-                                  id: product._id || product.id,
-                                  name_en: product.name_en,
-                                  name_ta: product.name_ta,
-                                  price: product.price,
-                                  original_price: product.original_price,
-                                  imageUrl: product.imageUrl || product.image_url,
-                                  category: product.category,
-                                  youtube_url: product.youtube_url,
-                                }}
-                                onAddToCart={addToCart}
-                                onRemoveFromCart={() => updateQuantity(product._id || product.id, quantity - 1)}
-                                quantity={quantity}
-                                size="sm"
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 sm:py-12">
-                    <h3 className="text-base sm:text-lg font-semibold mb-2">Select a Category</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Choose a category from the left sidebar to view products
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+      {/* Sparkler Products Section */}
+      <section className="w-full px-4 py-8 sm:py-12 bg-gradient-to-b from-muted/20 to-muted/40">
+        <div className="text-center mb-8 sm:mb-12 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
+            <span className="title-styled text-primary">Sparkler Items</span>
+          </h2>
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground">Beautiful sparkles for magical moments</p>
+        </div>
+        
+        {loadingSparklers ? (
+          <div className="py-12">
+            <Loader size="md" />
+          </div>
+        ) : sparklerProducts.length === 0 ? (
+          <p className="text-center text-muted-foreground">No sparkler products found.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+            {sparklerProducts.map((product) => {
+              const quantity = cartItems.find(item => item.id === (product._id || product.id))?.quantity || 0;
+              return (
+                <div key={product._id || product.id}>
+                  <ProductCard
+                    product={{
+                      id: product._id || product.id,
+                      name_en: product.name_en,
+                      name_ta: product.name_ta,
+                      price: product.price,
+                      original_price: product.original_price,
+                      imageUrl: product.imageUrl,
+                      category: product.category,
+                      youtube_url: product.youtube_url,
+                    }}
+                    onAddToCart={addToCart}
+                    onRemoveFromCart={() => updateQuantity(product._id || product.id, quantity - 1)}
+                    quantity={quantity}
+                    size="sm"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+        
+        {/* View More Button for Sparklers */}
+        <div className="text-center mt-8 sm:mt-12 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+          <Button variant="outline" size="lg" asChild className="transition-transform duration-300 hover:scale-110">
+            <Link to="/category/SPARKLER%20ITEMS">
+              View All Sparkler Products
+            </Link>
+          </Button>
         </div>
       </section>
 

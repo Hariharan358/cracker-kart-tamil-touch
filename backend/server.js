@@ -362,7 +362,44 @@ const fcmTokens = new Map();
 
 
 
-// ✅ POST: Place Order - Now handled by orderRoutes.js
+// ✅ POST: Place Order - Direct implementation as backup
+app.post('/api/orders/place', async (req, res) => {
+  try {
+    const { items, total, customerDetails, status, createdAt } = req.body;
+    if (!items || !total || !customerDetails) {
+      return res.status(400).json({ error: 'Missing required order fields.' });
+    }
+
+    // Generate a unique order ID
+    const today = new Date();
+    const dateStr = today.getDate().toString().padStart(2, '0') +
+                   (today.getMonth() + 1).toString().padStart(2, '0') +
+                   today.getFullYear().toString().slice(-2);
+    
+    const orderId = `${dateStr}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+
+    // Create new order
+    const newOrder = new Order({
+      orderId,
+      items,
+      total,
+      customerDetails,
+      status: 'confirmed',
+      createdAt: createdAt || new Date().toISOString(),
+    });
+    
+    await newOrder.save();
+    console.log('✅ Order saved successfully:', orderId);
+    
+    res.status(201).json({ message: '✅ Order placed successfully', orderId });
+  } catch (error) {
+    console.error('❌ Order placement error:', error);
+    res.status(500).json({ 
+      error: 'Failed to place order', 
+      details: error.message
+    });
+  }
+});
 
 // ✅ Admin Login Route
 app.post('/api/admin/login', (req, res) => {
@@ -892,30 +929,6 @@ app.delete('/api/categories/:name', async (req, res) => {
   } catch (error) {
     console.error('❌ Error removing category:', error);
     res.status(500).json({ error: 'Failed to remove category' });
-  }
-});
-
-// PATCH: Update category display name
-app.patch('/api/categories/:name', async (req, res) => {
-  try {
-    const { name } = req.params;
-    const { displayName } = req.body;
-    const decodedName = decodeURIComponent(name);
-    if (!decodedName || !displayName || typeof displayName !== 'string' || displayName.trim().length === 0) {
-      return res.status(400).json({ error: 'Category name and valid displayName are required' });
-    }
-    const existingCategory = await Category.findOne({ name: decodedName });
-    if (!existingCategory) {
-      return res.status(404).json({ error: 'Category not found' });
-    }
-    await Category.findOneAndUpdate(
-      { name: decodedName },
-      { displayName: displayName.trim(), updatedAt: new Date() }
-    );
-    res.json({ message: 'Category updated successfully' });
-  } catch (error) {
-    console.error('❌ Error updating category:', error);
-    res.status(500).json({ error: 'Failed to update category' });
   }
 });
 

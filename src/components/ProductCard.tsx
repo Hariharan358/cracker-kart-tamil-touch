@@ -52,12 +52,12 @@ export const ProductCard = ({
     >
       {/* Product Image */}
       <div
-        className={`relative ${size === "sm" ? "h-20 sm:h-24" : "h-40 sm:h-48"} bg-muted overflow-hidden`}
+        className={`relative ${size === "sm" ? "h-24 sm:h-28" : "h-44 sm:h-52"} bg-white overflow-hidden flex items-center justify-center`}
       >
         <img
           src={product.imageUrl || product.image_url || '/placeholder.svg'}
           alt={product.name_en}
-          className={`w-full h-full object-cover transition-transform duration-300 ${size === "sm" ? "rounded-md" : ""}`}
+          className={`max-w-full max-h-full object-contain transition-transform duration-300 ${size === "sm" ? "rounded-md" : ""}`}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             console.log('🖼️ Image failed to load:', product.imageUrl || product.image_url);

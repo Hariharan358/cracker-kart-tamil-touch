@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 import { Loader } from './ui/loader';
 import { ProductCard } from './ProductCard';
 import { useCart } from '../hooks/useCart';
@@ -164,47 +171,22 @@ export const Categories = () => {
           <div className="flex-1">
             <h3 className="text-lg font-semibold mb-2">Categories</h3>
             
-            {/* Category Dropdown */}
-            <div className="relative">
-              <Button 
-                onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)} 
-                variant="outline" 
-                className="w-full justify-between bg-white hover:bg-gray-50"
-              >
-                <span className="text-left">
-                  {selectedCategory ? 
-                    categories.find(c => c.name === selectedCategory)?.displayName : 
-                    'Select a category'
-                  }
-                </span>
-                {isCategoryDropdownOpen ? (
-                  <ChevronUp className="h-4 w-4 ml-2" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                )}
-              </Button>
-              
-              {/* Dropdown Menu */}
-              {isCategoryDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                  {categories.map((category) => (
-                    <button
-                      key={category.name}
-                      onClick={() => handleCategorySelect(category.name)}
-                      className={`w-full text-left p-3 hover:bg-gray-100 transition-colors ${
-                        selectedCategory === category.name
-                          ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500'
-                          : 'text-gray-700'
-                      }`}
-                    >
-                      <div className="font-medium text-sm">
-                        {category.displayName}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Category Dropdown (Portal) */}
+            <Select
+              value={selectedCategory || undefined}
+              onValueChange={(val) => handleCategorySelect(val)}
+            >
+              <SelectTrigger className="w-full bg-white">
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.name} value={category.name}>
+                    {category.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <Button 

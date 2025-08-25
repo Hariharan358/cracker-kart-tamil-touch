@@ -895,6 +895,30 @@ app.delete('/api/categories/:name', async (req, res) => {
   }
 });
 
+// PATCH: Update category display name
+app.patch('/api/categories/:name', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { displayName } = req.body;
+    const decodedName = decodeURIComponent(name);
+    if (!decodedName || !displayName || typeof displayName !== 'string' || displayName.trim().length === 0) {
+      return res.status(400).json({ error: 'Category name and valid displayName are required' });
+    }
+    const existingCategory = await Category.findOne({ name: decodedName });
+    if (!existingCategory) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    await Category.findOneAndUpdate(
+      { name: decodedName },
+      { displayName: displayName.trim(), updatedAt: new Date() }
+    );
+    res.json({ message: 'Category updated successfully' });
+  } catch (error) {
+    console.error('❌ Error updating category:', error);
+    res.status(500).json({ error: 'Failed to update category' });
+  }
+});
+
 // GET: Get categories for user side (public)
 app.get('/api/categories/public', async (req, res) => {
   try {

@@ -51,7 +51,7 @@ const Cart = () => {
     <div className="min-h-screen bg-background">
       <Navbar cartCount={getTotalItems()} />
       
-      <div className="w-full px-3 sm:px-4 py-6 sm:py-8">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">Shopping Cart</h1>
           <p className="text-xs sm:text-sm text-muted-foreground">{cartItems.length} items</p>
@@ -62,45 +62,49 @@ const Cart = () => {
           <div className="lg:col-span-2 space-y-3 sm:space-y-4">
             {cartItems.map((item) => (
               <div key={item.id} className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4 bg-card rounded-lg border">
-                <img
-                  src={item.imageUrl}
-                  alt={item.name_en}
-                  className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-md"
-                />
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-xs sm:text-sm md:text-base truncate">{item.name_en}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground">₹{item.price}</p>
-                </div>
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    disabled={item.quantity <= 1}
-                    className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                  >
-                    <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                  <span className="w-6 sm:w-8 text-center text-xs sm:text-sm">{item.quantity}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                  >
-                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-xs sm:text-sm md:text-base">₹{item.price * item.quantity}</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeFromCart(item.id)}
-                    className="text-destructive hover:text-destructive h-7 w-7 sm:h-8 sm:w-8 p-0"
-                  >
-                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
+                <div className="w-full md:grid md:[grid-template-columns:64px_1fr_minmax(140px,auto)_120px] md:items-center md:gap-4 flex items-center">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 p-1 rounded-md border bg-white overflow-hidden flex items-center justify-center flex-shrink-0 aspect-square">
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name_en}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0 px-2 sm:px-4 md:px-0">
+                    <h3 className="font-semibold text-xs sm:text-sm md:text-base truncate">{item.name_en}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">₹{item.price}</p>
+                  </div>
+                  <div className="flex items-center gap-1 sm:gap-2 md:justify-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      disabled={item.quantity <= 1}
+                      className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                    >
+                      <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
+                    </Button>
+                    <span className="w-6 sm:w-8 text-center text-xs sm:text-sm">{item.quantity}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                    >
+                      <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                    </Button>
+                  </div>
+                  <div className="ml-auto md:ml-0 text-right min-w-[90px] sm:min-w-[120px]">
+                    <p className="font-semibold text-xs sm:text-sm md:text-base">₹{item.price * item.quantity}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFromCart(item.id)}
+                      className="text-destructive hover:text-destructive h-7 w-7 sm:h-8 sm:w-8 p-0"
+                    >
+                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}

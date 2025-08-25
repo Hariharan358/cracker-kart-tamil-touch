@@ -296,6 +296,33 @@ const Admin = () => {
     }
   };
 
+  const handleEditCategory = async (categoryName) => {
+    const newDisplayName = window.prompt(`Edit display name for ${categoryName}`, categoryName);
+    if (newDisplayName === null) return;
+    const trimmed = newDisplayName.trim();
+    if (!trimmed) {
+      toast({ title: 'Invalid name', description: 'Display name cannot be empty', variant: 'destructive' });
+      return;
+    }
+    try {
+      const res = await fetch(`https://api.kmpyrotech.com/api/categories/${encodeURIComponent(categoryName)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ displayName: trimmed })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast({ title: '✅ Category updated', description: `${categoryName} display name changed.` });
+        fetchCategories();
+        fetchDetailedCategories();
+      } else {
+        toast({ title: '❌ Update failed', description: data.error || 'Server error', variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: '❌ Network error', description: error.message, variant: 'destructive' });
+    }
+  };
+
   const fetchOrders = async () => {
     try {
       const queryParams = new URLSearchParams();
@@ -861,19 +888,29 @@ const Admin = () => {
                                 {loadingCategoryCounts ? 'Loading...' : `${categoryProductCounts[category] || 0} products`}
                               </div>
                             </div>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDeleteCategory(category)}
-                              disabled={isDeletingCategory}
-                              className="ml-3"
-                            >
-                              {isDeletingCategory ? (
-                                <Loader2 className="animate-spin h-4 w-4" />
-                              ) : (
-                                "Delete"
-                              )}
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleEditCategory(category)}
+                                className="ml-3"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteCategory(category)}
+                                disabled={isDeletingCategory}
+                                className="ml-3"
+                              >
+                                {isDeletingCategory ? (
+                                  <Loader2 className="animate-spin h-4 w-4" />
+                                ) : (
+                                  "Delete"
+                                )}
+                              </Button>
+                            </div>
                           </div>
 
                         </div>

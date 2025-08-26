@@ -27,7 +27,7 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
 
   const handleDownloadPriceList = () => {
     // Replace this URL with your actual price list voucher file
-    const priceListUrl = '/Final_Net_Rate_compressed.pdf'; // Update this path to your actual file
+    const priceListUrl = '/Price List_Net Rate.pdf'; // Update this path to your actual file
     
     // Create a temporary link element to trigger download
     const link = document.createElement('a');

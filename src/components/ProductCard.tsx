@@ -12,6 +12,7 @@ interface Product {
   image_url?: string;
   category: string;
   youtube_url?: string;
+  createdAt?: string;
 }
 
 interface ProductCardProps {
@@ -67,6 +68,11 @@ export const ProductCard = ({
             console.log('✅ Image loaded successfully:', product.imageUrl || product.image_url);
           }}
         />
+        {product.createdAt && Date.now() - new Date(product.createdAt).getTime() < 1000 * 60 * 60 * 24 * 7 && (
+          <span className="absolute top-2 left-2 bg-green-600 text-white text-[10px] sm:text-xs px-2 py-0.5 rounded-full shadow">
+            NEW
+          </span>
+        )}
         <div className="absolute inset-0 bg-gradient-hero opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
       </div>
 

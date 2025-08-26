@@ -166,10 +166,11 @@ const Admin = () => {
   const fetchCategories = async () => {
     setLoadingCategories(true);
     try {
-      const res = await fetch('https://api.kmpyrotech.com/api/categories');
+      const res = await fetch('https://api.kmpyrotech.com/api/categories/public');
       const data = await res.json();
       if (res.ok) {
-        setCategories(data);
+        // Expect array of { name, displayName }
+        setCategories(Array.isArray(data) ? data : []);
       } else {
         toast({
           title: "❌ Failed to fetch categories",
@@ -384,13 +385,13 @@ const Admin = () => {
     setLoadingCategoryCounts(true);
     try {
       const counts = {};
-      for (const category of categories) {
+      for (const cat of categories) {
         try {
-          const res = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(category)}`);
+          const res = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(cat.name)}`);
           const data = await res.json();
-          counts[category] = data.length;
+          counts[cat.name] = data.length;
         } catch (err) {
-          counts[category] = 0;
+          counts[cat.name] = 0;
         }
       }
       setCategoryProductCounts(counts);
@@ -771,8 +772,8 @@ const Admin = () => {
                   >
                     <option value="">-- Select Category --</option>
                     {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat] || 0} products)`}
+                      <option key={cat.name} value={cat.name}>
+                        {cat.displayName} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat.name] || 0} products)`}
                       </option>
                     ))}
                   </select>
@@ -878,21 +879,21 @@ const Admin = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {categories.map((category) => (
                         <div 
-                          key={category} 
+                          key={category.name} 
                           className="bg-card rounded-lg shadow-card p-4 border border-border"
                         >
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex-1">
-                              <div className="font-semibold text-lg">{category}</div>
+                              <div className="font-semibold text-lg">{category.displayName}</div>
                               <div className="text-sm text-muted-foreground">
-                                {loadingCategoryCounts ? 'Loading...' : `${categoryProductCounts[category] || 0} products`}
+                                {loadingCategoryCounts ? 'Loading...' : `${categoryProductCounts[category.name] || 0} products`}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <Button
                                 variant="secondary"
                                 size="sm"
-                                onClick={() => handleEditCategory(category)}
+                                onClick={() => handleEditCategory(category.name)}
                                 className="ml-3"
                               >
                                 Edit
@@ -900,7 +901,7 @@ const Admin = () => {
                               <Button
                                 variant="destructive"
                                 size="sm"
-                                onClick={() => handleDeleteCategory(category)}
+                                onClick={() => handleDeleteCategory(category.name)}
                                 disabled={isDeletingCategory}
                                 className="ml-3"
                               >
@@ -992,8 +993,8 @@ const Admin = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat] || 0} products)`}
+                            <SelectItem key={cat.name} value={cat.name}>
+                              {cat.displayName} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat.name] || 0} products)`}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1416,8 +1417,8 @@ const Admin = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat] || 0} products)`}
+                    <SelectItem key={cat.name} value={cat.name}>
+                      {cat.displayName} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat.name] || 0} products)`}
                     </SelectItem>
                   ))}
                 </SelectContent>

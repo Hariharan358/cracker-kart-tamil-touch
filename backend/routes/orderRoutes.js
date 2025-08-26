@@ -13,12 +13,12 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-// Generate unique order ID using atomic per-day counter (DDMMYY + 3 digits)
+// Generate unique order ID using atomic per-day counter (YYMMDD + 3 digits)
 const getNextOrderIdForToday = async () => {
   const today = new Date();
-  const dateStr = today.getDate().toString().padStart(2, '0') +
+  const dateStr = today.getFullYear().toString().slice(-2) +
                  (today.getMonth() + 1).toString().padStart(2, '0') +
-                 today.getFullYear().toString().slice(-2);
+                 today.getDate().toString().padStart(2, '0');
   
   console.log('🔢 Generating order ID for date:', dateStr);
   const counter = await OrderCounter.findOneAndUpdate(

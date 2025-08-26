@@ -15,6 +15,7 @@ interface Product {
   category: string;
   youtube_url?: string; // Added youtube_url to the interface
    // Added original_price to the interface
+  createdAt?: string;
 }
 
 export const CategoryProducts = () => {
@@ -65,6 +66,7 @@ export const CategoryProducts = () => {
                 imageUrl: product.imageUrl,
                 category: product.category,
                 youtube_url: product.youtube_url,
+                createdAt: product.createdAt,
               }}
               onAddToCart={addToCart}
               size={isMobile ? "sm" : "md"}

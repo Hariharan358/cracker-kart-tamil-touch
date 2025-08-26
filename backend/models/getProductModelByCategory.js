@@ -5,7 +5,10 @@ const productSchema = new mongoose.Schema({
   name_en: String,
   name_ta: String,
   price: Number,
+  original_price: Number,
   imageUrl: String,
+  youtube_url: String,
+  category: String,
 }, { timestamps: true });
 
 const modelCache = {};

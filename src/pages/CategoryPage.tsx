@@ -18,6 +18,7 @@ interface Product {
   imageUrl: string;
   category: string;
   youtube_url?: string;
+  createdAt?: string;
 }
 
 const CategoryPage = () => {
@@ -83,6 +84,7 @@ const CategoryPage = () => {
                     imageUrl: product.imageUrl,
                     category: product.category,
                     youtube_url: product.youtube_url,
+                    createdAt: product.createdAt,
                   }}
                   onAddToCart={addToCart}
                   onRemoveFromCart={removeFromCart}

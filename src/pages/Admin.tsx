@@ -119,10 +119,17 @@ const Admin = () => {
 
   // Category management state
   const [categories, setCategories] = useState([]);
-  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryEn, setNewCategoryEn] = useState("");
+  const [newCategoryTa, setNewCategoryTa] = useState("");
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [isDeletingCategory, setIsDeletingCategory] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [isEditingCategory, setIsEditingCategory] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [editCategoryForm, setEditCategoryForm] = useState({
+    displayName_en: "",
+    displayName_ta: "",
+  });
 
   // Add state for transportName and lrNumber per order
   const [transportInputs, setTransportInputs] = useState({});
@@ -167,17 +174,21 @@ const Admin = () => {
     setLoadingCategories(true);
     try {
       const res = await fetch('https://api.kmpyrotech.com/api/categories/public');
-      const data = await res.json();
-      if (res.ok) {
-        // Expect array of { name, displayName }
-        setCategories(Array.isArray(data) ? data : []);
-      } else {
+      if (!res.ok) {
+        const errorMessage = await getErrorMessage(res);
         toast({
           title: "❌ Failed to fetch categories",
-          description: data.error || "Server error",
+          description: errorMessage,
           variant: "destructive",
         });
+        return;
       }
+      const data = await res.json();
+      setCategories(Array.isArray(data) ? data.map(cat => ({
+        ...cat,
+        displayName_en: cat.displayName_en || cat.displayName || cat.name,
+        displayName_ta: cat.displayName_ta || ''
+      })) : []);
     } catch (error) {
       toast({
         title: "❌ Network error",
@@ -192,26 +203,43 @@ const Admin = () => {
   const fetchDetailedCategories = async () => {
     try {
       const res = await fetch('https://api.kmpyrotech.com/api/categories/detailed');
-      const data = await res.json();
-      if (res.ok) {
-        // Update category product counts
-        const counts = {};
-        data.forEach(cat => {
-          counts[cat.name] = cat.productCount;
-        });
-        setCategoryProductCounts(counts);
+      if (!res.ok) {
+        return;
       }
+      const data = await res.json();
+      const counts = {};
+      data.forEach(cat => {
+        counts[cat.name] = cat.productCount;
+      });
+      setCategoryProductCounts(counts);
     } catch (error) {
       console.error('Error fetching detailed categories:', error);
     }
   };
 
+  const getErrorMessage = async (res) => {
+    let errorMessage = 'Unknown error';
+    const contentType = res.headers.get('Content-Type');
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        const data = await res.json();
+        errorMessage = data.error || 'Server error';
+      } catch {
+        errorMessage = 'Invalid JSON response';
+      }
+    } else {
+      errorMessage = await res.text();
+      errorMessage = errorMessage.substring(0, 200); // truncate long HTML
+    }
+    return errorMessage;
+  };
+
   const handleAddCategory = async (e) => {
     e.preventDefault();
-    if (!newCategoryName.trim()) {
+    if (!newCategoryEn.trim()) {
       toast({
-        title: "❌ Category name required",
-        description: "Please enter a category name",
+        title: "❌ English name required",
+        description: "Please enter an English category name",
         variant: "destructive",
       });
       return;
@@ -219,30 +247,34 @@ const Admin = () => {
 
     setIsAddingCategory(true);
     try {
+      const name = newCategoryEn.trim().toUpperCase().replace(/\s+/g, '_');
       const res = await fetch('https://api.kmpyrotech.com/api/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          name: newCategoryName.trim()
+          name,
+          displayName_en: newCategoryEn.trim(),
+          displayName_ta: newCategoryTa.trim()
         }),
       });
-      const data = await res.json();
-      
-      if (res.ok) {
-        toast({
-          title: "✅ Category Added!",
-          description: `${data.category} added successfully.`,
-        });
-        setNewCategoryName("");
-        fetchCategories();
-        fetchDetailedCategories();
-      } else {
+      if (!res.ok) {
+        const errorMessage = await getErrorMessage(res);
         toast({
           title: "❌ Failed to Add Category",
-          description: data.error || "Something went wrong.",
+          description: errorMessage,
           variant: "destructive",
         });
+        return;
       }
+      const data = await res.json();
+      toast({
+        title: "✅ Category Added!",
+        description: `${data.category} added successfully.`,
+      });
+      setNewCategoryEn("");
+      setNewCategoryTa("");
+      fetchCategories();
+      fetchDetailedCategories();
     } catch (error) {
       toast({
         title: "❌ Server Error",
@@ -264,27 +296,27 @@ const Admin = () => {
       const res = await fetch(`https://api.kmpyrotech.com/api/categories/${encodeURIComponent(categoryName)}`, {
         method: 'DELETE',
       });
-      const data = await res.json();
-      
-      if (res.ok) {
-        toast({
-          title: "✅ Category Deleted!",
-          description: `${categoryName} removed successfully.`,
-        });
-        fetchCategories();
-        fetchDetailedCategories();
-        
-        // If the deleted category was selected in product management, clear it
-        if (productManagementCategory === categoryName) {
-          setProductManagementCategory("");
-          setCategoryProducts([]);
-        }
-      } else {
+      if (!res.ok) {
+        const errorMessage = await getErrorMessage(res);
         toast({
           title: "❌ Failed to Delete Category",
-          description: data.error || "Something went wrong.",
+          description: errorMessage,
           variant: "destructive",
         });
+        return;
+      }
+      const data = await res.json();
+      toast({
+        title: "✅ Category Deleted!",
+        description: `${categoryName} removed successfully.`,
+      });
+      fetchCategories();
+      fetchDetailedCategories();
+      
+      // If the deleted category was selected in product management, clear it
+      if (productManagementCategory === categoryName) {
+        setProductManagementCategory("");
+        setCategoryProducts([]);
       }
     } catch (error) {
       toast({
@@ -297,31 +329,45 @@ const Admin = () => {
     }
   };
 
-  const handleEditCategory = async (categoryName) => {
-    const newDisplayName = window.prompt(`Edit display name for ${categoryName}`, categoryName);
-    if (newDisplayName === null) return;
-    const trimmed = newDisplayName.trim();
-    if (!trimmed) {
-      toast({ title: 'Invalid name', description: 'Display name cannot be empty', variant: 'destructive' });
+  const handleEditCategoryClick = (category) => {
+    setEditCategoryForm({
+      displayName_en: category.displayName_en || category.displayName || category.name,
+      displayName_ta: category.displayName_ta || "",
+    });
+    setEditingCategory(category);
+    setIsEditingCategory(true);
+  };
+
+  const handleEditCategorySubmit = async (e) => {
+    e.preventDefault();
+    const { displayName_en, displayName_ta } = editCategoryForm;
+    if (!displayName_en.trim()) {
+      toast({ title: 'Invalid name', description: 'English display name cannot be empty', variant: 'destructive' });
       return;
     }
     try {
-      const res = await fetch(`https://api.kmpyrotech.com/api/categories/${encodeURIComponent(categoryName)}`, {
+      const res = await fetch(`https://api.kmpyrotech.com/api/categories/${encodeURIComponent(editingCategory.name)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ displayName: trimmed })
+        body: JSON.stringify({ displayName_en: displayName_en.trim(), displayName_ta: displayName_ta.trim() })
       });
-      const data = await res.json();
-      if (res.ok) {
-        toast({ title: '✅ Category updated', description: `${categoryName} display name changed.` });
-        fetchCategories();
-        fetchDetailedCategories();
-      } else {
-        toast({ title: '❌ Update failed', description: data.error || 'Server error', variant: 'destructive' });
+      if (!res.ok) {
+        const errorMessage = await getErrorMessage(res);
+        toast({ title: '❌ Update failed', description: errorMessage, variant: 'destructive' });
+        return;
       }
+      const data = await res.json();
+      toast({ title: '✅ Category updated', description: `${editingCategory.name} display names changed.` });
+      fetchCategories();
+      fetchDetailedCategories();
+      setIsEditingCategory(false);
     } catch (error) {
       toast({ title: '❌ Network error', description: error.message, variant: 'destructive' });
     }
+  };
+
+  const handleEditCategoryFormChange = (field, value) => {
+    setEditCategoryForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const fetchOrders = async () => {
@@ -773,7 +819,7 @@ const Admin = () => {
                     <option value="">-- Select Category --</option>
                     {categories.map((cat) => (
                       <option key={cat.name} value={cat.name}>
-                        {cat.displayName} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat.name] || 0} products)`}
+                        {cat.displayName_en}{cat.displayName_ta ? ` (${cat.displayName_ta})` : ''} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat.name] || 0} products)`}
                       </option>
                     ))}
                   </select>
@@ -817,18 +863,23 @@ const Admin = () => {
                     <FolderPlus className="h-5 w-5 mr-2" />
                     Add New Category
                   </h3>
-                  <form onSubmit={handleAddCategory} className="flex gap-3">
+                  <form onSubmit={handleAddCategory} className="space-y-3">
                     <Input
-                      placeholder="Enter category name (e.g., NEW CATEGORY)"
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                      className="flex-1"
+                      placeholder="Enter category English name (e.g., New Category)"
+                      value={newCategoryEn}
+                      onChange={(e) => setNewCategoryEn(e.target.value)}
+                      disabled={isAddingCategory}
+                    />
+                    <Input
+                      placeholder="Enter category Tamil name (optional)"
+                      value={newCategoryTa}
+                      onChange={(e) => setNewCategoryTa(e.target.value)}
                       disabled={isAddingCategory}
                     />
                     <Button 
                       type="submit" 
-                      disabled={isAddingCategory || !newCategoryName.trim()}
-                      className="min-w-[120px]"
+                      disabled={isAddingCategory || !newCategoryEn.trim()}
+                      className="w-full"
                     >
                       {isAddingCategory ? (
                         <span className="flex items-center justify-center">
@@ -840,7 +891,7 @@ const Admin = () => {
                     </Button>
                   </form>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Category names will be automatically converted to uppercase
+                    Internal name will be generated from English name (uppercase)
                   </p>
                 </div>
 
@@ -884,7 +935,8 @@ const Admin = () => {
                         >
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex-1">
-                              <div className="font-semibold text-lg">{category.displayName}</div>
+                              <div className="font-semibold text-lg">{category.displayName_en}</div>
+                              <div className="text-sm text-muted-foreground">{category.displayName_ta}</div>
                               <div className="text-sm text-muted-foreground">
                                 {loadingCategoryCounts ? 'Loading...' : `${categoryProductCounts[category.name] || 0} products`}
                               </div>
@@ -893,7 +945,7 @@ const Admin = () => {
                               <Button
                                 variant="secondary"
                                 size="sm"
-                                onClick={() => handleEditCategory(category.name)}
+                                onClick={() => handleEditCategoryClick(category)}
                                 className="ml-3"
                               >
                                 Edit
@@ -994,7 +1046,7 @@ const Admin = () => {
                         <SelectContent>
                           {categories.map((cat) => (
                             <SelectItem key={cat.name} value={cat.name}>
-                              {cat.displayName} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat.name] || 0} products)`}
+                              {cat.displayName_en}{cat.displayName_ta ? ` (${cat.displayName_ta})` : ''} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat.name] || 0} products)`}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1418,7 +1470,7 @@ const Admin = () => {
                 <SelectContent>
                   {categories.map((cat) => (
                     <SelectItem key={cat.name} value={cat.name}>
-                      {cat.displayName} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat.name] || 0} products)`}
+                      {cat.displayName_en}{cat.displayName_ta ? ` (${cat.displayName_ta})` : ''} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat.name] || 0} products)`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1484,6 +1536,41 @@ const Admin = () => {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="ml-2">Save Changes</Button>
+            </DialogFooter>
+          </form>
+          <div className="h-4"></div> {/* Extra space at bottom */}
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Edit Dialog */}
+      <Dialog open={isEditingCategory} onOpenChange={setIsEditingCategory}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Category Display Names</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditCategorySubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="edit_displayName_en">Display Name (English)</Label>
+              <Input
+                id="edit_displayName_en"
+                value={editCategoryForm.displayName_en}
+                onChange={e => handleEditCategoryFormChange("displayName_en", e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit_displayName_ta">Display Name (Tamil)</Label>
+              <Input
+                id="edit_displayName_ta"
+                value={editCategoryForm.displayName_ta}
+                onChange={e => handleEditCategoryFormChange("displayName_ta", e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditingCategory(false)}>
                 Cancel
               </Button>
               <Button type="submit" className="ml-2">Save Changes</Button>

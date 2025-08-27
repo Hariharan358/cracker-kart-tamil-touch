@@ -87,98 +87,91 @@ const Checkout = () => {
         throw new Error('Missing required customer details');
       }
 
-      // Try the main API endpoint first
-      let response = await fetch('https://api.kmpyrotech.com/api/orders/place', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData),
-      });
+      // Always use the correct endpoint that exists on the server
+      // Helper: fetch with timeout
+      const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs = 12000) => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const res = await fetch(url, { ...options, signal: controller.signal });
+          return res;
+        } finally {
+          clearTimeout(id);
+        }
+      };
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-      // If the main endpoint fails, try alternative endpoints
-      if (!response.ok) {
-        console.log('Main endpoint failed, trying alternative...');
-        
-        // Try alternative endpoint
-        response = await fetch('https://api.kmpyrotech.com/api/orders', {
+      let response: Response | null = null;
+      try {
+        response = await fetchWithTimeout('https://api.kmpyrotech.com/api/orders/place', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
           body: JSON.stringify(orderData),
         });
-        
-        console.log('Alternative endpoint response status:', response.status);
-        
-        // If that also fails, try a different approach
-        if (!response.ok) {
-          console.log('Alternative endpoint also failed, trying direct POST...');
-          
-          // Try a more direct approach
-          response = await fetch('https://api.kmpyrotech.com/api/orders', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-              ...orderData,
-              endpoint: 'place' // Add endpoint identifier
-            }),
-          });
-          
-          console.log('Direct POST response status:', response.status);
-        }
+      } catch (networkErr) {
+        console.warn('Primary endpoint network error, retrying fallback /api/orders', networkErr);
+        // Retry fallback immediately if network fails (e.g., 524/blocked by proxy)
+        response = await fetchWithTimeout('https://api.kmpyrotech.com/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(orderData),
+        });
+      }
+      
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      // If /place is not found on the server, try fallback /api/orders
+      if (!response.ok && response.status === 404) {
+        console.log('Primary endpoint 404, retrying fallback /api/orders');
+        response = await fetchWithTimeout('https://api.kmpyrotech.com/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(orderData),
+        });
+        console.log('Fallback response status:', response.status);
       }
 
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: Failed to place order`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (parseError) {
-          console.error('Failed to parse error response:', parseError);
-          // If we can't parse JSON, it might be an HTML error page
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const errorData = await response.json().catch(() => null);
+          if (errorData) errorMessage = errorData.error || errorData.message || errorMessage;
+        } else {
+          const errorText = await response.text().catch(() => '');
+          console.error('Non-JSON error response:', errorText?.slice(0, 200));
           if (response.status === 404) {
-            // Create a local order as fallback
-            console.log('API endpoint not available, creating local order...');
-            const localOrderId = `LOCAL_${Date.now()}`;
-            const localOrder = {
-              orderId: localOrderId,
-              ...orderData,
-              status: 'confirmed',
-              createdAt: new Date().toISOString(),
-              isLocalOrder: true
-            };
-            
-            // Store in localStorage as fallback
-            const existingOrders = JSON.parse(localStorage.getItem('localOrders') || '[]');
-            existingOrders.push(localOrder);
-            localStorage.setItem('localOrders', JSON.stringify(existingOrders));
-            
-            setOrderId(localOrderId);
-            setIsSubmitted(true);
-            clearCart();
-            alert(`Order placed successfully! Order ID: ${localOrderId}\n\nNote: This is a local order. Please contact support at +91 9940891416 to complete your order.`);
-            return;
-          } else {
-            errorMessage = `Server error (${response.status}). Please try again later.`;
+            errorMessage = 'Order service not found. Please try again in a moment.';
           }
         }
         throw new Error(errorMessage);
       }
 
-      const result = await response.json();
-      setOrderId(result.orderId);
+      // Resilient success handling: proceed even if JSON parsing fails
+      let result: any = null;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        result = await response.json().catch(() => null);
+      } else {
+        // Attempt to parse text for debugging, but don't block success
+        await response.text().catch(() => '');
+      }
+
+      const finalOrderId = result?.orderId || generateTempOrderId();
+      setOrderId(finalOrderId);
       setIsSubmitted(true);
       clearCart();
       
-      // Show success message
-      alert(`Order placed successfully! Order ID: ${result.orderId}\n\nWe'll contact you soon to confirm your order.`);
+      // Success message handled by UI (isSubmitted view). No popup.
     } catch (error) {
       console.error('Error placing order:', error);
       let errorMessage = error.message || 'Failed to place order. Please try again.';
@@ -192,7 +185,8 @@ const Checkout = () => {
         errorMessage = 'Server error. Please try again later or contact support.';
       }
       
-      alert(`Error: ${errorMessage}`);
+      // Optional: surface error in UI instead of blocking popup
+      console.error('Checkout error:', errorMessage);
     } finally {
       setIsSubmitting(false);
     }

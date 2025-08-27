@@ -437,44 +437,92 @@ try {
 // FCM Token storage (in production, use a database)
 const fcmTokens = new Map();
 
+// Shared simple order creation used by fallback endpoints
+const createOrderSimple = async (payload) => {
+  const { items, total, customerDetails, createdAt } = payload || {};
+
+  const errors = [];
+  // items validation
+  if (!Array.isArray(items) || items.length === 0) {
+    errors.push('items must be a non-empty array');
+  }
+  // total validation (coerce to number)
+  const numericTotal = Number(total);
+  if (Number.isNaN(numericTotal) || numericTotal <= 0) {
+    errors.push('total must be a positive number');
+  }
+  // customerDetails validation
+  if (!customerDetails || typeof customerDetails !== 'object') {
+    errors.push('customerDetails is required');
+  } else {
+    if (!customerDetails.fullName) errors.push('customerDetails.fullName is required');
+    if (!customerDetails.mobile) errors.push('customerDetails.mobile is required');
+    if (!customerDetails.address) errors.push('customerDetails.address is required');
+  }
+
+  if (errors.length > 0) {
+    const err = new Error(`Missing/invalid fields: ${errors.join(', ')}`);
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Generate a simple unique order ID (YYMMDD + random 3 digits)
+  const today = new Date();
+  const dateStr = today.getFullYear().toString().slice(-2) +
+                 (today.getMonth() + 1).toString().padStart(2, '0') +
+                 today.getDate().toString().padStart(2, '0');
+  const orderId = `${dateStr}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+
+  const newOrder = new Order({
+    orderId,
+    items,
+    total: numericTotal,
+    customerDetails,
+    status: 'confirmed',
+    createdAt: createdAt || new Date().toISOString(),
+  });
+
+  await newOrder.save();
+  return orderId;
+};
+
 
 
 // ✅ POST: Place Order - Direct implementation as backup
 app.post('/api/orders/place', async (req, res) => {
   try {
-    const { items, total, customerDetails, status, createdAt } = req.body;
-    if (!items || !total || !customerDetails) {
-      return res.status(400).json({ error: 'Missing required order fields.' });
-    }
-
-    // Generate a unique order ID
-    const today = new Date();
-    const dateStr = today.getFullYear().toString().slice(-2) +
-                   (today.getMonth() + 1).toString().padStart(2, '0') +
-                   today.getDate().toString().padStart(2, '0');
-    const orderId = `${dateStr}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
-
-    // Create new order
-    const newOrder = new Order({
-      orderId,
-      items,
-      total,
-      customerDetails,
-      status: 'confirmed',
-      createdAt: createdAt || new Date().toISOString(),
-    });
-    
-    await newOrder.save();
+    const orderId = await createOrderSimple(req.body);
     console.log('✅ Order saved successfully:', orderId);
-    
     res.status(201).json({ message: '✅ Order placed successfully', orderId });
   } catch (error) {
+    const status = error.statusCode || 500;
     console.error('❌ Order placement error:', error);
-    res.status(500).json({ 
+    res.status(status).json({ 
       error: 'Failed to place order', 
       details: error.message
     });
   }
+});
+
+// ✅ POST: Fallback endpoint (some clients may still POST /api/orders)
+app.post('/api/orders', async (req, res) => {
+  try {
+    const orderId = await createOrderSimple(req.body);
+    console.log('✅ Order saved successfully (fallback):', orderId);
+    res.status(201).json({ message: '✅ Order placed successfully', orderId });
+  } catch (error) {
+    const status = error.statusCode || 500;
+    console.error('❌ Fallback order placement error:', error);
+    res.status(status).json({ 
+      error: 'Failed to place order', 
+      details: error.message
+    });
+  }
+});
+
+// ✅ Quick ping to verify orders route availability
+app.get('/api/orders/ping', (req, res) => {
+  res.json({ ok: true, message: 'orders route is live' });
 });
 
 // ✅ Admin Login Route
@@ -1096,63 +1144,7 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 
-// Initialize default categories
-const initializeDefaultCategories = async () => {
-  try {
-    const defaultCategories = [
-      "SPARKLER ITEMS",
-      "FLOWER POTS",
-      "CHAKKARS",
-      "TWINKLING",
-      "COLOUR FOUNTAIN WINDOW BIG",
-      "Color Window Fountain 3 Inch",
-      "ENJOY PENCIAL",
-      "ONE SOUND CRACKERS",
-      "BIJILI",
-      "ROCKET BOMB",
-      "ATOM BOMB",
-      "GAINT & DELUXE",
-      "RED MIRACLE (OTHER)",
-      "RED MIRACLE (Brands)",
-      "BABY FANCY NOVELTIES",
-      "MULTI COLOUR SHOT BRAND",
-      "MULTI COLOUR SHOT-Others",
-      "COLOUR PAPER MUSICAL OUT",
-      "MEGA DISPLAY SERIOUS",
-      "MEGA FOUNTAIN",
-      "MINI AERIAL CHOTTA FACNY",
-      "MEGA DISPLAY",
-      "GUJARATH FLOWER POTS",
-      "NEW COLOUR FOUNTAIN SKY",
-      "COLOUR SMOKE FOUNTAIN",
-      "MATCHES BOX",
-      "KANNAN 5 PIECE GIFT BOX",
-      "GUNS",
-      "NATTU VEDI",
-      "FAMILY PACK",
-      "GIFT BOX"
-    ];
-
-    for (const categoryName of defaultCategories) {
-      try {
-        await Category.findOneAndUpdate(
-          { name: categoryName.toUpperCase() },
-          { 
-            name: categoryName.toUpperCase(),
-            displayName: categoryName,
-            isActive: true
-          },
-          { upsert: true, new: true }
-        );
-      } catch (err) {
-        console.warn(`⚠️ Could not initialize category ${categoryName}:`, err.message);
-      }
-    }
-    console.log('✅ Default categories initialized');
-  } catch (error) {
-    console.warn('⚠️ Category initialization failed:', error.message);
-  }
-};
+// Removed hardcoded default categories initialization to avoid duplication.
 
 // Performance optimization: Add database indexes for faster queries
 const setupDatabaseIndexes = async () => {
@@ -1183,5 +1175,5 @@ const setupDatabaseIndexes = async () => {
 mongoose.connection.once('open', () => {
   console.log('✅ Connected to MongoDB');
   setupDatabaseIndexes();
-  initializeDefaultCategories();
+  // Default categories are managed client-side (mockData) or via /api/categories endpoints.
 });

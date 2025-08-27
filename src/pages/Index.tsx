@@ -18,7 +18,7 @@ import { Loader } from "../components/ui/loader";
 const Index = () => {
   const { getTotalItems, addToCart, cartItems, updateQuantity } = useCart();
   const { t } = useLanguage();
-  const categories = getCategoriesWithCount();
+  const [categories, setCategories] = useState<{ name: string; displayName?: string; count: number }[]>([]);
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [sparklerProducts, setSparklerProducts] = useState([]);
@@ -26,6 +26,31 @@ const Index = () => {
   const [isDesktop, setIsDesktop] = useState(false);
   const { resolvedTheme } = useTheme();
   const [videoError, setVideoError] = useState(false);
+
+  // Load categories with counts from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('https://api.kmpyrotech.com/api/categories/detailed');
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const mapped = data.map((c: any) => ({
+            name: c.name,
+            displayName: c.displayName,
+            count: c.productCount || 0,
+          }));
+          setCategories(mapped);
+        } else {
+          setCategories([]);
+        }
+      } catch (e) {
+        console.error('❌ Failed to load categories:', e);
+        setCategories([]);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Responsive hook for category display
   useEffect(() => {

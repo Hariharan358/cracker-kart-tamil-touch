@@ -32,13 +32,31 @@ const Categories = () => {
       
       // Add cache-busting parameter to ensure fresh data
       const timestamp = Date.now();
-      const res = await fetch(`https://api.kmpyrotech.com/api/categories/public?t=${timestamp}`);
+      const res = await fetch(`https://api.kmpyrotech.com/api/categories/detailed?t=${timestamp}`);
       
       if (!res.ok) {
         throw new Error(`Failed to fetch categories: ${res.status}`);
       }
       
       const data = await res.json();
+      
+      console.log('📋 Categories data from API:', data);
+      
+      // If no categories found in API, fall back to mock data
+      if (!Array.isArray(data) || data.length === 0) {
+        console.log('⚠️ No categories found in API, using mock data');
+        const { getCategoriesWithCount } = await import('../data/mockData');
+        const mockCategories = getCategoriesWithCount();
+        const transformedMockCategories = mockCategories.map((cat: any) => ({
+          name: cat.name,
+          displayName: cat.name,
+          displayName_en: cat.name,
+          displayName_ta: "",
+          productCount: cat.count || 0
+        }));
+        setCategories(transformedMockCategories);
+        return;
+      }
       
       // Transform the data to match the expected format
       const transformedCategories = data.map((cat: any) => ({
@@ -48,6 +66,8 @@ const Categories = () => {
         displayName_ta: cat.displayName_ta || "",
         productCount: cat.productCount || 0
       }));
+      
+      console.log('🔄 Transformed categories:', transformedCategories);
       
       setCategories(transformedCategories);
     } catch (err) {

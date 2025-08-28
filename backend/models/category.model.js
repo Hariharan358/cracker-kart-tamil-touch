@@ -14,6 +14,14 @@ const categorySchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  displayName_en: { 
+    type: String, 
+    trim: true
+  },
+  displayName_ta: { 
+    type: String, 
+    trim: true
+  },
   description: { 
     type: String, 
     default: '' 

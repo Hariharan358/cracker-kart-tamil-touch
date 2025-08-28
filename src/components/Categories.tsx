@@ -68,6 +68,40 @@ export const Categories = () => {
       console.log('📋 Categories response:', data);
       
       if (res.ok) {
+        // If no categories found in API, fall back to mock data
+        if (!Array.isArray(data) || data.length === 0) {
+          console.log('⚠️ No categories found in API, using mock data');
+          const { getCategoriesWithCount } = await import('../data/mockData');
+          const mockCategories = getCategoriesWithCount();
+          const transformedMockCategories = mockCategories.map((cat: any) => ({
+            name: cat.name,
+            displayName: cat.name,
+            displayName_en: cat.name,
+            displayName_ta: "",
+            productCount: cat.count || 0
+          }));
+          setCategories(transformedMockCategories);
+          setError(null);
+          
+          // Auto-select SPARKLERS category if available, otherwise first category
+          if (transformedMockCategories.length > 0) {
+            const sparklersCategory = transformedMockCategories.find(cat => 
+              cat.name.toUpperCase().includes('SPARKLER') || 
+              cat.displayName.toUpperCase().includes('SPARKLER')
+            );
+            if (sparklersCategory && !selectedCategory) {
+              console.log('✅ Auto-selecting SPARKLERS category:', sparklersCategory.name);
+              setSelectedCategory(sparklersCategory.name);
+              setSelectedCategoryInfo(sparklersCategory);
+            } else if (!selectedCategory) {
+              console.log('✅ Auto-selecting first category:', transformedMockCategories[0].name);
+              setSelectedCategory(transformedMockCategories[0].name);
+              setSelectedCategoryInfo(transformedMockCategories[0]);
+            }
+          }
+          return;
+        }
+        
         setCategories(data);
         setError(null);
         // Auto-select SPARKLERS category if available, otherwise first category

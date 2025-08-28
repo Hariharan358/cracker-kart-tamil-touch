@@ -1091,7 +1091,7 @@ app.get('/api/categories', async (req, res) => {
 // POST: Add new category
 app.post('/api/categories', async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, displayName_en, displayName_ta } = req.body;
     
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return res.status(400).json({ error: 'Category name is required and must be a non-empty string' });
@@ -1108,7 +1108,9 @@ app.post('/api/categories', async (req, res) => {
     // Create new category in database
     const newCategory = new Category({
       name: trimmedName,
-      displayName: name.trim(),
+      displayName: displayName_en ? displayName_en.trim() : name.trim(),
+      displayName_en: displayName_en ? displayName_en.trim() : name.trim(),
+      displayName_ta: displayName_ta ? displayName_ta.trim() : '',
       isActive: true
     });
     
@@ -1214,7 +1216,14 @@ app.patch('/api/categories/:name', async (req, res) => {
       return res.status(404).json({ error: 'Category not found' });
     }
 
-    await Category.updateOne({ name: decodedName }, { $set: { displayName: finalDisplayName.trim(), updatedAt: new Date() } });
+    await Category.updateOne({ name: decodedName }, { 
+      $set: { 
+        displayName: finalDisplayName.trim(), 
+        displayName_en: displayName_en ? displayName_en.trim() : finalDisplayName.trim(),
+        displayName_ta: displayName_ta ? displayName_ta.trim() : '',
+        updatedAt: new Date() 
+      } 
+    });
     
     // Clear category caches
     console.log('🔄 Clearing category caches after update...');
@@ -1373,7 +1382,7 @@ app.get('/api/categories/public', cache('2 minutes'), async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true })
       .sort({ name: 1 })
-      .select('name displayName')
+      .select('name displayName displayName_en displayName_ta')
       .lean();
     
     res.json(categories);
@@ -1399,6 +1408,8 @@ app.get('/api/categories/detailed', cache('3 minutes'), async (req, res) => {
           return {
             name: category.name,
             displayName: category.displayName,
+            displayName_en: category.displayName_en,
+            displayName_ta: category.displayName_ta,
             description: category.description,
             productCount: count,
             createdAt: category.createdAt
@@ -1407,6 +1418,8 @@ app.get('/api/categories/detailed', cache('3 minutes'), async (req, res) => {
           return {
             name: category.name,
             displayName: category.displayName,
+            displayName_en: category.displayName_en,
+            displayName_ta: category.displayName_ta,
             description: category.description,
             productCount: 0,
             createdAt: category.createdAt

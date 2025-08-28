@@ -33,7 +33,7 @@ const Index = () => {
       try {
         const res = await fetch('https://api.kmpyrotech.com/api/categories/detailed');
         const data = await res.json();
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           const mapped = data.map((c: any) => ({
             name: c.name,
             displayName: c.displayName,
@@ -41,7 +41,15 @@ const Index = () => {
           }));
           setCategories(mapped);
         } else {
-          setCategories([]);
+          console.log('⚠️ No categories found in API, using mock data');
+          const { getCategoriesWithCount } = await import('../data/mockData');
+          const mockCategories = getCategoriesWithCount();
+          const mapped = mockCategories.map((c: any) => ({
+            name: c.name,
+            displayName: c.name,
+            count: c.count || 0,
+          }));
+          setCategories(mapped);
         }
       } catch (e) {
         console.error('❌ Failed to load categories:', e);

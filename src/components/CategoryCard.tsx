@@ -6,11 +6,16 @@ import sparklerImg from '../assets/categories/sparkler.jpg';
 
 interface CategoryCardProps {
   category: string;
-  productCount: number;
+  displayName?: string;
+  displayNameTa?: string;
+  productCount?: number;
 }
 
-export const CategoryCard = ({ category, productCount }: CategoryCardProps) => {
+export const CategoryCard = ({ category, displayName, displayNameTa, productCount = 0 }: CategoryCardProps) => {
   const { t } = useLanguage();
+  
+  // Use the display name if available, otherwise fall back to the category name
+  const displayText = displayName || category;
   
   return (
     <Link to={`/category/${encodeURIComponent(category)}`}>
@@ -25,15 +30,25 @@ export const CategoryCard = ({ category, productCount }: CategoryCardProps) => {
           <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden border-2 border-primary group-hover:animate-bounce-gentle">
             <img 
               src={categoryImages[category] || sparklerImg}
-              alt={category}
+              alt={displayText}
               className="w-full h-full object-cover"
             />
           </div>
           
           {/* Category Name */}
-          <h3 className="font-semibold text-sm sm:text-base md:text-lg text-foreground group-hover:text-primary transition-colors truncate leading-tight">
-            {category}
-          </h3>
+          <div className="space-y-1">
+            <h3 className="font-semibold text-sm sm:text-base md:text-lg text-foreground group-hover:text-primary transition-colors truncate leading-tight">
+              {displayText}
+            </h3>
+            {displayNameTa && (
+              <p className="text-xs sm:text-sm text-muted-foreground truncate leading-tight">
+                {displayNameTa}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {productCount} {productCount === 1 ? 'product' : 'products'}
+            </p>
+          </div>
         </div>
       </div>
     </Link>

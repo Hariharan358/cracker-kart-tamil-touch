@@ -318,6 +318,7 @@ const Index = () => {
               <div key={category.name} className="animate-fade-in" style={{ animationDelay: `${0.3 + index * 0.1}s` }}>
                 <CategoryCard 
                   category={category.name}
+                  displayName={category.displayName}
                   productCount={category.count}
                 />
               </div>

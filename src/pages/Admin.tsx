@@ -173,7 +173,9 @@ const Admin = () => {
   const fetchCategories = async () => {
     setLoadingCategories(true);
     try {
-      const res = await fetch('https://api.kmpyrotech.com/api/categories/public');
+      // Add cache-busting parameter to ensure fresh data
+      const timestamp = Date.now();
+      const res = await fetch(`https://api.kmpyrotech.com/api/categories/public?t=${timestamp}`);
       if (!res.ok) {
         const errorMessage = await getErrorMessage(res);
         toast({
@@ -202,14 +204,16 @@ const Admin = () => {
 
   const fetchDetailedCategories = async () => {
     try {
-      const res = await fetch('https://api.kmpyrotech.com/api/categories/detailed');
+      // Add cache-busting parameter to ensure fresh data
+      const timestamp = Date.now();
+      const res = await fetch(`https://api.kmpyrotech.com/api/categories/detailed?t=${timestamp}`);
       if (!res.ok) {
         return;
       }
       const data = await res.json();
       const counts = {};
       data.forEach(cat => {
-        counts[cat.name] = cat.productCount;
+        counts[cat.name] = cat.displayName || cat.name;
       });
       setCategoryProductCounts(counts);
     } catch (error) {
@@ -358,8 +362,13 @@ const Admin = () => {
       }
       const data = await res.json();
       toast({ title: '✅ Category updated', description: `${editingCategory.name} display names changed.` });
-      fetchCategories();
-      fetchDetailedCategories();
+      
+      // Force refresh categories with a small delay to ensure backend cache is cleared
+      setTimeout(() => {
+        fetchCategories();
+        fetchDetailedCategories();
+      }, 500);
+      
       setIsEditingCategory(false);
     } catch (error) {
       toast({ title: '❌ Network error', description: error.message, variant: 'destructive' });
@@ -902,22 +911,44 @@ const Admin = () => {
                       <FolderOpen className="h-5 w-5 mr-2" />
                       Existing Categories
                     </h3>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        fetchCategories();
-                        fetchDetailedCategories();
-                      }}
-                      disabled={loadingCategories}
-                      className="ml-2"
-                    >
-                      {loadingCategories ? (
-                        <Loader2 className="animate-spin h-4 w-4" />
-                      ) : (
-                        "Refresh"
-                      )}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          fetchCategories();
+                          fetchDetailedCategories();
+                        }}
+                        disabled={loadingCategories}
+                      >
+                        {loadingCategories ? (
+                          <Loader2 className="animate-spin h-4 w-4" />
+                        ) : (
+                          "Refresh"
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // Force refresh with cache-busting
+                          const timestamp = Date.now();
+                          fetch(`https://api.kmpyrotech.com/api/categories/public?t=${timestamp}&force=1`)
+                            .then(res => res.json())
+                            .then(data => {
+                              setCategories(Array.isArray(data) ? data.map(cat => ({
+                                ...cat,
+                                displayName_en: cat.displayName_en || cat.displayName || cat.name,
+                                displayName_ta: cat.displayName_ta || ''
+                              })) : []);
+                            })
+                            .catch(console.error);
+                        }}
+                        disabled={loadingCategories}
+                      >
+                        Force Refresh
+                      </Button>
+                    </div>
                   </div>
                   {loadingCategories ? (
                     <div className="flex items-center justify-center py-8">

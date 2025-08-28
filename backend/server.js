@@ -81,6 +81,14 @@ app.use(rateLimit({
   legacyHeaders: false,
 }));
 
+// Admin endpoints with higher rate limits
+app.use('/api/admin', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500, // Higher limit for admin operations
+  standardHeaders: true,
+  legacyHeaders: false,
+}));
+
 // 6️⃣ JSON body parsing
 app.use(express.json());
 
@@ -1153,7 +1161,26 @@ app.post('/api/admin/categories', verifyAdmin, async (req, res) => {
       // best-effort; not critical if it fails since collection is created on first insert
     }
 
-    clearCacheByPrefix('products:');
+    // Clear category caches
+    console.log('🔄 Clearing category caches after creation...');
+    try {
+      // Try multiple cache clearing methods
+      if (apicache.clearRegexp) {
+        const cleared = apicache.clearRegexp(/\/api\/categories/);
+        console.log('✅ API cache cleared with regexp:', cleared);
+      } else if (apicache.clear) {
+        apicache.clear();
+        console.log('✅ API cache cleared completely');
+      } else {
+        console.log('⚠️ No apicache clearing method available');
+      }
+      
+      // Also clear our custom memory cache
+      clearCacheByPrefix('products:');
+      console.log('✅ Memory cache cleared');
+    } catch (cacheError) {
+      console.error('❌ Cache clearing error:', cacheError);
+    }
 
     return res.status(201).json({
       message: '✅ Category created successfully',
@@ -1172,8 +1199,12 @@ app.post('/api/admin/categories', verifyAdmin, async (req, res) => {
 app.patch('/api/categories/:name', async (req, res) => {
   try {
     const { name } = req.params;
-    const { displayName } = req.body;
-    if (!displayName || typeof displayName !== 'string' || displayName.trim().length === 0) {
+    const { displayName, displayName_en, displayName_ta } = req.body;
+    
+    // Handle both field names for backward compatibility
+    const finalDisplayName = displayName || displayName_en;
+    
+    if (!finalDisplayName || typeof finalDisplayName !== 'string' || finalDisplayName.trim().length === 0) {
       return res.status(400).json({ error: 'displayName is required' });
     }
 
@@ -1183,8 +1214,30 @@ app.patch('/api/categories/:name', async (req, res) => {
       return res.status(404).json({ error: 'Category not found' });
     }
 
-    await Category.updateOne({ name: decodedName }, { $set: { displayName: displayName.trim(), updatedAt: new Date() } });
-    res.json({ message: '✅ Category updated', name: decodedName, displayName: displayName.trim() });
+    await Category.updateOne({ name: decodedName }, { $set: { displayName: finalDisplayName.trim(), updatedAt: new Date() } });
+    
+    // Clear category caches
+    console.log('🔄 Clearing category caches after update...');
+    try {
+      // Try multiple cache clearing methods
+      if (apicache.clearRegexp) {
+        const cleared = apicache.clearRegexp(/\/api\/categories/);
+        console.log('✅ API cache cleared with regexp:', cleared);
+      } else if (apicache.clear) {
+        apicache.clear();
+        console.log('✅ API cache cleared completely');
+      } else {
+        console.log('⚠️ No apicache clearing method available');
+      }
+      
+      // Also clear our custom memory cache
+      clearCacheByPrefix('products:');
+      console.log('✅ Memory cache cleared');
+    } catch (cacheError) {
+      console.error('❌ Cache clearing error:', cacheError);
+    }
+    
+    res.json({ message: '✅ Category updated', name: decodedName, displayName: finalDisplayName.trim() });
   } catch (error) {
     console.error('❌ Error updating category:', error);
     res.status(500).json({ error: 'Failed to update category' });
@@ -1282,6 +1335,27 @@ app.delete('/api/categories/:name', async (req, res) => {
       { isActive: false, updatedAt: new Date() }
     );
     
+    // Clear category caches
+    console.log('🔄 Clearing category caches after deletion...');
+    try {
+      // Try multiple cache clearing methods
+      if (apicache.clearRegexp) {
+        const cleared = apicache.clearRegexp(/\/api\/categories/);
+        console.log('✅ API cache cleared with regexp:', cleared);
+      } else if (apicache.clear) {
+        apicache.clear();
+        console.log('✅ API cache cleared completely');
+      } else {
+        console.log('⚠️ No apicache clearing method available');
+      }
+      
+      // Also clear our custom memory cache
+      clearCacheByPrefix('products:');
+      console.log('✅ Memory cache cleared');
+    } catch (cacheError) {
+      console.error('❌ Cache clearing error:', cacheError);
+    }
+    
     console.log(`✅ Category deactivated: ${decodedName}`);
     
     res.json({ 
@@ -1295,7 +1369,7 @@ app.delete('/api/categories/:name', async (req, res) => {
 });
 
 // GET: Get categories for user side (public)
-app.get('/api/categories/public', async (req, res) => {
+app.get('/api/categories/public', cache('2 minutes'), async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true })
       .sort({ name: 1 })
@@ -1310,7 +1384,7 @@ app.get('/api/categories/public', async (req, res) => {
 });
 
 // GET: Get detailed category information with product counts
-app.get('/api/categories/detailed', async (req, res) => {
+app.get('/api/categories/detailed', cache('3 minutes'), async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true })
       .sort({ name: 1 })

@@ -371,6 +371,7 @@ const Index = () => {
                     onRemoveFromCart={() => updateQuantity(product._id || product.id, quantity - 1)}
                     quantity={quantity}
                     size="sm"
+                    categoryDisplayName="Atom Bomb"
                   />
                 </div>
               );
@@ -424,6 +425,7 @@ const Index = () => {
                     onRemoveFromCart={() => updateQuantity(product._id || product.id, quantity - 1)}
                     quantity={quantity}
                     size="sm"
+                    categoryDisplayName="Sparkler Items"
                   />
                 </div>
               );

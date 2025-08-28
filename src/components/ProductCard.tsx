@@ -21,6 +21,7 @@ interface ProductCardProps {
   onRemoveFromCart?: (productId: string) => void;
   quantity?: number;
   size?: "sm" | "md";
+  categoryDisplayName?: string; // New prop for display name
 }
 
 export const ProductCard = ({
@@ -29,6 +30,7 @@ export const ProductCard = ({
   onRemoveFromCart,
   quantity = 0,
   size = "md",
+  categoryDisplayName,
 }: ProductCardProps) => {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -46,6 +48,9 @@ export const ProductCard = ({
 
   const isDiscount =
     product.original_price && product.original_price > product.price;
+
+  // Use categoryDisplayName if provided, otherwise fall back to product.category
+  const displayCategory = categoryDisplayName || product.category;
 
   return (
     <div
@@ -122,7 +127,7 @@ export const ProductCard = ({
               </span>
             </div>
             <span className={`text-muted-foreground font-medium uppercase tracking-wide ${size === "sm" ? "text-xs" : "text-xs sm:text-sm"}`}>
-              {product.category}
+              {displayCategory}
             </span>
           </div>
 

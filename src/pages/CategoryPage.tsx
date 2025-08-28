@@ -5,7 +5,7 @@ import { ProductCard } from "../components/ProductCard";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { useCart } from "../hooks/useCart";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -21,26 +21,92 @@ interface Product {
   createdAt?: string;
 }
 
+interface Category {
+  name: string;
+  displayName?: string;
+  displayName_en?: string;
+  displayName_ta?: string;
+}
+
 const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categoryInfo, setCategoryInfo] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingCategory, setLoadingCategory] = useState(true);
   const { addToCart, removeFromCart, cartItems } = useCart();
 
+  // Fetch category information
+  useEffect(() => {
+    const fetchCategoryInfo = async () => {
+      try {
+        setLoadingCategory(true);
+        const res = await axios.get('https://api.kmpyrotech.com/api/categories/public');
+        const categories = res.data;
+        
+        // Find the category by name
+        const foundCategory = categories.find((cat: Category) => cat.name === category);
+        if (foundCategory) {
+          setCategoryInfo(foundCategory);
+        } else {
+          // If not found, create a fallback category info
+          setCategoryInfo({
+            name: category!,
+            displayName: category!,
+            displayName_en: category!,
+            displayName_ta: ""
+          });
+        }
+      } catch (err) {
+        console.error("❌ Error fetching category info:", err);
+        // Fallback to using the category name from URL
+        setCategoryInfo({
+          name: category!,
+          displayName: category!,
+          displayName_en: category!,
+          displayName_ta: ""
+        });
+      } finally {
+        setLoadingCategory(false);
+      }
+    };
+
+    if (category) {
+      fetchCategoryInfo();
+    }
+  }, [category]);
+
+  // Fetch products for the category
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
+        setLoading(true);
         const res = await axios.get(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(category!)}`);
         setProducts(res.data);
       } catch (err) {
         console.error("❌ Error fetching products:", err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCategoryProducts();
+    if (category) {
+      fetchCategoryProducts();
+    }
   }, [category]);
+
+  // Get the display name to show
+  const getDisplayName = () => {
+    if (!categoryInfo) return category;
+    return categoryInfo.displayName || categoryInfo.displayName_en || categoryInfo.name;
+  };
+
+  // Get the Tamil display name
+  const getTamilDisplayName = () => {
+    if (!categoryInfo) return "";
+    return categoryInfo.displayName_ta || "";
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -54,13 +120,27 @@ const CategoryPage = () => {
               Back to Categories
             </Link>
           </Button>
-          <h1 className="text-3xl font-bold mb-2">{category} Products</h1>
-          <p className="text-muted-foreground">{products.length} products found</p>
+          
+          {loadingCategory ? (
+            <div className="flex items-center mb-4">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <span>Loading category...</span>
+            </div>
+          ) : (
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{getDisplayName()} Products</h1>
+              {getTamilDisplayName() && (
+                <h2 className="text-xl text-muted-foreground mb-2">{getTamilDisplayName()}</h2>
+              )}
+              <p className="text-muted-foreground">{products.length} products found</p>
+            </div>
+          )}
         </div>
 
         {loading ? (
           <div className="flex justify-center items-center py-16">
-            <p>Loading products...</p>
+            <Loader2 className="h-8 w-8 animate-spin mr-2" />
+            <span>Loading products...</span>
           </div>
         ) : products.length === 0 ? (
           <div className="text-center py-16">
@@ -89,6 +169,7 @@ const CategoryPage = () => {
                   onAddToCart={addToCart}
                   onRemoveFromCart={removeFromCart}
                   quantity={quantity}
+                  categoryDisplayName={getDisplayName()}
                 />
               );
             })}

@@ -16,6 +16,8 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 interface Category {
   name: string;
   displayName: string;
+  displayName_en?: string;
+  displayName_ta?: string;
 }
 
 interface Product {
@@ -36,6 +38,7 @@ export const Categories = () => {
   const isMobile = useIsMobile();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategoryInfo, setSelectedCategoryInfo] = useState<Category | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingProducts, setLoadingProducts] = useState(false);
@@ -76,9 +79,11 @@ export const Categories = () => {
           if (sparklersCategory && !selectedCategory) {
             console.log('✅ Auto-selecting SPARKLERS category:', sparklersCategory.name);
             setSelectedCategory(sparklersCategory.name);
+            setSelectedCategoryInfo(sparklersCategory);
           } else if (!selectedCategory) {
             console.log('✅ Auto-selecting first category:', data[0].name);
             setSelectedCategory(data[0].name);
+            setSelectedCategoryInfo(data[0]);
           }
         }
       } else {
@@ -130,6 +135,11 @@ export const Categories = () => {
   const handleCategorySelect = (categoryName: string) => {
     console.log('🎯 Category selected:', categoryName);
     setSelectedCategory(categoryName);
+    
+    // Find the category info for display
+    const categoryInfo = categories.find(cat => cat.name === categoryName);
+    setSelectedCategoryInfo(categoryInfo || null);
+    
     setIsCategoryDropdownOpen(false); // Close dropdown when category is selected
     fetchProducts(categoryName);
   };
@@ -205,7 +215,14 @@ export const Categories = () => {
         {selectedCategory ? (
           <div>
             <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-2">{selectedCategory}</h2>
+              <h2 className="text-2xl font-bold mb-2">
+                {selectedCategoryInfo?.displayName || selectedCategory}
+              </h2>
+              {selectedCategoryInfo?.displayName_ta && (
+                <h3 className="text-lg text-muted-foreground mb-2">
+                  {selectedCategoryInfo.displayName_ta}
+                </h3>
+              )}
               <p className="text-muted-foreground">
                 Browse products in this category
               </p>
@@ -220,7 +237,7 @@ export const Categories = () => {
               <div className="text-center py-12">
                 <h3 className="text-lg font-semibold mb-2">No Products Found</h3>
                 <p className="text-muted-foreground">
-                  No products available in {selectedCategory} category yet.
+                  No products available in {selectedCategoryInfo?.displayName || selectedCategory} category yet.
                 </p>
               </div>
             ) : (
@@ -244,6 +261,7 @@ export const Categories = () => {
                         onRemoveFromCart={() => updateQuantity(product._id || product.id, quantity - 1)}
                         quantity={quantity}
                         size="sm"
+                        categoryDisplayName={selectedCategoryInfo?.displayName || selectedCategory}
                       />
                     </div>
                   );

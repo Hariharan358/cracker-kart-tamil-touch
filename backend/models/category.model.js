@@ -22,6 +22,11 @@ const categorySchema = new mongoose.Schema({
     type: String, 
     trim: true
   },
+  // Optional icon image URL for showing category icon in UI
+  iconUrl: {
+    type: String,
+    default: ''
+  },
   description: { 
     type: String, 
     default: '' 

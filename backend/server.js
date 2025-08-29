@@ -1091,7 +1091,7 @@ app.get('/api/categories', async (req, res) => {
 // POST: Add new category
 app.post('/api/categories', async (req, res) => {
   try {
-    const { name, displayName_en, displayName_ta } = req.body;
+    const { name, displayName_en, displayName_ta, iconUrl } = req.body;
     
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return res.status(400).json({ error: 'Category name is required and must be a non-empty string' });
@@ -1111,6 +1111,7 @@ app.post('/api/categories', async (req, res) => {
       displayName: displayName_en ? displayName_en.trim() : name.trim(),
       displayName_en: displayName_en ? displayName_en.trim() : name.trim(),
       displayName_ta: displayName_ta ? displayName_ta.trim() : '',
+      iconUrl: typeof iconUrl === 'string' ? iconUrl.trim() : '',
       isActive: true
     });
     
@@ -1130,7 +1131,7 @@ app.post('/api/categories', async (req, res) => {
 // ADMIN: Create new category
 app.post('/api/admin/categories', verifyAdmin, async (req, res) => {
   try {
-    const { name, displayName, description } = req.body;
+    const { name, displayName, description, iconUrl } = req.body;
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return res.status(400).json({ error: 'Category name is required and must be a non-empty string' });
@@ -1150,6 +1151,7 @@ app.post('/api/admin/categories', verifyAdmin, async (req, res) => {
       name: normalizedName,
       displayName: humanDisplayName,
       description: typeof description === 'string' ? description : '',
+      iconUrl: typeof iconUrl === 'string' ? iconUrl.trim() : '',
       isActive: true
     });
 
@@ -1201,7 +1203,7 @@ app.post('/api/admin/categories', verifyAdmin, async (req, res) => {
 app.patch('/api/categories/:name', async (req, res) => {
   try {
     const { name } = req.params;
-    const { displayName, displayName_en, displayName_ta } = req.body;
+    const { displayName, displayName_en, displayName_ta, iconUrl } = req.body;
     
     // Handle both field names for backward compatibility
     const finalDisplayName = displayName || displayName_en;
@@ -1221,6 +1223,7 @@ app.patch('/api/categories/:name', async (req, res) => {
         displayName: finalDisplayName.trim(), 
         displayName_en: displayName_en ? displayName_en.trim() : finalDisplayName.trim(),
         displayName_ta: displayName_ta ? displayName_ta.trim() : '',
+        ...(typeof iconUrl === 'string' ? { iconUrl: iconUrl.trim() } : {}),
         updatedAt: new Date() 
       } 
     });
@@ -1382,7 +1385,7 @@ app.get('/api/categories/public', cache('2 minutes'), async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true })
       .sort({ name: 1 })
-      .select('name displayName displayName_en displayName_ta')
+      .select('name displayName displayName_en displayName_ta iconUrl')
       .lean();
     
     res.json(categories);
@@ -1411,6 +1414,7 @@ app.get('/api/categories/detailed', cache('3 minutes'), async (req, res) => {
             displayName_en: category.displayName_en,
             displayName_ta: category.displayName_ta,
             description: category.description,
+            iconUrl: category.iconUrl,
             productCount: count,
             createdAt: category.createdAt
           };
@@ -1421,6 +1425,7 @@ app.get('/api/categories/detailed', cache('3 minutes'), async (req, res) => {
             displayName_en: category.displayName_en,
             displayName_ta: category.displayName_ta,
             description: category.description,
+            iconUrl: category.iconUrl,
             productCount: 0,
             createdAt: category.createdAt
           };

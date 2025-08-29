@@ -18,7 +18,7 @@ import { Loader } from "../components/ui/loader";
 const Index = () => {
   const { getTotalItems, addToCart, cartItems, updateQuantity } = useCart();
   const { t } = useLanguage();
-  const [categories, setCategories] = useState<{ name: string; displayName?: string; count: number }[]>([]);
+  const [categories, setCategories] = useState<{ name: string; displayName?: string; count: number; iconUrl?: string }[]>([]);
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [sparklerProducts, setSparklerProducts] = useState([]);
@@ -38,6 +38,7 @@ const Index = () => {
             name: c.name,
             displayName: c.displayName,
             count: c.productCount || 0,
+            iconUrl: c.iconUrl,
           }));
           setCategories(mapped);
         } else {
@@ -328,6 +329,7 @@ const Index = () => {
                   category={category.name}
                   displayName={category.displayName}
                   productCount={category.count}
+                  iconUrl={category.iconUrl}
                 />
               </div>
             ))}

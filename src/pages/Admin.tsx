@@ -129,6 +129,7 @@ const Admin = () => {
   const [editCategoryForm, setEditCategoryForm] = useState({
     displayName_en: "",
     displayName_ta: "",
+    iconUrl: "",
   });
 
   // Add state for transportName and lrNumber per order
@@ -337,6 +338,7 @@ const Admin = () => {
     setEditCategoryForm({
       displayName_en: category.displayName_en || category.displayName || category.name,
       displayName_ta: category.displayName_ta || "",
+      iconUrl: category.iconUrl || "",
     });
     setEditingCategory(category);
     setIsEditingCategory(true);
@@ -344,7 +346,7 @@ const Admin = () => {
 
   const handleEditCategorySubmit = async (e) => {
     e.preventDefault();
-    const { displayName_en, displayName_ta } = editCategoryForm;
+    const { displayName_en, displayName_ta, iconUrl } = editCategoryForm;
     if (!displayName_en.trim()) {
       toast({ title: 'Invalid name', description: 'English display name cannot be empty', variant: 'destructive' });
       return;
@@ -353,7 +355,7 @@ const Admin = () => {
       const res = await fetch(`https://api.kmpyrotech.com/api/categories/${encodeURIComponent(editingCategory.name)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ displayName_en: displayName_en.trim(), displayName_ta: displayName_ta.trim() })
+        body: JSON.stringify({ displayName_en: displayName_en.trim(), displayName_ta: displayName_ta.trim(), iconUrl: iconUrl.trim() })
       });
       if (!res.ok) {
         const errorMessage = await getErrorMessage(res);
@@ -1580,7 +1582,7 @@ const Admin = () => {
       <Dialog open={isEditingCategory} onOpenChange={setIsEditingCategory}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Category Display Names</DialogTitle>
+            <DialogTitle>Edit Category</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEditCategorySubmit} className="space-y-4">
             <div>
@@ -1599,6 +1601,21 @@ const Admin = () => {
                 value={editCategoryForm.displayName_ta}
                 onChange={e => handleEditCategoryFormChange("displayName_ta", e.target.value)}
               />
+            </div>
+            <div>
+              <Label htmlFor="edit_iconUrl">Icon Image URL</Label>
+              <Input
+                id="edit_iconUrl"
+                placeholder="https://.../image.png"
+                value={editCategoryForm.iconUrl}
+                onChange={e => handleEditCategoryFormChange("iconUrl", e.target.value)}
+              />
+              {editCategoryForm.iconUrl ? (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Preview:</p>
+                  <img src={editCategoryForm.iconUrl} alt="Preview" className="h-16 w-16 rounded-full object-cover border" />
+                </div>
+              ) : null}
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsEditingCategory(false)}>

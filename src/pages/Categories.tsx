@@ -15,6 +15,7 @@ interface Category {
   displayName_en?: string;
   displayName_ta?: string;
   productCount?: number;
+  iconUrl?: string;
 }
 
 const Categories = () => {
@@ -64,7 +65,8 @@ const Categories = () => {
         displayName: cat.displayName || cat.displayName_en || cat.name,
         displayName_en: cat.displayName_en || cat.displayName || cat.name,
         displayName_ta: cat.displayName_ta || "",
-        productCount: cat.productCount || 0
+        productCount: cat.productCount || 0,
+        iconUrl: cat.iconUrl,
       }));
       
       console.log('🔄 Transformed categories:', transformedCategories);
@@ -165,6 +167,7 @@ const Categories = () => {
                   displayName={category.displayName || category.displayName_en || category.name}
                   displayNameTa={category.displayName_ta}
                   productCount={category.productCount || 0}
+                  iconUrl={category.iconUrl}
                 />
               </div>
             ))}

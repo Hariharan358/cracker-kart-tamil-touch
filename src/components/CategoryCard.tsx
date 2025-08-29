@@ -9,9 +9,10 @@ interface CategoryCardProps {
   displayName?: string;
   displayNameTa?: string;
   productCount?: number;
+  iconUrl?: string;
 }
 
-export const CategoryCard = ({ category, displayName, displayNameTa, productCount = 0 }: CategoryCardProps) => {
+export const CategoryCard = ({ category, displayName, displayNameTa, productCount = 0, iconUrl }: CategoryCardProps) => {
   const { t } = useLanguage();
   
   // Use the display name if available, otherwise fall back to the category name
@@ -29,7 +30,7 @@ export const CategoryCard = ({ category, displayName, displayNameTa, productCoun
           {/* Category Image */}
           <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden border-2 border-primary group-hover:animate-bounce-gentle">
             <img 
-              src={categoryImages[category] || sparklerImg}
+              src={iconUrl || categoryImages[category] || sparklerImg}
               alt={displayText}
               className="w-full h-full object-cover"
             />

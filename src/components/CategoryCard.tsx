@@ -33,6 +33,15 @@ export const CategoryCard = ({ category, displayName, displayNameTa, productCoun
               src={iconUrl || categoryImages[category] || sparklerImg}
               alt={displayText}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                console.log(`❌ Image failed to load for ${category}:`, iconUrl);
+                (e.target as HTMLImageElement).src = categoryImages[category] || sparklerImg;
+              }}
+              onLoad={() => {
+                if (iconUrl) {
+                  console.log(`✅ Image loaded successfully for ${category}:`, iconUrl);
+                }
+              }}
             />
           </div>
           

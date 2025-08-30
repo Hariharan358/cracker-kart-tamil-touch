@@ -46,8 +46,11 @@ const Admin = () => {
     if (token !== "admin-auth-token") {
       navigate("/admin-login"); // unauthorized? redirect
     } else {
-      // Register admin for notifications
-      requestPermission();
+      // Register admin for notifications - handle permission gracefully
+      requestPermission().catch(error => {
+        console.log('Notification permission not available:', error);
+        // Don't show error toast for permission issues
+      });
     }
   }, [requestPermission]);
 
@@ -121,9 +124,11 @@ const Admin = () => {
   const [categories, setCategories] = useState([]);
   const [newCategoryEn, setNewCategoryEn] = useState("");
   const [newCategoryTa, setNewCategoryTa] = useState("");
+  const [newCategoryImage, setNewCategoryImage] = useState(null);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [isDeletingCategory, setIsDeletingCategory] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [categoriesError, setCategoriesError] = useState(null);
   const [isEditingCategory, setIsEditingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editCategoryForm, setEditCategoryForm] = useState({
@@ -171,33 +176,289 @@ const Admin = () => {
   };
 
   // Category management functions
-  const fetchCategories = async () => {
+  const fetchCategories = async (retryCount = 0) => {
     setLoadingCategories(true);
+    
+    // Check if we're online
+    if (!navigator.onLine) {
+      toast({
+        title: "❌ No Internet Connection",
+        description: "Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+      setLoadingCategories(false);
+      return;
+    }
+    
     try {
       // Add cache-busting parameter to ensure fresh data
       const timestamp = Date.now();
-      const res = await fetch(`https://api.kmpyrotech.com/api/categories/public?t=${timestamp}`);
+      const url = `https://api.kmpyrotech.com/api/categories/public?t=${timestamp}`;
+      
+      // Log the request for debugging
+      console.log('Fetching categories from:', url);
+      console.log('Request method:', 'GET');
+      console.log('Request mode:', 'cors');
+      
+      // Test API accessibility first
+      try {
+        const testRes = await fetch('https://api.kmpyrotech.com/api/health', { 
+          mode: 'cors',
+          credentials: 'omit'
+        });
+        console.log('API health check status:', testRes.status);
+      } catch (healthError) {
+        console.log('API health check failed:', healthError);
+      }
+      
+      // Test a different endpoint to see if it's a general CORS issue
+      try {
+        const productsRes = await fetch('https://api.kmpyrotech.com/api/products', { 
+          mode: 'cors',
+          credentials: 'omit'
+        });
+        console.log('Products endpoint test status:', productsRes.status);
+      } catch (productsError) {
+        console.log('Products endpoint test failed:', productsError);
+      }
+      
+      // Test basic CORS with minimal options
+      try {
+        const corsTestRes = await fetch('https://api.kmpyrotech.com/api/categories/public', { 
+          method: 'GET',
+          mode: 'cors'
+        });
+        console.log('CORS test status:', corsTestRes.status);
+      } catch (corsError) {
+        console.log('CORS test failed:', corsError);
+      }
+      
+      // Test with absolutely minimal options
+      try {
+        const minimalRes = await fetch('https://api.kmpyrotech.com/api/categories/public');
+        console.log('Minimal fetch test status:', minimalRes.status);
+        
+        // Test the actual response content
+        if (minimalRes.ok) {
+          const minimalText = await minimalRes.text();
+          console.log('Minimal test response text:', minimalText);
+          try {
+            const minimalData = JSON.parse(minimalText);
+            console.log('Minimal test parsed data:', minimalData);
+          } catch (e) {
+            console.log('Minimal test response is not JSON');
+          }
+        }
+      } catch (minimalError) {
+        console.log('Minimal fetch test failed:', minimalError);
+      }
+      
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const res = await fetch(url, { 
+        signal: controller.signal,
+        mode: 'cors',
+        credentials: 'omit' // Don't send cookies to avoid CORS issues
+        // Removed custom headers to avoid CORS issues
+      });
+      
+      clearTimeout(timeoutId);
+      
+      // Log response details for debugging
+      console.log('Categories response status:', res.status);
+      console.log('Categories response headers:', Object.fromEntries(res.headers.entries()));
+      
       if (!res.ok) {
         const errorMessage = await getErrorMessage(res);
+        console.error('Categories API error:', res.status, errorMessage);
+        
+        // Try fallback endpoint if public endpoint fails
+        if (res.status === 400 || res.status === 404) {
+          console.log('Trying fallback categories endpoint...');
+          try {
+            const fallbackRes = await fetch(`https://api.kmpyrotech.com/api/categories?t=${timestamp}`, {
+              mode: 'cors',
+              credentials: 'omit'
+            });
+            if (fallbackRes.ok) {
+              const fallbackData = await fallbackRes.json();
+              console.log('Fallback categories data received:', fallbackData);
+              console.log('Fallback data type:', typeof fallbackData);
+              console.log('Fallback data length:', Array.isArray(fallbackData) ? fallbackData.length : 'Not an array');
+              
+              if (Array.isArray(fallbackData)) {
+                setCategories(fallbackData.map(cat => ({
+                  ...cat,
+                  displayName_en: cat.displayName_en || cat.displayName || cat.name,
+                  displayName_ta: cat.displayName_ta || ''
+                })));
+                setCategoriesError(null);
+                return;
+              } else if (fallbackData && typeof fallbackData === 'object') {
+                if (fallbackData.categories && Array.isArray(fallbackData.categories)) {
+                  setCategories(fallbackData.categories.map(cat => ({
+                    ...cat,
+                    displayName_en: cat.displayName_en || cat.displayName || cat.name,
+                    displayName_ta: cat.displayName_ta || ''
+                  })));
+                  setCategoriesError(null);
+                  return;
+                } else if (fallbackData.data && Array.isArray(fallbackData.data)) {
+                  setCategories(fallbackData.data.map(cat => ({
+                    ...cat,
+                    displayName_en: cat.displayName_en || cat.displayName || cat.name,
+                    displayName_ta: cat.displayName_ta || ''
+                  })));
+                  setCategoriesError(null);
+                  return;
+                }
+              }
+            }
+          } catch (fallbackError) {
+            console.error('Fallback categories fetch failed:', fallbackError);
+          }
+        }
+        
+        // Try without query parameters if both fail
+        if (res.status === 400 || res.status === 404) {
+          console.log('Trying categories endpoint without query parameters...');
+          try {
+            const simpleRes = await fetch('https://api.kmpyrotech.com/api/categories', {
+              mode: 'cors',
+              credentials: 'omit'
+            });
+            if (simpleRes.ok) {
+              const simpleData = await simpleRes.json();
+              console.log('Simple categories data received:', simpleData);
+              console.log('Simple data type:', typeof simpleData);
+              console.log('Simple data length:', Array.isArray(simpleData) ? simpleData.length : 'Not an array');
+              
+              if (Array.isArray(simpleData)) {
+                setCategories(simpleData.map(cat => ({
+                  ...cat,
+                  displayName_en: cat.displayName_en || cat.displayName || cat.name,
+                  displayName_ta: cat.displayName_ta || ''
+                })));
+                setCategoriesError(null);
+                return;
+              } else if (simpleData && typeof simpleData === 'object') {
+                if (simpleData.categories && Array.isArray(simpleData.categories)) {
+                  setCategories(simpleData.categories.map(cat => ({
+                    ...cat,
+                    displayName_en: cat.displayName_en || cat.displayName || cat.name,
+                    displayName_ta: cat.displayName_ta || ''
+                  })));
+                  setCategoriesError(null);
+                  return;
+                } else if (simpleData.data && Array.isArray(simpleData.data)) {
+                  setCategories(simpleData.data.map(cat => ({
+                    ...cat,
+                    displayName_en: cat.displayName_en || cat.displayName || cat.name,
+                    displayName_ta: cat.displayName_ta || ''
+                  })));
+                  setCategoriesError(null);
+                  return;
+                }
+              }
+            }
+          } catch (simpleError) {
+            console.error('Simple categories fetch failed:', simpleError);
+          }
+        }
+        
+        // Retry logic for 5xx errors
+        if (res.status >= 500 && retryCount < 2) {
+          console.log(`Retrying categories fetch (attempt ${retryCount + 1})...`);
+          setTimeout(() => fetchCategories(retryCount + 1), 2000); // Wait 2 seconds before retry
+          return;
+        }
+        
+        setCategoriesError(`Status: ${res.status} - ${errorMessage}`);
         toast({
           title: "❌ Failed to fetch categories",
-          description: errorMessage,
+          description: `Status: ${res.status} - ${errorMessage}`,
           variant: "destructive",
         });
         return;
       }
-      const data = await res.json();
-      setCategories(Array.isArray(data) ? data.map(cat => ({
+      
+      // First, let's see the raw response
+      const responseText = await res.text();
+      console.log('Raw response text:', responseText);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('Parsed JSON data:', data);
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', parseError);
+        console.log('Response was not valid JSON');
+        setCategories([]);
+        setCategoriesError('Invalid JSON response from API');
+        return;
+      }
+      
+      console.log('Categories data received:', data);
+      console.log('Data type:', typeof data);
+      console.log('Data length:', Array.isArray(data) ? data.length : 'Not an array');
+      console.log('Data keys:', Array.isArray(data) ? 'Array' : Object.keys(data || {}));
+      
+      if (Array.isArray(data)) {
+        console.log('First category item:', data[0]);
+        setCategories(data.map(cat => ({
         ...cat,
         displayName_en: cat.displayName_en || cat.displayName || cat.name,
         displayName_ta: cat.displayName_ta || ''
-      })) : []);
+        })));
+        setCategoriesError(null); // Clear any previous errors
+      } else if (data && typeof data === 'object') {
+        // Handle case where API returns an object instead of array
+        console.log('API returned object, checking for categories property...');
+        if (data.categories && Array.isArray(data.categories)) {
+          console.log('Found categories in data.categories:', data.categories);
+          setCategories(data.categories.map(cat => ({
+            ...cat,
+            displayName_en: cat.displayName_en || cat.displayName || cat.name,
+            displayName_ta: cat.displayName_ta || ''
+          })));
+          setCategoriesError(null);
+        } else if (data.data && Array.isArray(data.data)) {
+          console.log('Found categories in data.data:', data.data);
+          setCategories(data.data.map(cat => ({
+            ...cat,
+            displayName_en: cat.displayName_en || cat.displayName || cat.name,
+            displayName_ta: cat.displayName_ta || ''
+          })));
+          setCategoriesError(null);
+        } else {
+          console.log('No categories found in response object');
+          setCategories([]);
+          setCategoriesError('No categories found in API response');
+        }
+      } else {
+        console.log('Unexpected data format:', data);
+        setCategories([]);
+        setCategoriesError('Unexpected API response format');
+      }
     } catch (error) {
+      console.error('Categories fetch error:', error);
+      
+      setCategoriesError(error.message);
+      if (error.name === 'AbortError') {
+        toast({
+          title: "❌ Request Timeout",
+          description: "The request took too long. Please try again.",
+          variant: "destructive",
+        });
+      } else {
       toast({
         title: "❌ Network error",
         description: error.message,
         variant: "destructive",
       });
+      }
     } finally {
       setLoadingCategories(false);
     }
@@ -218,7 +479,7 @@ const Admin = () => {
       });
       setCategoryProductCounts(counts);
     } catch (error) {
-      console.error('Error fetching detailed categories:', error);
+      // Error fetching detailed categories
     }
   };
 
@@ -239,6 +500,8 @@ const Admin = () => {
     return errorMessage;
   };
 
+
+
   const handleAddCategory = async (e) => {
     e.preventDefault();
     if (!newCategoryEn.trim()) {
@@ -252,16 +515,70 @@ const Admin = () => {
 
     setIsAddingCategory(true);
     try {
-      const name = newCategoryEn.trim().toUpperCase().replace(/\s+/g, '_');
+      let iconUrl = '';
+      
+      // Upload image to Cloudinary if selected
+      if (newCategoryImage) {
+        try {
+          const cloudinaryFormData = new FormData();
+          cloudinaryFormData.append('file', newCategoryImage);
+          cloudinaryFormData.append('upload_preset', 'ml_default'); // Using default preset
+          cloudinaryFormData.append('cloud_name', 'kmpyrotech'); // Your cloud name
+          
+          console.log('📤 Uploading to Cloudinary with preset: ml_default');
+          
+          const cloudinaryRes = await fetch('https://api.cloudinary.com/v1_1/kmpyrotech/image/upload', {
+            method: 'POST',
+            body: cloudinaryFormData,
+          });
+          
+          console.log('📥 Cloudinary response status:', cloudinaryRes.status);
+          
+          if (cloudinaryRes.ok) {
+            const cloudinaryData = await cloudinaryRes.json();
+            iconUrl = cloudinaryData.secure_url;
+            console.log('✅ Image uploaded to Cloudinary:', iconUrl);
+            console.log('📊 Full Cloudinary response:', cloudinaryData);
+          } else {
+            const errorData = await cloudinaryRes.text();
+            console.error('❌ Cloudinary upload failed:', errorData);
+            console.error('❌ Response status:', cloudinaryRes.status);
+            console.error('❌ Response headers:', cloudinaryRes.headers);
+            toast({
+              title: "⚠️ Image Upload Warning",
+              description: `Image upload failed (${cloudinaryRes.status}), but category will be created without image.`,
+              variant: "destructive",
+            });
+          }
+        } catch (uploadError) {
+          console.error('❌ Error uploading to Cloudinary:', uploadError);
+          toast({
+            title: "⚠️ Image Upload Warning",
+            description: "Image upload failed, but category will be created without image.",
+            variant: "destructive",
+          });
+        }
+      }
+      
+      // Create category with or without image URL
+      const categoryData = {
+        name: newCategoryEn.trim().toUpperCase().replace(/\s+/g, '_'),
+        displayName_en: newCategoryEn.trim(),
+        displayName_ta: newCategoryTa.trim(),
+        iconUrl: iconUrl
+      };
+      
+      console.log('📤 Sending category data to API:', categoryData);
+      console.log('🔗 Image URL being sent:', iconUrl);
+      
       const res = await fetch('https://api.kmpyrotech.com/api/categories', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          name,
-          displayName_en: newCategoryEn.trim(),
-          displayName_ta: newCategoryTa.trim()
-        }),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(categoryData),
       });
+      
       if (!res.ok) {
         const errorMessage = await getErrorMessage(res);
         toast({
@@ -271,15 +588,39 @@ const Admin = () => {
         });
         return;
       }
+      
       const data = await res.json();
+      console.log('📥 API Response:', data);
       toast({
         title: "✅ Category Added!",
-        description: `${data.category} added successfully.`,
+        description: `${data.category || data.name || 'Category'} added successfully.`,
       });
+      
       setNewCategoryEn("");
       setNewCategoryTa("");
+      setNewCategoryImage(null);
+      
+      // Test: Fetch the category back to see if iconUrl was saved
+      setTimeout(async () => {
+        try {
+          console.log('🔍 Testing: Fetching categories to check if iconUrl was saved...');
+          const testRes = await fetch('https://api.kmpyrotech.com/api/categories/detailed');
+          const testData = await testRes.json();
+          console.log('🔍 Test: Categories after creation:', testData);
+          
+          const newCategory = testData.find(cat => cat.name === categoryData.name);
+          if (newCategory) {
+            console.log('🔍 Test: New category found:', newCategory);
+            console.log('🔍 Test: iconUrl in new category:', newCategory.iconUrl);
+          }
+        } catch (testError) {
+          console.error('🔍 Test: Error fetching categories:', testError);
+        }
+      }, 2000);
+      
       fetchCategories();
       fetchDetailedCategories();
+      
     } catch (error) {
       toast({
         title: "❌ Server Error",
@@ -419,7 +760,7 @@ const Admin = () => {
         else setAnalytics(data);
       }
     } catch (error) {
-      console.error("Analytics fetch error:", error);
+      // Analytics fetch error
     } finally {
       setLoadingAnalytics(false);
     }
@@ -453,7 +794,7 @@ const Admin = () => {
       }
       setCategoryProductCounts(counts);
     } catch (err) {
-      console.error('Error fetching category counts:', err);
+      // Error fetching category counts
     } finally {
       setLoadingCategoryCounts(false);
     }
@@ -887,6 +1228,49 @@ const Admin = () => {
                       onChange={(e) => setNewCategoryTa(e.target.value)}
                       disabled={isAddingCategory}
                     />
+                    
+                    {/* Image Upload Section */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">
+                        Category Icon (optional)
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setNewCategoryImage(e.target.files?.[0] || null)}
+                          className="flex-1 text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                          disabled={isAddingCategory}
+                        />
+                        {newCategoryImage && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setNewCategoryImage(null)}
+                            disabled={isAddingCategory}
+                            className="shrink-0"
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      {newCategoryImage && (
+                        <div className="space-y-2">
+                          <div className="text-xs text-muted-foreground">
+                            Selected: {newCategoryImage.name}
+                          </div>
+                          <div className="w-20 h-20 border rounded-md overflow-hidden">
+                            <img
+                              src={URL.createObjectURL(newCategoryImage)}
+                              alt="Preview"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
                     <Button 
                       type="submit" 
                       disabled={isAddingCategory || !newCategoryEn.trim()}
@@ -935,7 +1319,9 @@ const Admin = () => {
                         onClick={() => {
                           // Force refresh with cache-busting
                           const timestamp = Date.now();
-                          fetch(`https://api.kmpyrotech.com/api/categories/public?t=${timestamp}&force=1`)
+                          fetch(`https://api.kmpyrotech.com/api/categories/public?t=${timestamp}&force=1`, {
+                            // No custom headers to avoid CORS issues
+                          })
                             .then(res => res.json())
                             .then(data => {
                               setCategories(Array.isArray(data) ? data.map(cat => ({
@@ -944,7 +1330,7 @@ const Admin = () => {
                                 displayName_ta: cat.displayName_ta || ''
                               })) : []);
                             })
-                            .catch(console.error);
+                            .catch(() => {});
                         }}
                         disabled={loadingCategories}
                       >
@@ -957,8 +1343,43 @@ const Admin = () => {
                       <Loader2 className="animate-spin h-6 w-6 mr-2" />
                       Loading categories...
                     </div>
+                  ) : categoriesError ? (
+                    <div className="text-center py-8 space-y-4">
+                      <p className="text-red-500 font-medium">Failed to load categories</p>
+                      <p className="text-sm text-muted-foreground">{categoriesError}</p>
+                      <Button
+                        variant="outline"
+                        onClick={() => fetchCategories()}
+                        disabled={loadingCategories}
+                      >
+                        {loadingCategories ? (
+                          <span className="flex items-center">
+                            <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                            Retrying...
+                          </span>
+                        ) : (
+                          "Retry Loading Categories"
+                        )}
+                      </Button>
+                    </div>
                   ) : categories.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">No categories found</p>
+                    <div className="text-center py-8 space-y-4">
+                      <p className="text-muted-foreground">No categories found</p>
+                      <Button
+                        variant="outline"
+                        onClick={() => fetchCategories()}
+                        disabled={loadingCategories}
+                      >
+                        {loadingCategories ? (
+                          <span className="flex items-center">
+                            <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                            Retrying...
+                          </span>
+                        ) : (
+                          "Retry Loading Categories"
+                        )}
+                      </Button>
+                    </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {categories.map((category) => (

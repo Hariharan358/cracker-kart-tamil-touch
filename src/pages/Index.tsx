@@ -33,6 +33,7 @@ const Index = () => {
       try {
         const res = await fetch('https://api.kmpyrotech.com/api/categories/detailed');
         const data = await res.json();
+        console.log('🔍 Raw categories data from API:', data);
         if (Array.isArray(data) && data.length > 0) {
           const mapped = data.map((c: any) => ({
             name: c.name,
@@ -40,9 +41,9 @@ const Index = () => {
             count: c.productCount || 0,
             iconUrl: c.iconUrl,
           }));
+          console.log('🗺️ Mapped categories with iconUrl:', mapped);
           setCategories(mapped);
         } else {
-          console.log('⚠️ No categories found in API, using mock data');
           const { getCategoriesWithCount } = await import('../data/mockData');
           const mockCategories = getCategoriesWithCount();
           const mapped = mockCategories.map((c: any) => ({
@@ -53,7 +54,6 @@ const Index = () => {
           setCategories(mapped);
         }
       } catch (e) {
-        console.error('❌ Failed to load categories:', e);
         setCategories([]);
       }
     };
@@ -100,11 +100,10 @@ const Index = () => {
         
         setProducts(atomBombProducts);
         setSparklerProducts(sparklerProducts);
-      } catch (err) {
-        console.error("Error fetching home products:", err);
-        // Fallback: fetch individual categories if home endpoint fails
-        fetchFallbackProducts();
-      } finally {
+              } catch (err) {
+          // Fallback: fetch individual categories if home endpoint fails
+          fetchFallbackProducts();
+        } finally {
         setLoadingProducts(false);
         setLoadingSparklers(false);
       }
@@ -123,7 +122,6 @@ const Index = () => {
         const sparklerData = await sparklerRes.json();
         setSparklerProducts(sparklerData.slice(0, 8));
       } catch (err) {
-        console.error("Fallback fetch failed:", err);
         setProducts([]);
         setSparklerProducts([]);
       }
@@ -166,7 +164,6 @@ const Index = () => {
               className="w-full h-full object-cover object-center"
               onError={() => {
                 // If both video and image fail, show a gradient background
-                console.warn('Both video and fallback image failed to load');
               }}
             />
           )}

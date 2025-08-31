@@ -136,7 +136,16 @@ export const Categories = () => {
     try {
       setLoadingProducts(true);
       console.log('🔄 Fetching products for category:', categoryName);
-      const res = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(categoryName)}`);
+      
+      // Add cache busting parameter
+      const timestamp = Date.now();
+      const res = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(categoryName)}?t=${timestamp}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       const data = await res.json();
       
       console.log('📦 Products response:', data);

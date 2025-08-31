@@ -136,6 +136,7 @@ const Admin = () => {
     displayName_ta: "",
     iconUrl: "",
   });
+  const [editCategoryImage, setEditCategoryImage] = useState(null);
 
   // Add state for transportName and lrNumber per order
   const [transportInputs, setTransportInputs] = useState({});
@@ -692,27 +693,93 @@ const Admin = () => {
       toast({ title: 'Invalid name', description: 'English display name cannot be empty', variant: 'destructive' });
       return;
     }
+    
     try {
+      let finalIconUrl = iconUrl;
+      
+      // Upload image to Cloudinary if selected
+      if (editCategoryImage) {
+        try {
+          const cloudinaryFormData = new FormData();
+          cloudinaryFormData.append('file', editCategoryImage);
+          cloudinaryFormData.append('upload_preset', 'ml_default');
+          cloudinaryFormData.append('cloud_name', 'kmpyrotech');
+          
+          console.log('📤 Uploading category image to Cloudinary...');
+          
+          const cloudinaryRes = await fetch('https://api.cloudinary.com/v1_1/kmpyrotech/image/upload', {
+            method: 'POST',
+            body: cloudinaryFormData,
+          });
+          
+          if (cloudinaryRes.ok) {
+            const cloudinaryData = await cloudinaryRes.json();
+            finalIconUrl = cloudinaryData.secure_url;
+            console.log('✅ Category image uploaded to Cloudinary:', finalIconUrl);
+          } else {
+            const errorData = await cloudinaryRes.text();
+            console.error('❌ Cloudinary upload failed:', errorData);
+            toast({
+              title: "⚠️ Image Upload Warning",
+              description: "Image upload failed, but category will be updated without image.",
+              variant: "destructive",
+            });
+          }
+        } catch (uploadError) {
+          console.error('❌ Error uploading to Cloudinary:', uploadError);
+          toast({
+            title: "⚠️ Image Upload Warning",
+            description: "Image upload failed, but category will be updated without image.",
+            variant: "destructive",
+          });
+        }
+      }
+      
       const res = await fetch(`https://api.kmpyrotech.com/api/categories/${encodeURIComponent(editingCategory.name)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ displayName_en: displayName_en.trim(), displayName_ta: displayName_ta.trim(), iconUrl: iconUrl.trim() })
+        body: JSON.stringify({ 
+          displayName_en: displayName_en.trim(), 
+          displayName_ta: displayName_ta.trim(), 
+          iconUrl: finalIconUrl.trim() 
+        })
       });
+      
       if (!res.ok) {
         const errorMessage = await getErrorMessage(res);
         toast({ title: '❌ Update failed', description: errorMessage, variant: 'destructive' });
         return;
       }
+      
       const data = await res.json();
-      toast({ title: '✅ Category updated', description: `${editingCategory.name} display names changed.` });
+      toast({ title: '✅ Category updated', description: `${editingCategory.name} updated successfully.` });
+      
+      // Force refresh all data with cache busting
+      console.log('🔄 Refreshing data after category update...');
+      
+      // Clear existing data first
+      setCategories([]);
+      setCategoryProductCounts({});
       
       // Force refresh categories with a small delay to ensure backend cache is cleared
-      setTimeout(() => {
-        fetchCategories();
-        fetchDetailedCategories();
-      }, 500);
+      setTimeout(async () => {
+        try {
+          console.log('🔄 Fetching fresh categories...');
+          await fetchCategories();
+          await fetchDetailedCategories();
+          console.log('✅ Data refreshed successfully');
+        } catch (refreshError) {
+          console.error('❌ Error refreshing data:', refreshError);
+          toast({
+            title: "⚠️ Data Refresh Warning",
+            description: "Category was updated but data refresh failed. Please refresh the page manually.",
+            variant: "destructive",
+          });
+        }
+      }, 1000);
       
       setIsEditingCategory(false);
+      setEditCategoryImage(null);
     } catch (error) {
       toast({ title: '❌ Network error', description: error.message, variant: 'destructive' });
     }
@@ -720,6 +787,14 @@ const Admin = () => {
 
   const handleEditCategoryFormChange = (field, value) => {
     setEditCategoryForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleEditCategoryImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditCategoryImage(file);
+      setEditCategoryForm((prev) => ({ ...prev, iconUrl: "" })); // Clear URL when file is selected
+    }
   };
 
   const fetchOrders = async () => {
@@ -769,10 +844,34 @@ const Admin = () => {
   const fetchCategoryProducts = async (category) => {
     setLoadingCategoryProducts(true);
     try {
-  const res = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(category)}`);
+      console.log('🔍 Fetching products for category:', category);
+      // Add cache busting parameter
+      const timestamp = Date.now();
+      const url = `https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(category)}?t=${timestamp}`;
+      console.log('🔍 Requesting URL:', url);
+      
+      const res = await fetch(url, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      
+      console.log('🔍 Response status:', res.status);
       const data = await res.json();
+      console.log('🔍 Response data length:', data.length);
+      
+      if (!res.ok) {
+        console.error('❌ Error response:', data);
+        setCategoryProducts([]);
+        return;
+      }
+      
       setCategoryProducts(data);
+      console.log('✅ Products set:', data.length);
     } catch (err) {
+      console.error('❌ Fetch error:', err);
       setCategoryProducts([]);
     } finally {
       setLoadingCategoryProducts(false);
@@ -957,6 +1056,11 @@ const Admin = () => {
   };
 
   const handleEditClick = (product) => {
+    console.log('🔄 Edit clicked for product:', product);
+    console.log('🔄 Product ID:', product._id || product.id);
+    console.log('🔄 Product ID type:', typeof (product._id || product.id));
+    console.log('🔄 Full product object:', JSON.stringify(product, null, 2));
+    
     setEditProduct(product);
     setEditForm({
       name_en: product.name_en,
@@ -1016,8 +1120,33 @@ const Admin = () => {
         setIsEditing(false);
         setEditProduct(null);
         setEditForm({ name_en: "", name_ta: "", price: "", original_price: "", category: "", image: null, imageUrl: "", youtube_url: "" });
-        if (productManagementCategory) fetchCategoryProducts(productManagementCategory);
-        fetchCategoryProductCounts();
+        
+        // Force refresh all data with cache busting
+        console.log('🔄 Refreshing data after product update...');
+        
+        // Clear existing product data first
+        if (productManagementCategory) {
+          setCategoryProducts([]);
+        }
+        
+        // Wait a moment for backend to process, then refresh
+        setTimeout(async () => {
+          try {
+            console.log('🔄 Fetching fresh data...');
+            if (productManagementCategory) {
+              await fetchCategoryProducts(productManagementCategory);
+            }
+            await fetchCategoryProductCounts();
+            console.log('✅ Data refreshed successfully');
+          } catch (refreshError) {
+            console.error('❌ Error refreshing data:', refreshError);
+            toast({
+              title: "⚠️ Data Refresh Warning",
+              description: "Product was updated but data refresh failed. Please refresh the page manually.",
+              variant: "destructive",
+            });
+          }
+        }, 1000);
       } else {
         toast({ title: "❌ Failed to Update", description: data.error || "Something went wrong." });
       }
@@ -2024,19 +2153,45 @@ const Admin = () => {
               />
             </div>
             <div>
-              <Label htmlFor="edit_iconUrl">Icon Image URL</Label>
-              <Input
-                id="edit_iconUrl"
-                placeholder="https://.../image.png"
-                value={editCategoryForm.iconUrl}
-                onChange={e => handleEditCategoryFormChange("iconUrl", e.target.value)}
-              />
-              {editCategoryForm.iconUrl ? (
-                <div className="mt-2">
-                  <p className="text-xs text-muted-foreground mb-1">Preview:</p>
-                  <img src={editCategoryForm.iconUrl} alt="Preview" className="h-16 w-16 rounded-full object-cover border" />
+              <Label htmlFor="edit_iconUrl">Category Icon</Label>
+              <div className="space-y-2">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                  <Input
+                    id="edit_image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleEditCategoryImageUpload}
+                    className="mb-2"
+                  />
+                  {editCategoryImage && (
+                    <p className="text-xs text-green-600 mb-2">
+                      ✓ File selected: {editCategoryImage.name}
+                    </p>
+                  )}
+                  <div className="text-center text-sm text-muted-foreground mb-2">OR</div>
+                  <Input
+                    id="edit_iconUrl"
+                    type="url"
+                    placeholder="https://example.com/image.jpg"
+                    value={editCategoryForm.iconUrl}
+                    onChange={e => handleEditCategoryFormChange("iconUrl", e.target.value)}
+                  />
+                  {editCategoryForm.iconUrl && (
+                    <p className="text-xs text-green-600 mt-2">
+                      ✓ URL provided: {editCategoryForm.iconUrl.substring(0, 50)}...
+                    </p>
+                  )}
                 </div>
-              ) : null}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Upload an image file or provide an image URL (optional - will keep current image if none provided)
+              </p>
+              {editingCategory && editingCategory.iconUrl && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Current image:</p>
+                  <img src={editingCategory.iconUrl} alt="Current" className="h-20 rounded" />
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsEditingCategory(false)}>

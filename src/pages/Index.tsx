@@ -91,7 +91,16 @@ const Index = () => {
     const fetchHomeProducts = async () => {
       try {
         setLoadingProducts(true);
-        const res = await fetch("https://api.kmpyrotech.com/api/products/home");
+        
+        // Add cache busting parameter
+        const timestamp = Date.now();
+        const res = await fetch(`https://api.kmpyrotech.com/api/products/home?t=${timestamp}`, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         const data = await res.json();
         
         // Separate products by category for display
@@ -100,10 +109,10 @@ const Index = () => {
         
         setProducts(atomBombProducts);
         setSparklerProducts(sparklerProducts);
-              } catch (err) {
-          // Fallback: fetch individual categories if home endpoint fails
-          fetchFallbackProducts();
-        } finally {
+      } catch (err) {
+        // Fallback: fetch individual categories if home endpoint fails
+        fetchFallbackProducts();
+      } finally {
         setLoadingProducts(false);
         setLoadingSparklers(false);
       }
@@ -112,13 +121,28 @@ const Index = () => {
     // Fallback method for individual category fetching
     const fetchFallbackProducts = async () => {
       try {
+        // Add cache busting parameter
+        const timestamp = Date.now();
+        
         // Fetch ATOM BOMB products
-        const atomRes = await fetch("https://api.kmpyrotech.com/api/products/category/ATOM%20BOMB");
+        const atomRes = await fetch(`https://api.kmpyrotech.com/api/products/category/ATOM%20BOMB?t=${timestamp}`, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         const atomData = await atomRes.json();
         setProducts(atomData.slice(0, 8));
         
         // Fetch SPARKLER ITEMS products
-        const sparklerRes = await fetch("https://api.kmpyrotech.com/api/products/category/SPARKLER%20ITEMS");
+        const sparklerRes = await fetch(`https://api.kmpyrotech.com/api/products/category/SPARKLER%20ITEMS?t=${timestamp}`, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         const sparklerData = await sparklerRes.json();
         setSparklerProducts(sparklerData.slice(0, 8));
       } catch (err) {

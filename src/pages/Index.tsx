@@ -18,6 +18,7 @@ import { Loader } from "../components/ui/loader";
 const Index = () => {
   const { getTotalItems, addToCart, cartItems, updateQuantity } = useCart();
   const { t } = useLanguage();
+  const location = useLocation();
   const [categories, setCategories] = useState<{ name: string; displayName?: string; count: number; iconUrl?: string }[]>([]);
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -29,20 +30,46 @@ const Index = () => {
 
   // Load categories with counts from backend
   useEffect(() => {
+    // simple in-memory de-dupe to avoid parallel requests spamming the API
+    let aborted = false;
+
+    const fetchJsonWithRetry = async (url: string, retries = 1): Promise<any> => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      } catch (err) {
+        if (retries > 0) {
+          await new Promise(r => setTimeout(r, 800));
+          return fetchJsonWithRetry(url, retries - 1);
+        }
+        throw err;
+      }
+    };
+
     const fetchCategories = async () => {
       try {
-        const res = await fetch('https://api.kmpyrotech.com/api/categories/detailed');
-        const data = await res.json();
+        // serve from cache first to avoid empty UI on rate-limit
+        const cached = localStorage.getItem('kk_categories_v1');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (!aborted) setCategories(parsed);
+        }
+
+        const ts = Date.now();
+        const data = await fetchJsonWithRetry(`https://api.kmpyrotech.com/api/categories/detailed?t=${ts}`, 1);
         console.log('🔍 Raw categories data from API:', data);
         if (Array.isArray(data) && data.length > 0) {
           const mapped = data.map((c: any) => ({
             name: c.name,
-            displayName: c.displayName,
-            count: c.productCount || 0,
-            iconUrl: c.iconUrl,
+            displayName: c.displayName || c.displayName_en || c.name,
+            count: c.productCount || c.count || 0,
+            // Accept multiple possible fields from backend
+            iconUrl: c.iconUrl || c.icon_url || c.icon || c.imageUrl || c.image_url || '',
           }));
           console.log('🗺️ Mapped categories with iconUrl:', mapped);
-          setCategories(mapped);
+          if (!aborted) setCategories(mapped);
+          localStorage.setItem('kk_categories_v1', JSON.stringify(mapped));
         } else {
           const { getCategoriesWithCount } = await import('../data/mockData');
           const mockCategories = getCategoriesWithCount();
@@ -51,14 +78,16 @@ const Index = () => {
             displayName: c.name,
             count: c.count || 0,
           }));
-          setCategories(mapped);
+          if (!aborted) setCategories(mapped);
         }
       } catch (e) {
-        setCategories([]);
+        // keep whatever we already have (cache/UI) to avoid clearing on 429
+        console.warn('Categories fetch failed; using cache where available');
       }
     };
 
     fetchCategories();
+    return () => { aborted = true; };
   }, []);
 
   // Responsive hook for category display
@@ -95,6 +124,7 @@ const Index = () => {
         // Add cache busting parameter
         const timestamp = Date.now();
         const res = await fetch(`https://api.kmpyrotech.com/api/products/home?t=${timestamp}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         
         // Separate products by category for display
@@ -120,11 +150,13 @@ const Index = () => {
         
         // Fetch ATOM BOMB products
         const atomRes = await fetch(`https://api.kmpyrotech.com/api/products/category/ATOM%20BOMB?t=${timestamp}`);
+        if (!atomRes.ok) throw new Error(`HTTP ${atomRes.status}`);
         const atomData = await atomRes.json();
         setProducts(atomData.slice(0, 8));
         
         // Fetch SPARKLER ITEMS products
         const sparklerRes = await fetch(`https://api.kmpyrotech.com/api/products/category/SPARKLER%20ITEMS?t=${timestamp}`);
+        if (!sparklerRes.ok) throw new Error(`HTTP ${sparklerRes.status}`);
         const sparklerData = await sparklerRes.json();
         setSparklerProducts(sparklerData.slice(0, 8));
       } catch (err) {
@@ -143,8 +175,8 @@ const Index = () => {
       {/* Discount Marquee Banner */}
       <div className="relative w-full overflow-hidden bg-primary py-2">
         <div className="marquee whitespace-nowrap text-white font-bold text-sm sm:text-lg tracking-wide">
-          <span className="mx-4 sm:mx-8">🔥 Festival Offer: 10% OFF on all products! 🔥</span>
-          <span className="mx-4 sm:mx-8">🔥 Festival Offer: 10% OFF on all products! 🔥</span>
+          <span className="mx-4 sm:mx-8">🔥 Festival Offer: 80% OFF on all products! 🔥</span>
+          <span className="mx-4 sm:mx-8">🔥 Delivery all over TamilNadu 🔥</span>
         </div>
       </div>
 

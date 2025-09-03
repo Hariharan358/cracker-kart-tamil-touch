@@ -89,8 +89,23 @@ app.use('/api/admin', rateLimit({
   legacyHeaders: false,
 }));
 
+// Specific higher-limit for discount application (admin-only)
+const discountLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // 6️⃣ JSON body parsing
 app.use(express.json());
+
+// Static folder for locally stored category icons (Option A)
+const categoryIconsDir = path.join(__dirname, 'public', 'category-icons');
+if (!fs.existsSync(categoryIconsDir)) {
+  fs.mkdirSync(categoryIconsDir, { recursive: true });
+}
+app.use('/category-icons', express.static(categoryIconsDir));
 
 // 7️⃣ Health check (Railway ping)
 app.get("/", (req, res) => {
@@ -160,6 +175,38 @@ const storage = new CloudinaryStorage({
   }
 });
 const upload = multer({ storage });
+
+// Multer disk storage for category icons (local filesystem)
+const categoryIconDiskStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, categoryIconsDir),
+  filename: (req, file, cb) => {
+    const safeName = `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
+    cb(null, safeName);
+  }
+});
+const uploadCategoryIcon = multer({ storage: categoryIconDiskStorage });
+
+// ✅ POST: Upload Category Icon (local filesystem)
+app.post('/api/uploads/category-icon', uploadCategoryIcon.single('icon'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Icon file is required (field name: icon)' });
+    }
+    // Build public URL
+    const filename = req.file.filename;
+    const publicPath = `/category-icons/${filename}`;
+    const absoluteUrl = `${req.protocol}://${req.get('host')}${publicPath}`;
+    return res.json({
+      message: '✅ Category icon uploaded',
+      url: absoluteUrl,
+      path: publicPath,
+      filename
+    });
+  } catch (err) {
+    console.error('❌ Category icon upload error:', err);
+    res.status(500).json({ error: 'Failed to upload category icon' });
+  }
+});
 
 
 
@@ -444,7 +491,7 @@ app.put('/api/products/:id', upload.single('image'), async (req, res) => {
 
 
 // ✅ BULK DISCOUNT: Apply discount to all products in all categories
-app.post('/api/products/apply-discount', async (req, res) => {
+app.post('/api/products/apply-discount', verifyAdmin, discountLimiter, async (req, res) => {
   try {
     const { discount } = req.body;
     if (typeof discount !== 'number' || discount < 0 || discount > 100) {

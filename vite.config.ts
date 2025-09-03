@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => ({
         target: "https://api.kmpyrotech.com",
         changeOrigin: true,
         secure: true,
+        rewrite: (p) => p.replace(/^\/api/, ""),
       },
     },
   },

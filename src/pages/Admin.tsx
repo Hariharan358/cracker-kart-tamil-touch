@@ -518,46 +518,25 @@ const Admin = () => {
     try {
       let iconUrl = '';
       
-      // Upload image to Cloudinary if selected
+      // Upload icon to backend local storage (Option A)
       if (newCategoryImage) {
         try {
-          const cloudinaryFormData = new FormData();
-          cloudinaryFormData.append('file', newCategoryImage);
-          cloudinaryFormData.append('upload_preset', 'ml_default'); // Using default preset
-          cloudinaryFormData.append('cloud_name', 'kmpyrotech'); // Your cloud name
-          
-          console.log('📤 Uploading to Cloudinary with preset: ml_default');
-          
-          const cloudinaryRes = await fetch('https://api.cloudinary.com/v1_1/kmpyrotech/image/upload', {
+          const form = new FormData();
+          form.append('icon', newCategoryImage);
+          const uploadRes = await fetch('/api/uploads/category-icon', {
             method: 'POST',
-            body: cloudinaryFormData,
+            body: form
           });
-          
-          console.log('📥 Cloudinary response status:', cloudinaryRes.status);
-          
-          if (cloudinaryRes.ok) {
-            const cloudinaryData = await cloudinaryRes.json();
-            iconUrl = cloudinaryData.secure_url;
-            console.log('✅ Image uploaded to Cloudinary:', iconUrl);
-            console.log('📊 Full Cloudinary response:', cloudinaryData);
+          if (uploadRes.ok) {
+            const payload = await uploadRes.json();
+            iconUrl = payload.url || payload.path || '';
+            console.log('✅ Category icon uploaded to server:', iconUrl);
           } else {
-            const errorData = await cloudinaryRes.text();
-            console.error('❌ Cloudinary upload failed:', errorData);
-            console.error('❌ Response status:', cloudinaryRes.status);
-            console.error('❌ Response headers:', cloudinaryRes.headers);
-            toast({
-              title: "⚠️ Image Upload Warning",
-              description: `Image upload failed (${cloudinaryRes.status}), but category will be created without image.`,
-              variant: "destructive",
-            });
+            const txt = await uploadRes.text();
+            console.warn('⚠️ Category icon upload failed:', txt);
           }
-        } catch (uploadError) {
-          console.error('❌ Error uploading to Cloudinary:', uploadError);
-          toast({
-            title: "⚠️ Image Upload Warning",
-            description: "Image upload failed, but category will be created without image.",
-            variant: "destructive",
-          });
+        } catch (err) {
+          console.warn('⚠️ Category icon upload error:', err);
         }
       }
       

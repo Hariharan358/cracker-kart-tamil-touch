@@ -850,13 +850,7 @@ const Admin = () => {
       const url = `https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(category)}?t=${timestamp}`;
       console.log('🔍 Requesting URL:', url);
       
-      const res = await fetch(url, {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
+             const res = await fetch(url);
       
       console.log('🔍 Response status:', res.status);
       const data = await res.json();

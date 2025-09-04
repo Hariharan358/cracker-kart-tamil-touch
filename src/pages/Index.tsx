@@ -57,7 +57,7 @@ const Index = () => {
         }
 
         const ts = Date.now();
-        const data = await fetchJsonWithRetry(`https://api.kmpyrotech.com/api/categories/detailed?t=${ts}`, 1);
+        const data = await fetchJsonWithRetry(`https://api.kmpyrotech.com/api/categories/detailed?t=${Date.now()}`, 1);
         console.log('🔍 Raw categories data from API:', data);
         if (Array.isArray(data) && data.length > 0) {
           const mapped = data.map((c: any) => ({

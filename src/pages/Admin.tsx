@@ -138,6 +138,11 @@ const Admin = () => {
   });
   const [editCategoryImage, setEditCategoryImage] = useState(null);
 
+  // Reorder categories state
+  const [isReordering, setIsReordering] = useState(false);
+  const [reorderList, setReorderList] = useState([] as { name: string; displayName_en?: string; displayName_ta?: string }[]);
+  const dragIndexRef = useRef<number | null>(null);
+
   // Add state for transportName and lrNumber per order
   const [transportInputs, setTransportInputs] = useState({});
 
@@ -413,6 +418,8 @@ const Admin = () => {
         displayName_en: cat.displayName_en || cat.displayName || cat.name,
         displayName_ta: cat.displayName_ta || ''
         })));
+        // Prepare reorder list (preserve current order from API)
+        setReorderList(data.map(cat => ({ name: cat.name, displayName_en: cat.displayName_en || cat.displayName || cat.name, displayName_ta: cat.displayName_ta || '' })));
         setCategoriesError(null); // Clear any previous errors
       } else if (data && typeof data === 'object') {
         // Handle case where API returns an object instead of array
@@ -424,6 +431,7 @@ const Admin = () => {
             displayName_en: cat.displayName_en || cat.displayName || cat.name,
             displayName_ta: cat.displayName_ta || ''
           })));
+          setReorderList(data.categories.map(cat => ({ name: cat.name, displayName_en: cat.displayName_en || cat.displayName || cat.name, displayName_ta: cat.displayName_ta || '' })));
           setCategoriesError(null);
         } else if (data.data && Array.isArray(data.data)) {
           console.log('Found categories in data.data:', data.data);
@@ -432,6 +440,7 @@ const Admin = () => {
             displayName_en: cat.displayName_en || cat.displayName || cat.name,
             displayName_ta: cat.displayName_ta || ''
           })));
+          setReorderList(data.data.map(cat => ({ name: cat.name, displayName_en: cat.displayName_en || cat.displayName || cat.name, displayName_ta: cat.displayName_ta || '' })));
           setCategoriesError(null);
         } else {
           console.log('No categories found in response object');
@@ -1400,6 +1409,55 @@ const Admin = () => {
                       Existing Categories
                     </h3>
                     <div className="flex gap-2">
+                      {!isReordering ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsReordering(true)}
+                        >
+                          Reorder
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                const payload = reorderList.map((item, idx) => ({ name: item.name, order: idx + 1 }));
+                                const token = localStorage.getItem('adminToken') || '';
+                                const headers: any = { 'Content-Type': 'application/json' };
+                                if (token) headers['Authorization'] = `Bearer ${token}`;
+                                const res = await fetch('https://api.kmpyrotech.com/api/categories/reorder', {
+                                  method: 'POST',
+                                  headers,
+                                  body: JSON.stringify({ order: payload })
+                                });
+                                const data = await res.json();
+                                if (res.ok) {
+                                  toast({ title: '✅ Order saved', description: `${payload.length} categories updated` });
+                                  setIsReordering(false);
+                                  fetchCategories();
+                                  fetchDetailedCategories();
+                                } else {
+                                  toast({ title: '❌ Failed to save order', description: data.error || 'Server error', variant: 'destructive' });
+                                }
+                              } catch (err: any) {
+                                toast({ title: '❌ Network error', description: err.message, variant: 'destructive' });
+                              }
+                            }}
+                          >
+                            Save Order
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => { setIsReordering(false); setReorderList(categories.map(c => ({ name: c.name, displayName_en: c.displayName_en, displayName_ta: c.displayName_ta }))); }}
+                          >
+                            Cancel
+                          </Button>
+                        </>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -1484,41 +1542,61 @@ const Admin = () => {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {categories.map((category) => (
-                        <div 
-                          key={category.name} 
-                          className="bg-card rounded-lg shadow-card p-4 border border-border"
+                      {(isReordering ? reorderList : categories).map((category, index) => (
+                        <div
+                          key={category.name}
+                          className={`bg-card rounded-lg shadow-card p-4 border border-border ${isReordering ? 'cursor-move ring-1 ring-dashed' : ''}`}
+                          draggable={isReordering}
+                          onDragStart={() => { dragIndexRef.current = index; }}
+                          onDragOver={(e) => { if (isReordering) e.preventDefault(); }}
+                          onDrop={() => {
+                            if (!isReordering) return;
+                            const from = dragIndexRef.current;
+                            const to = index;
+                            if (from === null || from === to) return;
+                            setReorderList((prev) => {
+                              const next = [...prev];
+                              const [moved] = next.splice(from, 1);
+                              next.splice(to, 0, moved);
+                              return next;
+                            });
+                            dragIndexRef.current = null;
+                          }}
                         >
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex-1">
-                              <div className="font-semibold text-lg">{category.displayName_en}</div>
+                              <div className="font-semibold text-lg">{category.displayName_en || category.displayName}</div>
                               <div className="text-sm text-muted-foreground">{category.displayName_ta}</div>
                               <div className="text-sm text-muted-foreground">
                                 {loadingCategoryCounts ? 'Loading...' : `${categoryProductCounts[category.name] || 0} products`}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => handleEditCategoryClick(category)}
-                                className="ml-3"
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDeleteCategory(category.name)}
-                                disabled={isDeletingCategory}
-                                className="ml-3"
-                              >
-                                {isDeletingCategory ? (
-                                  <Loader2 className="animate-spin h-4 w-4" />
-                                ) : (
-                                  "Delete"
-                                )}
-                              </Button>
+                              {!isReordering && (
+                                <>
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => handleEditCategoryClick(category)}
+                                    className="ml-3"
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleDeleteCategory(category.name)}
+                                    disabled={isDeletingCategory}
+                                    className="ml-3"
+                                  >
+                                    {isDeletingCategory ? (
+                                      <Loader2 className="animate-spin h-4 w-4" />
+                                    ) : (
+                                      "Delete"
+                                    )}
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           </div>
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, CheckCircle, CreditCard, MapPin, User, Phone, Mail, X } from "lucide-react";
+import { ArrowLeft, CheckCircle, CreditCard, MapPin, User, Phone, Mail, X, Download } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
@@ -24,6 +24,8 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [selectedQR, setSelectedQR] = useState<{ src: string; title: string } | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
 
   // Generate a temporary order ID for display
   const generateTempOrderId = () => {
@@ -200,6 +202,44 @@ const Checkout = () => {
     setSelectedQR(null);
   };
 
+  const downloadInvoice = async () => {
+    if (!orderId) return;
+    
+    setIsDownloading(true);
+    setDownloadError("");
+    
+    try {
+      const response = await fetch(`https://api.kmpyrotech.com/api/orders/${orderId}/invoice`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to download invoice');
+      }
+      
+      // Create blob from response
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `KM_Pyrotech_Invoice_${orderId}.pdf`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Download error:', error);
+      setDownloadError('Failed to download invoice. Please try again later.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   if (cartItems.length === 0 && !isSubmitted) {
     return (
       <div className={`min-h-screen ${resolvedTheme === 'dark' ? 'bg-gradient-to-br from-gray-900 to-black' : 'bg-gradient-to-br from-orange-50 to-red-50'}`}>
@@ -243,6 +283,24 @@ const Checkout = () => {
                   <p className={`font-semibold ${resolvedTheme === 'dark' ? 'text-green-400' : 'text-green-800'}`}>Order ID: {orderId}</p>
                 </div>
               )}
+              
+              {/* Download Invoice Button */}
+              <div className="mb-6">
+                <Button 
+                  onClick={downloadInvoice}
+                  disabled={isDownloading}
+                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 mb-2"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {isDownloading ? 'Downloading...' : 'Download Invoice'}
+                </Button>
+                {downloadError && (
+                  <p className={`text-sm ${resolvedTheme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+                    {downloadError}
+                  </p>
+                )}
+              </div>
+              
               <Button asChild className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
                 <Link to="/">
                   <ArrowLeft className="mr-2 h-4 w-4" />

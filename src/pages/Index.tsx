@@ -20,13 +20,22 @@ const Index = () => {
   const { t } = useLanguage();
   const location = useLocation();
   const [categories, setCategories] = useState<{ name: string; displayName?: string; count: number; iconUrl?: string }[]>([]);
-  const [products, setProducts] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const [sparklerProducts, setSparklerProducts] = useState([]);
-  const [loadingSparklers, setLoadingSparklers] = useState(true);
+  const [fountainProducts, setFountainProducts] = useState([]);
+  const [loadingFountains, setLoadingFountains] = useState(true);
+  const [fancyProducts, setFancyProducts] = useState([]);
+  const [loadingFancy, setLoadingFancy] = useState(true);
+  const [fountainCategoryForLink, setFountainCategoryForLink] = useState<string | null>(null);
+  const [fancyCategoryForLink, setFancyCategoryForLink] = useState<string | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
   const { resolvedTheme } = useTheme();
   const [videoError, setVideoError] = useState(false);
+
+  // Normalize category strings for robust matching
+  const normalizeCategory = (value: unknown): string => {
+    const raw = String(value || '').toUpperCase();
+    // Replace all non-alphanumeric with underscores and collapse repeats
+    return raw.replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  };
 
   // Load categories with counts from backend
   useEffect(() => {
@@ -119,7 +128,7 @@ const Index = () => {
     // First: Fetch home page products for immediate user impression
     const fetchHomeProducts = async () => {
       try {
-        setLoadingProducts(true);
+        setLoadingFountains(true);
         
         // Add cache busting parameter
         const timestamp = Date.now();
@@ -127,18 +136,38 @@ const Index = () => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         
-        // Separate products by category for display
-        const atomBombProducts = data.filter(p => p.category === 'ATOM BOMB').slice(0, 8);
-        const sparklerProducts = data.filter(p => p.category === 'SPARKLER ITEMS').slice(0, 8);
-        
-        setProducts(atomBombProducts);
-        setSparklerProducts(sparklerProducts);
+        // Separate products by robust category matching
+        const fountains = data
+          .filter((p: any) => {
+            const c = normalizeCategory(p.category);
+            return c === 'FOUNTAIN_ITEMS' || c.includes('FOUNTAIN');
+          })
+          .slice(0, 8);
+        const fancys = data
+          .filter((p: any) => {
+            const c = normalizeCategory(p.category);
+            return c === 'NEW_FANCY_ITEM' || c.includes('FANCY');
+          })
+          .slice(0, 8);
+
+        setFountainProducts(fountains);
+        setFancyProducts(fancys);
+
+        // Derive category names for the "View All" links if available; otherwise defaults
+        setFountainCategoryForLink(fountains[0]?.category || 'FOUNTAIN_ITEMS');
+        setFancyCategoryForLink(fancys[0]?.category || 'NEW_FANCY_ITEM');
+
+        // If home payload didn't include these categories, immediately fall back to explicit fetches
+        if (fountains.length === 0 || fancys.length === 0) {
+          await fetchFallbackProducts();
+          return;
+        }
       } catch (err) {
         // Fallback: fetch individual categories if home endpoint fails
         fetchFallbackProducts();
       } finally {
-        setLoadingProducts(false);
-        setLoadingSparklers(false);
+        setLoadingFountains(false);
+        setLoadingFancy(false);
       }
     };
 
@@ -148,20 +177,69 @@ const Index = () => {
         // Add cache busting parameter
         const timestamp = Date.now();
         
-        // Fetch ATOM BOMB products
-        const atomRes = await fetch(`https://api.kmpyrotech.com/api/products/category/ATOM%20BOMB?t=${timestamp}`);
-        if (!atomRes.ok) throw new Error(`HTTP ${atomRes.status}`);
-        const atomData = await atomRes.json();
-        setProducts(atomData.slice(0, 8));
-        
-        // Fetch SPARKLER ITEMS products
-        const sparklerRes = await fetch(`https://api.kmpyrotech.com/api/products/category/SPARKLER%20ITEMS?t=${timestamp}`);
-        if (!sparklerRes.ok) throw new Error(`HTTP ${sparklerRes.status}`);
-        const sparklerData = await sparklerRes.json();
-        setSparklerProducts(sparklerData.slice(0, 8));
+        // Fetch explicit categories
+        // Try explicit categories first
+        let fountainData: any[] = [];
+        try {
+          const fountainRes = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent('FOUNTAIN_ITEMS')}?t=${timestamp}`);
+          if (fountainRes.ok) {
+            fountainData = await fountainRes.json();
+          }
+        } catch {}
+
+        // If empty, try alternative fountain-like categories
+        if (!Array.isArray(fountainData) || fountainData.length === 0) {
+          const fountainCandidates = [
+            'MEGA FOUNTAIN',
+            'COLOUR FOUNTAIN WINDOW BIG',
+            'Color Window Fountain 3 Inch',
+            'NEW COLOUR FOUNTAIN SKY',
+            'COLOUR SMOKE FOUNTAIN'
+          ];
+          const fountainResponses = await Promise.allSettled(
+            fountainCandidates.map(c => fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(c)}?t=${timestamp}`))
+          );
+          const fountainJsons = await Promise.all(
+            fountainResponses.map(async r => (r.status === 'fulfilled' && r.value.ok) ? r.value.json() : [])
+          );
+          fountainData = ([] as any[]).concat(...fountainJsons);
+          setFountainCategoryForLink(fountainData[0]?.category || 'MEGA FOUNTAIN');
+        } else {
+          setFountainCategoryForLink('FOUNTAIN_ITEMS');
+        }
+        setFountainProducts((fountainData || []).slice(0, 8));
+
+        // Now fancy items
+        let fancyData: any[] = [];
+        try {
+          const fancyRes = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent('NEW_FANCY_ITEM')}?t=${timestamp}`);
+          if (fancyRes.ok) {
+            fancyData = await fancyRes.json();
+          }
+        } catch {}
+
+        if (!Array.isArray(fancyData) || fancyData.length === 0) {
+          const fancyCandidates = [
+            'FANCY CRACKERS',
+            'BABY FANCY NOVELTIES',
+            'MINI AERIAL CHOTTA FANCY',
+            'MINI AERIAL CHOTTA FACNY'
+          ];
+          const fancyResponses = await Promise.allSettled(
+            fancyCandidates.map(c => fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(c)}?t=${timestamp}`))
+          );
+          const fancyJsons = await Promise.all(
+            fancyResponses.map(async r => (r.status === 'fulfilled' && r.value.ok) ? r.value.json() : [])
+          );
+          fancyData = ([] as any[]).concat(...fancyJsons);
+          setFancyCategoryForLink(fancyData[0]?.category || 'FANCY CRACKERS');
+        } else {
+          setFancyCategoryForLink('NEW_FANCY_ITEM');
+        }
+        setFancyProducts((fancyData || []).slice(0, 8));
       } catch (err) {
-        setProducts([]);
-        setSparklerProducts([]);
+        setFountainProducts([]);
+        setFancyProducts([]);
       }
     };
 
@@ -380,24 +458,24 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Atom Bomb Products Section */}
+      {/* Fountain Products Section */}
       <section className="w-full px-4 py-8 sm:py-12">
         <div className="text-center mb-8 sm:mb-12 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
-            <span className="title-styled text-primary">Atom Bomb Fireworks</span>
+            <span className="title-styled text-primary">Fountain Items</span>
           </h2>
-          <p className="text-sm sm:text-base md:text-lg text-muted-foreground">Powerful explosions for grand celebrations</p>
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground">Colorful fountains for dazzling displays</p>
         </div>
         
-        {loadingProducts ? (
+        {loadingFountains ? (
           <div className="py-12">
             <Loader size="md" />
           </div>
-        ) : products.length === 0 ? (
-          <p className="text-center text-muted-foreground">No atom bomb products found.</p>
+        ) : fountainProducts.length === 0 ? (
+          <p className="text-center text-muted-foreground">No fountain items found.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
-            {products.map((product) => {
+            {fountainProducts.map((product) => {
               const quantity = cartItems.find(item => item.id === (product._id || product.id))?.quantity || 0;
               return (
                 <div key={product._id || product.id}>
@@ -416,7 +494,7 @@ const Index = () => {
                     onRemoveFromCart={() => updateQuantity(product._id || product.id, quantity - 1)}
                     quantity={quantity}
                     size="sm"
-                    categoryDisplayName="Atom Bomb"
+                    categoryDisplayName="Fountain Items"
                   />
                 </div>
               );
@@ -424,34 +502,34 @@ const Index = () => {
           </div>
         )}
         
-        {/* View More Button for Atom Bomb */}
+        {/* View More Button for Fountains */}
         <div className="text-center mt-8 sm:mt-12 animate-fade-in" style={{ animationDelay: '0.8s' }}>
           <Button variant="outline" size="lg" asChild className="transition-transform duration-300 hover:scale-110">
-            <Link to="/category/ATOM%20BOMB">
-              View All Atom Bomb Products
+            <Link to={`/category/${encodeURIComponent(fountainCategoryForLink || 'FOUNTAIN_ITEMS')}`}>
+              View All Fountain Items
             </Link>
           </Button>
         </div>
       </section>
 
-      {/* Sparkler Products Section */}
+      {/* Fancy Crackers Products Section */}
       <section className="w-full px-4 py-8 sm:py-12 bg-gradient-to-b from-muted/20 to-muted/40">
         <div className="text-center mb-8 sm:mb-12 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
-            <span className="title-styled text-primary">Sparkler Items</span>
+            <span className="title-styled text-primary">New Fancy Items</span>
           </h2>
-          <p className="text-sm sm:text-base md:text-lg text-muted-foreground">Beautiful sparkles for magical moments</p>
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground">Exciting novelties for fun celebrations</p>
         </div>
         
-        {loadingSparklers ? (
+        {loadingFancy ? (
           <div className="py-12">
             <Loader size="md" />
           </div>
-        ) : sparklerProducts.length === 0 ? (
-          <p className="text-center text-muted-foreground">No sparkler products found.</p>
+        ) : fancyProducts.length === 0 ? (
+          <p className="text-center text-muted-foreground">No new fancy items found.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
-            {sparklerProducts.map((product) => {
+            {fancyProducts.map((product) => {
               const quantity = cartItems.find(item => item.id === (product._id || product.id))?.quantity || 0;
               return (
                 <div key={product._id || product.id}>
@@ -470,7 +548,7 @@ const Index = () => {
                     onRemoveFromCart={() => updateQuantity(product._id || product.id, quantity - 1)}
                     quantity={quantity}
                     size="sm"
-                    categoryDisplayName="Sparkler Items"
+                    categoryDisplayName="New Fancy Items"
                   />
                 </div>
               );
@@ -478,11 +556,11 @@ const Index = () => {
           </div>
         )}
         
-        {/* View More Button for Sparklers */}
+        {/* View More Button for Fancy Crackers */}
         <div className="text-center mt-8 sm:mt-12 animate-fade-in" style={{ animationDelay: '0.8s' }}>
           <Button variant="outline" size="lg" asChild className="transition-transform duration-300 hover:scale-110">
-            <Link to="/category/SPARKLER%20ITEMS">
-              View All Sparkler Products
+            <Link to={`/category/${encodeURIComponent(fancyCategoryForLink || 'NEW_FANCY_ITEM')}`}>
+              View All New Fancy Items
             </Link>
           </Button>
         </div>

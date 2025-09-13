@@ -1,6 +1,8 @@
 import { Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { FaYoutube } from "react-icons/fa";
+import { useState } from "react";
+import { ImagePreviewModal } from "./ImagePreviewModal";
 
 interface Product {
   id: string;
@@ -32,6 +34,8 @@ export const ProductCard = ({
   size = "md",
   categoryDisplayName,
 }: ProductCardProps) => {
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -46,11 +50,24 @@ export const ProductCard = ({
     }
   };
 
+  const handleImageClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsPreviewOpen(true);
+  };
+
   const isDiscount =
     product.original_price && product.original_price > product.price;
 
   // Use categoryDisplayName if provided, otherwise fall back to product.category
   const displayCategory = categoryDisplayName || product.category;
+
+  // Check if this product should show image preview (Family Pack or Gift Box categories)
+  const shouldShowPreview = product.category?.toUpperCase().includes('FAMILY') || 
+                           product.category?.toUpperCase().includes('GIFT') ||
+                           displayCategory?.toUpperCase().includes('FAMILY') ||
+                           displayCategory?.toUpperCase().includes('GIFT');
+
 
   return (
     <div
@@ -59,11 +76,14 @@ export const ProductCard = ({
       {/* Product Image */}
       <div
         className={`relative ${size === "sm" ? "h-24 sm:h-28" : "h-44 sm:h-52"} bg-white overflow-hidden flex items-center justify-center`}
+        onClick={shouldShowPreview ? handleImageClick : undefined}
+        style={{ cursor: shouldShowPreview ? 'pointer' : 'default' }}
       >
         <img
           src={product.imageUrl || product.image_url || '/placeholder.svg'}
           alt={product.name_en}
-          className={`max-w-full max-h-full object-contain transition-transform duration-300 ${size === "sm" ? "rounded-md" : ""}`}
+          className={`max-w-full max-h-full object-contain transition-transform duration-300 ${size === "sm" ? "rounded-md" : ""} ${shouldShowPreview ? 'hover:scale-105' : ''}`}
+          style={{ pointerEvents: 'none' }}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             console.log('🖼️ Image failed to load:', product.imageUrl || product.image_url);
@@ -79,6 +99,20 @@ export const ProductCard = ({
           </span>
         )}
         <div className="absolute inset-0 bg-gradient-hero opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
+        {shouldShowPreview && (
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+            <div className="bg-white/90 rounded-full p-3 shadow-lg">
+              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+              </svg>
+            </div>
+          </div>
+        )}
+        {shouldShowPreview && (
+          <div className="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            Click to preview
+          </div>
+        )}
       </div>
 
       {/* Product Details */}
@@ -159,6 +193,14 @@ export const ProductCard = ({
           </div>
         </div>
       </div>
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        imageUrl={product.imageUrl || product.image_url || '/placeholder.svg'}
+        productName={product.name_en}
+      />
     </div>
   );
 };

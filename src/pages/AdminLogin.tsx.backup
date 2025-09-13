@@ -11,7 +11,8 @@ import {
   Select,
   SelectContent,
   SelectItem,
-  SelectTrigger,
+  SelectTrigg
+  er,
   SelectValue,
 } from "../components/ui/select";
 import {
@@ -92,9 +93,6 @@ const Admin = () => {
   const [productManagementCategory, setProductManagementCategory] = useState("");
   const [categoryProducts, setCategoryProducts] = useState([]);
   const [loadingCategoryProducts, setLoadingCategoryProducts] = useState(false);
-  const [isProductReordering, setIsProductReordering] = useState(false);
-  const [productReorderList, setProductReorderList] = useState([] as { id: string; name_en: string; imageUrl?: string; order?: number }[]);
-  const productDragIndexRef = useRef<number | null>(null);
   const [categoryProductCounts, setCategoryProductCounts] = useState({});
   const [loadingCategoryCounts, setLoadingCategoryCounts] = useState(false);
   const [analyticsDate, setAnalyticsDate] = useState("");
@@ -140,11 +138,6 @@ const Admin = () => {
     iconUrl: "",
   });
   const [editCategoryImage, setEditCategoryImage] = useState(null);
-
-  // Reorder categories state
-  const [isReordering, setIsReordering] = useState(false);
-  const [reorderList, setReorderList] = useState([] as { name: string; displayName_en?: string; displayName_ta?: string }[]);
-  const dragIndexRef = useRef<number | null>(null);
 
   // Add state for transportName and lrNumber per order
   const [transportInputs, setTransportInputs] = useState({});
@@ -421,8 +414,6 @@ const Admin = () => {
         displayName_en: cat.displayName_en || cat.displayName || cat.name,
         displayName_ta: cat.displayName_ta || ''
         })));
-        // Prepare reorder list (preserve current order from API)
-        setReorderList(data.map(cat => ({ name: cat.name, displayName_en: cat.displayName_en || cat.displayName || cat.name, displayName_ta: cat.displayName_ta || '' })));
         setCategoriesError(null); // Clear any previous errors
       } else if (data && typeof data === 'object') {
         // Handle case where API returns an object instead of array
@@ -434,7 +425,6 @@ const Admin = () => {
             displayName_en: cat.displayName_en || cat.displayName || cat.name,
             displayName_ta: cat.displayName_ta || ''
           })));
-          setReorderList(data.categories.map(cat => ({ name: cat.name, displayName_en: cat.displayName_en || cat.displayName || cat.name, displayName_ta: cat.displayName_ta || '' })));
           setCategoriesError(null);
         } else if (data.data && Array.isArray(data.data)) {
           console.log('Found categories in data.data:', data.data);
@@ -443,7 +433,6 @@ const Admin = () => {
             displayName_en: cat.displayName_en || cat.displayName || cat.name,
             displayName_ta: cat.displayName_ta || ''
           })));
-          setReorderList(data.data.map(cat => ({ name: cat.name, displayName_en: cat.displayName_en || cat.displayName || cat.name, displayName_ta: cat.displayName_ta || '' })));
           setCategoriesError(null);
         } else {
           console.log('No categories found in response object');
@@ -853,22 +842,11 @@ const Admin = () => {
         return;
       }
       
-      // Sort by order if present, then by createdAt desc for stability
-      const sorted = [...data].sort((a, b) => {
-        const ao = typeof a.order === 'number' ? a.order : Number.MAX_SAFE_INTEGER;
-        const bo = typeof b.order === 'number' ? b.order : Number.MAX_SAFE_INTEGER;
-        if (ao !== bo) return ao - bo;
-        const ad = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const bd = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return bd - ad;
-      });
-      setCategoryProducts(sorted);
-      setProductReorderList(sorted.map(p => ({ id: p._id || p.id, name_en: p.name_en, imageUrl: p.imageUrl || p.image_url, order: p.order })));
+      setCategoryProducts(data);
       console.log('✅ Products set:', data.length);
     } catch (err) {
       console.error('❌ Fetch error:', err);
       setCategoryProducts([]);
-      setProductReorderList([]);
     } finally {
       setLoadingCategoryProducts(false);
     }
@@ -951,9 +929,7 @@ const Admin = () => {
     formData.append("name_en", productForm.name_en);
     formData.append("name_ta", productForm.name_ta);
     formData.append("price", productForm.price);
-    if (productForm.original_price !== undefined && productForm.original_price !== null && productForm.original_price !== '') {
-      formData.append("original_price", productForm.original_price);
-    }
+    if (productForm.original_price) formData.append("original_price", productForm.original_price);
     formData.append("category", productForm.category);
     if (productForm.image) formData.append("image", productForm.image);
     if (productForm.imageUrl) formData.append("imageUrl", productForm.imageUrl);
@@ -1102,9 +1078,7 @@ const Admin = () => {
     formData.append("name_en", editForm.name_en);
     formData.append("name_ta", editForm.name_ta);
     formData.append("price", editForm.price);
-    if (editForm.original_price !== undefined && editForm.original_price !== null && editForm.original_price !== '') {
-      formData.append("original_price", editForm.original_price);
-    }
+    if (editForm.original_price) formData.append("original_price", editForm.original_price);
     formData.append("category", editForm.category);
     if (editForm.image) formData.append("image", editForm.image);
     if (editForm.imageUrl) formData.append("imageUrl", editForm.imageUrl);
@@ -1303,16 +1277,6 @@ const Admin = () => {
                         {cat.displayName_en}{cat.displayName_ta ? ` (${cat.displayName_ta})` : ''} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat.name] || 0} products)`}
                       </option>
                     ))}
-                    {/* Add missing categories if not in the fetched list */}
-                    {!categories.find(cat => cat.name === 'FAMILY PACK') && (
-                      <option value="FAMILY PACK">FAMILY PACK (0 products)</option>
-                    )}
-                    {!categories.find(cat => cat.name === 'GIFT BOX') && (
-                      <option value="GIFT BOX">GIFT BOX (0 products)</option>
-                    )}
-                    {!categories.find(cat => cat.name === 'KANNAN 5 PIECE GIFT BOX') && (
-                      <option value="KANNAN 5 PIECE GIFT BOX">KANNAN 5 PIECE GIFT BOX (0 products)</option>
-                    )}
                   </select>
                 </div>
                 {loadingCategoryProducts ? (
@@ -1320,108 +1284,21 @@ const Admin = () => {
                 ) : categoryProducts.length === 0 && productManagementCategory ? (
                   <p className="text-muted-foreground">No products found in this category.</p>
                 ) : (
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="text-sm text-muted-foreground">{categoryProducts.length} products</div>
-                      <div className="flex gap-2">
-                        {!isProductReordering ? (
-                          <Button variant="outline" size="sm" onClick={() => setIsProductReordering(true)}>Reorder Products</Button>
-                        ) : (
-                          <>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={async () => {
-                                try {
-                                  const payload = productReorderList.map((p, idx) => ({ id: p.id, order: idx + 1 }));
-                                  const token = localStorage.getItem('adminToken') || '';
-                                  const headers: any = { 'Content-Type': 'application/json' };
-                                  if (token) headers['Authorization'] = `Bearer ${token}`;
-                                  const res = await fetch('https://api.kmpyrotech.com/api/products/reorder', {
-                                    method: 'POST',
-                                    headers,
-                                    body: JSON.stringify({ category: productManagementCategory, order: payload })
-                                  });
-                                  const data = await res.json();
-                                  if (res.ok) {
-                                    toast({ title: '✅ Product order saved', description: `${payload.length} products updated` });
-                                    // Optimistically reorder current list locally
-                                    setCategoryProducts((prev: any[]) => {
-                                      const byId: Record<string, any> = {};
-                                      for (const prod of prev) {
-                                        byId[(prod._id || prod.id) as string] = prod;
-                                      }
-                                      const next = productReorderList.map((p, idx) => {
-                                        const prod = byId[p.id];
-                                        if (!prod) return {} as any;
-                                        return { ...prod, order: idx + 1 };
-                                      }).filter(Boolean);
-                                      return next;
-                                    });
-                                    setIsProductReordering(false);
-                                    // Also re-fetch to ensure sync with backend and caches
-                                    await fetchCategoryProducts(productManagementCategory);
-                                    setTimeout(() => fetchCategoryProducts(productManagementCategory), 300);
-                                  } else {
-                                    toast({ title: '❌ Failed to save order', description: data.error || 'Server error', variant: 'destructive' });
-                                  }
-                                } catch (err: any) {
-                                  toast({ title: '❌ Network error', description: err.message, variant: 'destructive' });
-                                }
-                              }}
-                            >Save Order</Button>
-                            <Button variant="outline" size="sm" onClick={() => { setIsProductReordering(false); setProductReorderList(categoryProducts.map(p => ({ id: p._id || p.id, name_en: p.name_en, imageUrl: p.imageUrl || p.image_url, order: p.order }))); }}>Cancel</Button>
-                          </>
-                        )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {categoryProducts.map((product) => (
+                      <div key={product._id || product.id} className="bg-card rounded-lg shadow-card p-4 flex flex-col gap-2 border border-border">
+                        <img src={product.imageUrl || product.image_url} alt={product.name_en} className="h-32 w-full object-cover rounded-md mb-2" />
+                        <div className="font-semibold text-lg">{product.name_en}</div>
+                        <div className="text-sm text-muted-foreground">{product.name_ta}</div>
+                        <div className="text-primary font-bold">₹{product.price}</div>
+                        <Button variant="secondary" size="sm" onClick={() => handleEditClick(product)}>
+                          Edit
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteProduct(product._id || product.id)}>
+                          Delete
+                        </Button>
                       </div>
-                    </div>
-
-                    {!isProductReordering ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {categoryProducts.map((product) => (
-                          <div key={product._id || product.id} className="bg-card rounded-lg shadow-card p-4 flex flex-col gap-2 border border-border">
-                            <img src={product.imageUrl || product.image_url} alt={product.name_en} className="h-32 w-full object-cover rounded-md mb-2" />
-                            <div className="font-semibold text-lg">{product.name_en}</div>
-                            <div className="text-sm text-muted-foreground">{product.name_ta}</div>
-                            <div className="text-primary font-bold">₹{product.price}</div>
-                            <Button variant="secondary" size="sm" onClick={() => handleEditClick(product)}>
-                              Edit
-                            </Button>
-                            <Button variant="destructive" size="sm" onClick={() => handleDeleteProduct(product._id || product.id)}>
-                              Delete
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {productReorderList.map((p, index) => (
-                          <div
-                            key={p.id}
-                            className="flex items-center gap-3 bg-card rounded-md p-2 border border-border cursor-move"
-                            draggable
-                            onDragStart={() => { productDragIndexRef.current = index; }}
-                            onDragOver={(e) => { e.preventDefault(); }}
-                            onDrop={() => {
-                              const from = productDragIndexRef.current;
-                              const to = index;
-                              if (from === null || from === to) return;
-                              const next = [...productReorderList];
-                              const [moved] = next.splice(from, 1);
-                              next.splice(to, 0, moved);
-                              productDragIndexRef.current = null;
-                              setProductReorderList(next);
-                            }}
-                          >
-                            <img src={p.imageUrl} alt={p.name_en} className="h-10 w-10 object-cover rounded" />
-                            <div className="flex-1">
-                              <div className="font-medium">{p.name_en}</div>
-                              <div className="text-xs text-muted-foreground">Drag to reorder • Position: {index + 1}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    ))}
                   </div>
                 )}
               </CardContent>
@@ -1524,55 +1401,6 @@ const Admin = () => {
                       Existing Categories
                     </h3>
                     <div className="flex gap-2">
-                      {!isReordering ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsReordering(true)}
-                        >
-                          Reorder
-                        </Button>
-                      ) : (
-                        <>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={async () => {
-                              try {
-                                const payload = reorderList.map((item, idx) => ({ name: item.name, order: idx + 1 }));
-                                const token = localStorage.getItem('adminToken') || '';
-                                const headers: any = { 'Content-Type': 'application/json' };
-                                if (token) headers['Authorization'] = `Bearer ${token}`;
-                                const res = await fetch('https://api.kmpyrotech.com/api/categories/reorder', {
-                                  method: 'POST',
-                                  headers,
-                                  body: JSON.stringify({ order: payload })
-                                });
-                                const data = await res.json();
-                                if (res.ok) {
-                                  toast({ title: '✅ Order saved', description: `${payload.length} categories updated` });
-                                  setIsReordering(false);
-                                  fetchCategories();
-                                  fetchDetailedCategories();
-                                } else {
-                                  toast({ title: '❌ Failed to save order', description: data.error || 'Server error', variant: 'destructive' });
-                                }
-                              } catch (err: any) {
-                                toast({ title: '❌ Network error', description: err.message, variant: 'destructive' });
-                              }
-                            }}
-                          >
-                            Save Order
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => { setIsReordering(false); setReorderList(categories.map(c => ({ name: c.name, displayName_en: c.displayName_en, displayName_ta: c.displayName_ta }))); }}
-                          >
-                            Cancel
-                          </Button>
-                        </>
-                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -1657,61 +1485,41 @@ const Admin = () => {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {(isReordering ? reorderList : categories).map((category, index) => (
-                        <div
-                          key={category.name}
-                          className={`bg-card rounded-lg shadow-card p-4 border border-border ${isReordering ? 'cursor-move ring-1 ring-dashed' : ''}`}
-                          draggable={isReordering}
-                          onDragStart={() => { dragIndexRef.current = index; }}
-                          onDragOver={(e) => { if (isReordering) e.preventDefault(); }}
-                          onDrop={() => {
-                            if (!isReordering) return;
-                            const from = dragIndexRef.current;
-                            const to = index;
-                            if (from === null || from === to) return;
-                            setReorderList((prev) => {
-                              const next = [...prev];
-                              const [moved] = next.splice(from, 1);
-                              next.splice(to, 0, moved);
-                              return next;
-                            });
-                            dragIndexRef.current = null;
-                          }}
+                      {categories.map((category) => (
+                        <div 
+                          key={category.name} 
+                          className="bg-card rounded-lg shadow-card p-4 border border-border"
                         >
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex-1">
-                              <div className="font-semibold text-lg">{category.displayName_en || category.displayName}</div>
+                              <div className="font-semibold text-lg">{category.displayName_en}</div>
                               <div className="text-sm text-muted-foreground">{category.displayName_ta}</div>
                               <div className="text-sm text-muted-foreground">
                                 {loadingCategoryCounts ? 'Loading...' : `${categoryProductCounts[category.name] || 0} products`}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              {!isReordering && (
-                                <>
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => handleEditCategoryClick(category)}
-                                    className="ml-3"
-                                  >
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => handleDeleteCategory(category.name)}
-                                    disabled={isDeletingCategory}
-                                    className="ml-3"
-                                  >
-                                    {isDeletingCategory ? (
-                                      <Loader2 className="animate-spin h-4 w-4" />
-                                    ) : (
-                                      "Delete"
-                                    )}
-                                  </Button>
-                                </>
-                              )}
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleEditCategoryClick(category)}
+                                className="ml-3"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteCategory(category.name)}
+                                disabled={isDeletingCategory}
+                                className="ml-3"
+                              >
+                                {isDeletingCategory ? (
+                                  <Loader2 className="animate-spin h-4 w-4" />
+                                ) : (
+                                  "Delete"
+                                )}
+                              </Button>
                             </div>
                           </div>
 
@@ -1798,16 +1606,6 @@ const Admin = () => {
                               {cat.displayName_en}{cat.displayName_ta ? ` (${cat.displayName_ta})` : ''} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat.name] || 0} products)`}
                             </SelectItem>
                           ))}
-                          {/* Add missing categories if not in the fetched list */}
-                          {!categories.find(cat => cat.name === 'FAMILY PACK') && (
-                            <SelectItem value="FAMILY PACK">FAMILY PACK (0 products)</SelectItem>
-                          )}
-                          {!categories.find(cat => cat.name === 'GIFT BOX') && (
-                            <SelectItem value="GIFT BOX">GIFT BOX (0 products)</SelectItem>
-                          )}
-                          {!categories.find(cat => cat.name === 'KANNAN 5 PIECE GIFT BOX') && (
-                            <SelectItem value="KANNAN 5 PIECE GIFT BOX">KANNAN 5 PIECE GIFT BOX (0 products)</SelectItem>
-                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -2232,16 +2030,6 @@ const Admin = () => {
                       {cat.displayName_en}{cat.displayName_ta ? ` (${cat.displayName_ta})` : ''} {loadingCategoryCounts ? '(Loading...)' : `(${categoryProductCounts[cat.name] || 0} products)`}
                     </SelectItem>
                   ))}
-                  {/* Add missing categories if not in the fetched list */}
-                  {!categories.find(cat => cat.name === 'FAMILY PACK') && (
-                    <SelectItem value="FAMILY PACK">FAMILY PACK (0 products)</SelectItem>
-                  )}
-                  {!categories.find(cat => cat.name === 'GIFT BOX') && (
-                    <SelectItem value="GIFT BOX">GIFT BOX (0 products)</SelectItem>
-                  )}
-                  {!categories.find(cat => cat.name === 'KANNAN 5 PIECE GIFT BOX') && (
-                    <SelectItem value="KANNAN 5 PIECE GIFT BOX">KANNAN 5 PIECE GIFT BOX (0 products)</SelectItem>
-                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -2540,3 +2328,4 @@ const Admin = () => {
 };
 
 export default Admin;
+

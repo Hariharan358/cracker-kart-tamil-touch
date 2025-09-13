@@ -411,7 +411,7 @@ const Index = () => {
               </Button>
             </Link>
             
-            <Link to="/category/GIFT%20BOX" className="w-full sm:w-auto">
+            <Link to="/category/KANNAN%205%20PIECE%20GIFT%20BOX" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
                 variant="outline"

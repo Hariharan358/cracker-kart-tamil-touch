@@ -6,6 +6,8 @@ const productSchema = new mongoose.Schema({
   name_ta: String,
   price: Number,
   original_price: Number,
+  // Ordering index within a category
+  order: { type: Number, default: 0, index: true },
   imageUrl: String,
   youtube_url: String,
   category: String,

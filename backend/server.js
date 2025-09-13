@@ -19,6 +19,8 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import apicache from 'apicache';
+import nodemailer from 'nodemailer';
+import { generateInvoice } from './utils/generateInvoice.js';
 import orderRoutes from './routes/orderRoutes.js';
 
 import admin from 'firebase-admin'; // <-- Add this line
@@ -99,6 +101,21 @@ const discountLimiter = rateLimit({
 
 // 6️⃣ JSON body parsing
 app.use(express.json());
+
+// Simple admin auth middleware for protected admin endpoints (moved up to avoid TDZ)
+const verifyAdmin = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+    const validToken = process.env.ADMIN_TOKEN || 'admin-auth-token';
+    if (token && token === validToken) {
+      return next();
+    }
+    return res.status(401).json({ error: 'Unauthorized' });
+  } catch (e) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+};
 
 // Static folder for locally stored category icons (Option A)
 const categoryIconsDir = path.join(__dirname, 'public', 'category-icons');
@@ -333,6 +350,47 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
+// ✅ GET: Download invoice PDF
+app.get('/api/orders/:orderId/invoice', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    
+    // Verify order exists
+    const order = await Order.findOne({ orderId }).lean();
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    // Check if invoice file exists
+    const invoicePath = path.join(__dirname, 'invoices', `${orderId}.pdf`);
+    if (!fs.existsSync(invoicePath)) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+    
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="KM_Pyrotech_Invoice_${orderId}.pdf"`);
+    
+    // Stream the file
+    const fileStream = fs.createReadStream(invoicePath);
+    fileStream.pipe(res);
+    
+    fileStream.on('error', (error) => {
+      console.error('❌ Error streaming invoice:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to download invoice' });
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error downloading invoice:', error);
+    res.status(500).json({ 
+      error: 'Failed to download invoice', 
+      details: error.message 
+    });
+  }
+});
+
 // generateInvoice function moved to orderRoutes.js
 
 // sendEmailWithInvoice function moved to orderRoutes.js
@@ -362,12 +420,22 @@ app.post('/api/products', upload.single('image'), async (req, res) => {
     }
     // Ensure price and original_price are numbers
     price = Number(price);
-    original_price = original_price ? Number(original_price) : undefined;
+    original_price = (original_price !== undefined && original_price !== '') ? Number(original_price) : undefined;
     const ProductModel = getProductModelByCategory(category);
     const newProduct = new ProductModel({ name_en, name_ta, price, original_price, imageUrl: finalImageUrl, youtube_url });
     await newProduct.save();
     // Invalidate product caches
     clearCacheByPrefix('products:');
+    // Also clear HTTP apicache for product endpoints so frontend sees updates immediately
+    try {
+      if (apicache && typeof apicache.clearRegexp === 'function') {
+        apicache.clearRegexp(/\/api\/products\/(home|category|all)/);
+      } else if (apicache && typeof apicache.clear === 'function') {
+        apicache.clear();
+      }
+    } catch (e) {
+      console.warn('⚠️ Failed to clear apicache after product add:', e.message);
+    }
     res.status(201).json({ message: '✅ Product added successfully', product: newProduct });
   } catch (error) {
     console.error('❌ Product POST error:', error);
@@ -456,6 +524,16 @@ app.put('/api/products/:id', upload.single('image'), async (req, res) => {
       await OldModel.findByIdAndDelete(foundDoc._id);
       // Invalidate caches
       clearCacheByPrefix('products:');
+      // Also clear HTTP apicache for product endpoints
+      try {
+        if (apicache && typeof apicache.clearRegexp === 'function') {
+          apicache.clearRegexp(/\/api\/products\/(home|category|all)/);
+        } else if (apicache && typeof apicache.clear === 'function') {
+          apicache.clear();
+        }
+      } catch (e) {
+        console.warn('⚠️ Failed to clear apicache after product move:', e.message);
+      }
       console.log('✅ Product moved to new category successfully');
       return res.json({ message: '✅ Product updated and moved to new category', product: created });
     } else {
@@ -476,6 +554,16 @@ app.put('/api/products/:id', upload.single('image'), async (req, res) => {
       const updated = await Model.findByIdAndUpdate(foundDoc._id, { $set: updateFields }, { new: true });
       // Invalidate caches
       clearCacheByPrefix('products:');
+      // Also clear HTTP apicache for product endpoints
+      try {
+        if (apicache && typeof apicache.clearRegexp === 'function') {
+          apicache.clearRegexp(/\/api\/products\/(home|category|all)/);
+        } else if (apicache && typeof apicache.clear === 'function') {
+          apicache.clear();
+        }
+      } catch (e) {
+        console.warn('⚠️ Failed to clear apicache after product update:', e.message);
+      }
       console.log('✅ Product updated successfully');
       return res.json({ message: '✅ Product updated successfully', product: updated });
     }
@@ -607,7 +695,44 @@ app.post('/api/orders/place', async (req, res) => {
   try {
     const orderId = await createOrderSimple(req.body);
     console.log('✅ Order saved successfully:', orderId);
-    res.status(201).json({ message: '✅ Order placed successfully', orderId });
+
+    // Generate invoice PDF
+    try {
+      const invoiceDir = path.join(__dirname, 'invoices');
+      if (!fs.existsSync(invoiceDir)) fs.mkdirSync(invoiceDir, { recursive: true });
+      const invoicePath = path.join(invoiceDir, `${orderId}.pdf`);
+      const orderDoc = await Order.findOne({ orderId }).lean();
+      if (orderDoc) {
+        generateInvoice(orderDoc, invoicePath);
+      }
+      // Send email if configured and email present
+      let emailStatus = 'not_configured';
+      const to = orderDoc?.customerDetails?.email;
+      if (to && process.env.EMAIL_FROM && process.env.EMAIL_PASS) {
+        try {
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.EMAIL_FROM, pass: process.env.EMAIL_PASS },
+          });
+          await transporter.verify();
+          await transporter.sendMail({
+            from: `KMPyrotech <${process.env.EMAIL_FROM}>`,
+            to,
+            subject: 'KMPyrotech - Your Order Invoice',
+            text: 'Thank you for your order! Your invoice is attached.',
+            attachments: [{ filename: 'invoice.pdf', path: invoicePath }],
+          });
+          emailStatus = 'sent';
+        } catch (mailErr) {
+          console.warn('Email send failed:', mailErr.message);
+          emailStatus = 'failed';
+        }
+      }
+      res.status(201).json({ message: '✅ Order placed successfully', orderId, emailStatus });
+    } catch (invErr) {
+      console.warn('Invoice/email step failed:', invErr.message);
+      res.status(201).json({ message: '✅ Order placed successfully', orderId, emailStatus: 'skipped' });
+    }
   } catch (error) {
     const status = error.statusCode || 500;
     console.error('❌ Order placement error:', error);
@@ -623,7 +748,54 @@ app.post('/api/orders', async (req, res) => {
   try {
     const orderId = await createOrderSimple(req.body);
     console.log('✅ Order saved successfully (fallback):', orderId);
-    res.status(201).json({ message: '✅ Order placed successfully', orderId });
+
+    // Generate invoice PDF and send email
+    try {
+      const invoiceDir = path.join(__dirname, 'invoices');
+      if (!fs.existsSync(invoiceDir)) fs.mkdirSync(invoiceDir, { recursive: true });
+      const invoicePath = path.join(invoiceDir, `${orderId}.pdf`);
+      const orderDoc = await Order.findOne({ orderId }).lean();
+      
+      let emailStatus = 'not_configured';
+      if (orderDoc) {
+        // Generate invoice PDF first
+        await new Promise((resolve, reject) => {
+          generateInvoice(orderDoc, invoicePath);
+          // Wait a bit for file to be written
+          setTimeout(resolve, 1000);
+        });
+        
+        // Send email if configured and email present
+        const to = orderDoc?.customerDetails?.email;
+        if (to && process.env.EMAIL_FROM && process.env.EMAIL_PASS) {
+          try {
+            const transporter = nodemailer.createTransporter({
+              service: 'gmail',
+              auth: { user: process.env.EMAIL_FROM, pass: process.env.EMAIL_PASS },
+            });
+            await transporter.verify();
+            await transporter.sendMail({
+              from: `KMPyrotech <${process.env.EMAIL_FROM}>`,
+              to,
+              subject: 'KMPyrotech - Your Order Invoice',
+              text: 'Thank you for your order! Your invoice is attached.',
+              attachments: [{ filename: 'invoice.pdf', path: invoicePath }],
+            });
+            emailStatus = 'sent';
+            console.log('✅ Email sent successfully to:', to);
+          } catch (mailErr) {
+            console.warn('❌ Email send failed:', mailErr.message);
+            emailStatus = 'failed';
+          }
+        } else {
+          console.log('❌ Email not configured or missing email address');
+        }
+      }
+      res.status(201).json({ message: '✅ Order placed successfully', orderId, emailStatus });
+    } catch (invErr) {
+      console.warn('❌ Invoice/email step failed:', invErr.message);
+      res.status(201).json({ message: '✅ Order placed successfully', orderId, emailStatus: 'skipped' });
+    }
   } catch (error) {
     const status = error.statusCode || 500;
     console.error('❌ Fallback order placement error:', error);
@@ -651,20 +823,7 @@ app.post('/api/admin/login', (req, res) => {
   return res.status(401).json({ success: false, error: 'Invalid credentials' });
 });
 
-// Simple admin auth middleware for protected admin endpoints
-const verifyAdmin = (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-    const validToken = process.env.ADMIN_TOKEN || 'admin-auth-token';
-    if (token && token === validToken) {
-      return next();
-    }
-    return res.status(401).json({ error: 'Unauthorized' });
-  } catch (e) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-};
+// (removed duplicate verifyAdmin; defined earlier)
 
 // ✅ GET: Analytics
 app.get('/api/analytics', cache('2 minutes'), async (req, res) => {
@@ -814,8 +973,9 @@ app.get('/api/products/home', cache('3 minutes'), async (req, res) => {
             original_price: 1,
             imageUrl: 1,
             youtube_url: 1,
-            category: 1
-          }).limit(6).lean();
+            category: 1,
+            order: 1
+          }).sort({ order: 1, createdAt: -1 }).limit(6).lean();
           
           // Add category name for frontend
           return products.map(product => ({
@@ -885,8 +1045,9 @@ app.get('/api/products/category/:category', cache('2 minutes'), async (req, res)
       imageUrl: 1,
       youtube_url: 1,
       category: 1,
+      order: 1,
       createdAt: 1,
-    }).lean();
+    }).sort({ order: 1, createdAt: -1 }).lean();
 
     const productsWithCategory = products.map(product => ({
       ...product,
@@ -929,8 +1090,9 @@ app.get('/api/products/all', cache('5 minutes'), async (req, res) => {
             original_price: 1,
             imageUrl: 1,
             youtube_url: 1,
+            order: 1,
             createdAt: 1,
-          }).lean();
+          }).sort({ order: 1, createdAt: -1 }).lean();
           
           const category = collectionName.replace(/_/g, ' ');
           return docs.map((doc) => ({ ...doc, category }));
@@ -980,6 +1142,43 @@ app.delete('/api/products/:id', async (req, res) => {
   } catch (error) {
     console.error('❌ Product DELETE error:', error);
     res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
+// ✅ POST: Reorder products within a category
+app.post('/api/products/reorder', verifyAdmin, async (req, res) => {
+  try {
+    const { category, order } = req.body || {};
+    if (!category || !Array.isArray(order)) {
+      return res.status(400).json({ error: 'category and order array are required' });
+    }
+    // order: [{ id: string, order: number }]
+    const ProductModel = getProductModelByCategory(category);
+    const bulkOps = order.map(item => ({
+      updateOne: {
+        filter: { _id: new mongoose.Types.ObjectId(item.id) },
+        update: { $set: { order: Number(item.order) || 0 } }
+      }
+    }));
+    if (bulkOps.length === 0) {
+      return res.json({ message: 'No changes' });
+    }
+    const result = await ProductModel.bulkWrite(bulkOps, { ordered: false });
+    // Invalidate caches
+    clearCacheByPrefix('products:');
+    try {
+      if (apicache && typeof apicache.clearRegexp === 'function') {
+        apicache.clearRegexp(/\/api\/products\/(home|category|all)/);
+      } else if (apicache && typeof apicache.clear === 'function') {
+        apicache.clear();
+      }
+    } catch (e) {
+      console.warn('⚠️ Failed to clear apicache after product reorder:', e.message);
+    }
+    return res.json({ message: '✅ Product order updated', result });
+  } catch (error) {
+    console.error('❌ Error reordering products:', error);
+    res.status(500).json({ error: 'Failed to reorder products' });
   }
 });
 
@@ -1117,7 +1316,6 @@ app.get('/api/performance', (req, res) => {
     }
   });
 });
-
 // ✅ Health check endpoint for Railway
 app.get('/health', (req, res) => {
   res.json({
@@ -1150,7 +1348,7 @@ app.get('/api/test-cors', (req, res) => {
 app.get('/api/categories', async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true })
-      .sort({ name: 1 })
+      .sort({ order: 1, name: 1 })
       .select('name displayName description isActive createdAt')
       .lean();
     
@@ -1161,6 +1359,30 @@ app.get('/api/categories', async (req, res) => {
   } catch (error) {
     console.error('❌ Error fetching categories:', error);
     res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
+// ✅ BULK REORDER: Update order for multiple categories
+app.post('/api/categories/reorder', verifyAdmin, async (req, res) => {
+  try {
+    const { order } = req.body; // [{ name, order }, ...]
+    if (!Array.isArray(order)) {
+      return res.status(400).json({ error: 'order must be an array of { name, order }' });
+    }
+    const ops = order
+      .filter(item => item && typeof item.name === 'string' && typeof item.order === 'number')
+      .map(item => ({ updateOne: { filter: { name: item.name }, update: { $set: { order: item.order, updatedAt: new Date() } } } }));
+    if (ops.length === 0) {
+      return res.status(400).json({ error: 'no valid items provided' });
+    }
+    await Category.bulkWrite(ops);
+    // Clear caches so new order reflects immediately
+    if (apicache.clearRegexp) apicache.clearRegexp(/\/api\/categories/);
+    clearAllCache();
+    res.json({ message: '✅ Category order updated', updated: ops.length });
+  } catch (error) {
+    console.error('❌ Reorder categories error:', error);
+    res.status(500).json({ error: 'Failed to reorder categories' });
   }
 });
 
@@ -1181,6 +1403,10 @@ app.post('/api/categories', async (req, res) => {
       return res.status(409).json({ error: 'Category already exists' });
     }
     
+    // Determine next order value
+    const maxOrderDoc = await Category.findOne({}).sort({ order: -1 }).lean();
+    const nextOrder = (maxOrderDoc?.order ?? 0) + 1;
+
     // Create new category in database
     const newCategory = new Category({
       name: trimmedName,
@@ -1188,7 +1414,8 @@ app.post('/api/categories', async (req, res) => {
       displayName_en: displayName_en ? displayName_en.trim() : name.trim(),
       displayName_ta: displayName_ta ? displayName_ta.trim() : '',
       iconUrl: typeof iconUrl === 'string' ? iconUrl.trim() : '',
-      isActive: true
+      isActive: true,
+      order: nextOrder
     });
     
     await newCategory.save();
@@ -1244,12 +1471,16 @@ app.post('/api/admin/categories', verifyAdmin, async (req, res) => {
       return res.status(409).json({ error: 'Category already exists' });
     }
 
+    const maxOrderDoc = await Category.findOne({}).sort({ order: -1 }).lean();
+    const nextOrder = (maxOrderDoc?.order ?? 0) + 1;
+
     const newCategory = new Category({
       name: normalizedName,
       displayName: humanDisplayName,
       description: typeof description === 'string' ? description : '',
       iconUrl: typeof iconUrl === 'string' ? iconUrl.trim() : '',
-      isActive: true
+      isActive: true,
+      order: nextOrder
     });
 
     await newCategory.save();
@@ -1300,7 +1531,7 @@ app.post('/api/admin/categories', verifyAdmin, async (req, res) => {
 app.patch('/api/categories/:name', async (req, res) => {
   try {
     const { name } = req.params;
-    const { displayName, displayName_en, displayName_ta, iconUrl } = req.body;
+    const { displayName, displayName_en, displayName_ta, iconUrl, order } = req.body;
     
     console.log('🔄 Category update request:', { name, displayName, displayName_en, displayName_ta, iconUrl });
     
@@ -1326,6 +1557,9 @@ app.patch('/api/categories/:name', async (req, res) => {
       displayName_ta: displayName_ta ? displayName_ta.trim() : '',
       updatedAt: new Date() 
     };
+    if (typeof order === 'number') {
+      updateData.order = order;
+    }
 
     // Only update iconUrl if it's provided and not empty
     if (iconUrl && typeof iconUrl === 'string' && iconUrl.trim().length > 0) {
@@ -1503,7 +1737,7 @@ app.delete('/api/categories/:name', async (req, res) => {
 app.get('/api/categories/public', cache('2 minutes'), async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true })
-      .sort({ name: 1 })
+      .sort({ order: 1, name: 1 })
       .select('name displayName displayName_en displayName_ta iconUrl')
       .lean();
     
@@ -1518,7 +1752,7 @@ app.get('/api/categories/public', cache('2 minutes'), async (req, res) => {
 app.get('/api/categories/detailed', cache('3 minutes'), async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true })
-      .sort({ name: 1 })
+      .sort({ order: 1, name: 1 })
       .lean();
     
     // Get product counts for each category
@@ -1534,6 +1768,7 @@ app.get('/api/categories/detailed', cache('3 minutes'), async (req, res) => {
             displayName_ta: category.displayName_ta,
             description: category.description,
             iconUrl: category.iconUrl,
+            order: category.order,
             productCount: count,
             createdAt: category.createdAt
           };
@@ -1545,6 +1780,7 @@ app.get('/api/categories/detailed', cache('3 minutes'), async (req, res) => {
             displayName_ta: category.displayName_ta,
             description: category.description,
             iconUrl: category.iconUrl,
+            order: category.order,
             productCount: 0,
             createdAt: category.createdAt
           };

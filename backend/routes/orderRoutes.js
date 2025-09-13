@@ -286,7 +286,11 @@ router.post("/place", async (req, res) => {
     
     // Generate invoice (optional - will work without email)
     try {
-      generateInvoice(newOrder, invoicePath);
+      await new Promise((resolve, reject) => {
+        generateInvoice(newOrder, invoicePath);
+        // Wait for PDF generation to complete
+        setTimeout(resolve, 1000);
+      });
       console.log('✅ Invoice generated successfully');
     } catch (invoiceError) {
       console.error('⚠️ Invoice generation failed:', invoiceError);

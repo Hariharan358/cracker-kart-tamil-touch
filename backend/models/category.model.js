@@ -31,6 +31,12 @@ const categorySchema = new mongoose.Schema({
     type: String, 
     default: '' 
   },
+  // Display order for custom sorting in UI
+  order: {
+    type: Number,
+    default: 0,
+    index: true
+  },
   isActive: { 
     type: Boolean, 
     default: true 

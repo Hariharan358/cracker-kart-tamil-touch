@@ -40,10 +40,10 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-md">
-        <CardHeader>
+              <CardHeader>
           <CardTitle className="text-center text-2xl">Admin Login</CardTitle>
-        </CardHeader>
-        <CardContent>
+                  </CardHeader>
+                  <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
               <Label htmlFor="username">Username</Label>
@@ -66,7 +66,7 @@ const AdminLogin = () => {
             </div>
             <Button type="submit" className="w-full">
               Login
-            </Button>
+              </Button>
           </form>
         </CardContent>
       </Card>

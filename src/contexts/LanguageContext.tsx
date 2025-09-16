@@ -147,7 +147,7 @@ const translations = {
     kannan5PieceGiftBox: 'KANNAN 5 PIECE GIFT BOX',
     guns: 'GUNS',
     nattuVedi: 'NATTU VEDI',
-    familyPack: 'FAMILY PACK',
+    familyPack: 'COMBO PACK',
     giftBox: 'GIFT BOX',
     
     // Category Page
@@ -286,7 +286,7 @@ const translations = {
     kannan5PieceGiftBox: 'கண்ணன் 5 துண்டு பரிசு பெட்டகம்',
     guns: 'துப்பாக்கிகள்',
     nattuVedi: 'நாட்டு வெடி',
-    familyPack: 'குடும்ப பேக்',
+    familyPack: 'காம்போ பேக்',
     giftBox: 'பரிசு பெட்டகம்',
     
     // Category Page

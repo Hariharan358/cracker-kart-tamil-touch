@@ -1305,7 +1305,7 @@ const Admin = () => {
                     ))}
                     {/* Add missing categories if not in the fetched list */}
                     {!categories.find(cat => cat.name === 'FAMILY PACK') && (
-                      <option value="FAMILY PACK">FAMILY PACK (0 products)</option>
+                      <option value="FAMILY PACK">COMBO PACK (0 products)</option>
                     )}
                     {!categories.find(cat => cat.name === 'GIFT BOX') && (
                       <option value="GIFT BOX">GIFT BOX (0 products)</option>
@@ -1800,7 +1800,7 @@ const Admin = () => {
                           ))}
                           {/* Add missing categories if not in the fetched list */}
                           {!categories.find(cat => cat.name === 'FAMILY PACK') && (
-                            <SelectItem value="FAMILY PACK">FAMILY PACK (0 products)</SelectItem>
+                            <SelectItem value="FAMILY PACK">COMBO PACK (0 products)</SelectItem>
                           )}
                           {!categories.find(cat => cat.name === 'GIFT BOX') && (
                             <SelectItem value="GIFT BOX">GIFT BOX (0 products)</SelectItem>
@@ -2234,7 +2234,7 @@ const Admin = () => {
                   ))}
                   {/* Add missing categories if not in the fetched list */}
                   {!categories.find(cat => cat.name === 'FAMILY PACK') && (
-                    <SelectItem value="FAMILY PACK">FAMILY PACK (0 products)</SelectItem>
+                    <SelectItem value="FAMILY PACK">COMBO PACK (0 products)</SelectItem>
                   )}
                   {!categories.find(cat => cat.name === 'GIFT BOX') && (
                     <SelectItem value="GIFT BOX">GIFT BOX (0 products)</SelectItem>

@@ -96,16 +96,29 @@ const CategoryPage = () => {
     }
   }, [category]);
 
-  // Get the display name to show
+  // Get the display name to show (with Family->Combo override for UI only)
   const getDisplayName = () => {
     if (!categoryInfo) return category;
-    return categoryInfo.displayName || categoryInfo.displayName_en || categoryInfo.name;
+    const base = categoryInfo.displayName || categoryInfo.displayName_en || categoryInfo.name;
+    return (base || '').toUpperCase() === 'FAMILY PACK' ? 'COMBO PACK' : base;
   };
 
-  // Get the Tamil display name
+  // Get the Tamil display name (with Family->Combo override for UI only)
   const getTamilDisplayName = () => {
     if (!categoryInfo) return "";
-    return categoryInfo.displayName_ta || "";
+    const baseTa = categoryInfo.displayName_ta || "";
+    // Replace common Tamil phrase for Family Pack to Combo Pack
+    return baseTa.includes('குடும்ப') ? baseTa.replace('குடும்ப', 'காம்போ') : baseTa;
+  };
+
+  // Transform product titles locally for this page only when category is FAMILY PACK
+  const transformTitleEn = (name: string) => {
+    return name?.replace(/\bFamily Pack\b/gi, 'Combo Pack');
+  };
+
+  const transformTitleTa = (name: string) => {
+    // Replace the word corresponding to Family with Combo while keeping rest
+    return name?.replace('குடும்ப', 'காம்போ');
   };
 
   return (
@@ -157,8 +170,8 @@ const CategoryPage = () => {
                   key={product._id}
                   product={{
                     id: product._id,
-                    name_en: product.name_en,
-                    name_ta: product.name_ta,
+                    name_en: transformTitleEn(product.name_en),
+                    name_ta: transformTitleTa(product.name_ta),
                     price: product.price,
                     original_price: product.original_price,
                     imageUrl: product.imageUrl,

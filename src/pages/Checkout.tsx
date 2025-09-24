@@ -16,6 +16,7 @@ const Checkout = () => {
     name: "",
     email: "",
     phone: "",
+    confirmPhone: "",
     address: "",
     city: "",
     pincode: "",
@@ -47,6 +48,12 @@ const Checkout = () => {
     // Validate required fields (removed email and pincode from required)
     if (!formData.name || !formData.phone || !formData.address) {
       alert("Please fill in all required fields (Name, Phone, Address)");
+      return;
+    }
+
+    // Confirm phone matches
+    if (formData.phone.trim() !== formData.confirmPhone.trim()) {
+      alert("Phone numbers do not match. Please confirm your phone number correctly.");
       return;
     }
 
@@ -379,6 +386,23 @@ const Checkout = () => {
                   className={`border-2 transition-colors text-xs sm:text-sm ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
                   placeholder="Enter your phone number"
                 />
+              </div>
+              <div className="space-y-1 sm:space-y-2">
+                <label className={`block text-xs sm:text-sm font-semibold ${resolvedTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                  Confirm Phone Number *
+                </label>
+                <Input
+                  required
+                  value={formData.confirmPhone}
+                  onChange={(e) => setFormData({ ...formData, confirmPhone: e.target.value })}
+                  className={`border-2 transition-colors text-xs sm:text-sm ${resolvedTheme === 'dark' ? 'border-gray-600 bg-gray-700 text-white focus:border-orange-500 focus:ring-orange-200' : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'}`}
+                  placeholder="Re-enter your phone number"
+                />
+                {formData.confirmPhone && (
+                  <p className={`text-[11px] ${formData.confirmPhone === formData.phone ? 'text-green-600' : 'text-red-600'}`}>
+                    {formData.confirmPhone === formData.phone ? 'Phone numbers match' : 'Phone numbers do not match'}
+                  </p>
+                )}
               </div>
               
               <div className="space-y-1 sm:space-y-2">

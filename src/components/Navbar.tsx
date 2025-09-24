@@ -167,13 +167,13 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="relative hover:bg-white/25 dark:hover:bg-black/40 transition-all duration-300 group h-9 w-9 rounded-full backdrop-blur-md border border-white/20 dark:border-white/10"
+                  className="relative overflow-visible hover:bg-white/25 dark:hover:bg-black/40 transition-all duration-300 group h-9 w-9 rounded-full backdrop-blur-md border border-white/20 dark:border-white/10"
                 >
                   <ShoppingCart className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
                   {cartCount > 0 && (
                     <Badge 
                       variant="destructive" 
-                      className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] bg-gradient-to-r from-red-500 to-pink-500"
+                      className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 z-20 min-w-[20px] h-[20px] px-[6px] p-0 flex items-center justify-center text-[11px] leading-none rounded-full shadow-md bg-gradient-to-r from-red-500 to-pink-500"
                     >
                       {cartCount}
                     </Badge>
@@ -188,13 +188,13 @@ export const Navbar = ({ cartCount }: NavbarProps) => {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="relative hover:bg-white/25 dark:hover:bg-black/40 transition-all duration-300 h-8 w-8 rounded-full backdrop-blur-md border border-white/20 dark:border-white/10"
+                  className="relative overflow-visible hover:bg-white/25 dark:hover:bg-black/40 transition-all duration-300 h-8 w-8 rounded-full backdrop-blur-md border border-white/20 dark:border-white/10"
                 >
                   <ShoppingCart className="h-4 w-4" />
                   {cartCount > 0 && (
                     <Badge 
                       variant="destructive" 
-                      className="absolute -top-1 -right-1 h-3 w-3 p-0 flex items-center justify-center text-[8px] bg-gradient-to-r from-red-500 to-pink-500"
+                      className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 z-20 min-w-[18px] h-[18px] px-[5px] p-0 flex items-center justify-center text-[10px] leading-none rounded-full shadow-md bg-gradient-to-r from-red-500 to-pink-500"
                     >
                       {cartCount}
                     </Badge>

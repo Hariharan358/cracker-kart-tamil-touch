@@ -798,7 +798,51 @@ const Admin = () => {
       const data = await res.json();
 
       if (res.ok) {
-        setOrders(data);
+        // Step 1: De-duplicate by strict orderId (keep most recent)
+        const byId = new Map<string, any>();
+        for (const order of Array.isArray(data) ? data : []) {
+          const key = String(order.orderId || order._id || order.id || '');
+          if (!key) continue;
+          const prev = byId.get(key);
+          const prevTs = prev ? new Date(prev.updatedAt || prev.createdAt || 0).getTime() : -1;
+          const currTs = new Date(order.updatedAt || order.createdAt || 0).getTime();
+          if (!prev || currTs >= prevTs) byId.set(key, order);
+        }
+        let unique = Array.from(byId.values());
+
+        // Step 2: Collapse near-duplicates by same mobile+total created within 10 minutes
+        const byComposite = new Map<string, any>();
+        const TEN_MIN = 10 * 60 * 1000;
+        for (const order of unique) {
+          const mobile = String(order?.customerDetails?.mobile || '').replace(/\D/g, '');
+          const total = Number(order?.total || 0);
+          const ts = new Date(order.updatedAt || order.createdAt || 0).getTime();
+          const day = new Date(ts || Date.now());
+          const dayKey = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`;
+          const compKey = `${mobile}|${total}|${dayKey}`;
+
+          const prev = byComposite.get(compKey);
+          if (!prev) {
+            byComposite.set(compKey, order);
+          } else {
+            const prevTs = new Date(prev.updatedAt || prev.createdAt || 0).getTime();
+            // If within 10 minutes, keep the latest
+            if (Math.abs(ts - prevTs) <= TEN_MIN) {
+              byComposite.set(compKey, ts >= prevTs ? order : prev);
+            } else {
+              // If far apart, create a distinct bucket by appending a sequence suffix
+              byComposite.set(`${compKey}|${ts}`, order);
+            }
+          }
+        }
+
+        const deduped = Array.from(byComposite.values()).sort((a, b) => {
+          const at = new Date(a.updatedAt || a.createdAt || 0).getTime();
+          const bt = new Date(b.updatedAt || b.createdAt || 0).getTime();
+          return bt - at;
+        });
+
+        setOrders(deduped);
       } else {
         toast({
           title: "❌ Failed to fetch orders",

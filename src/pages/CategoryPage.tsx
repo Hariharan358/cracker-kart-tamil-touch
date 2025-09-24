@@ -81,8 +81,58 @@ const CategoryPage = () => {
     const fetchCategoryProducts = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(category!)}?t=${Date.now()}`);
-        setProducts(res.data);
+        const timestamp = Date.now();
+        const tryFetch = async (key: string) => {
+          const r = await axios.get(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(key)}?t=${timestamp}`);
+          return Array.isArray(r.data) ? r.data : [];
+        };
+
+        let list: any[] = await tryFetch(category!);
+
+        if ((!list || list.length === 0) && categoryInfo) {
+          const candidates = new Set<string>();
+          if (categoryInfo.name) candidates.add(categoryInfo.name);
+          if (categoryInfo.displayName) candidates.add(categoryInfo.displayName);
+          if (categoryInfo.displayName_en) candidates.add(categoryInfo.displayName_en);
+          for (const c of candidates) {
+            if (!c) continue;
+            const alt = await tryFetch(c);
+            if (alt.length > 0) { list = alt; break; }
+          }
+        }
+
+        if ((!list || list.length === 0)) {
+          try {
+            const catRes = await axios.get('https://api.kmpyrotech.com/api/categories/public');
+            const cats: any[] = Array.isArray(catRes.data) ? catRes.data : [];
+            const targetDisplay = (categoryInfo?.displayName_en || categoryInfo?.displayName || category) || '';
+            const normalized = (s: string) => String(s || '').trim().toUpperCase().replace(/[^A-Z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+            const targetNorm = normalized(targetDisplay);
+            let match = cats.find(c => normalized(c.displayName_en || c.displayName || c.name) === targetNorm);
+            if (!match) match = cats.find(c => normalized(c.displayName_en || c.displayName || c.name).includes(targetNorm));
+            if (match?.name) {
+              const alt = await tryFetch(match.name);
+              if (alt.length > 0) list = alt;
+            }
+          } catch {}
+        }
+
+        // 4) Last-resort: fetch all products and fuzzy-filter by category name similarity
+        if ((!list || list.length === 0)) {
+          try {
+            const allRes = await axios.get(`https://api.kmpyrotech.com/api/products?t=${timestamp}`);
+            const all: any[] = Array.isArray(allRes.data) ? allRes.data : [];
+            const norm = (s: string) => String(s || '').trim().toUpperCase().replace(/[^A-Z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+            const target = norm(categoryInfo?.displayName_en || categoryInfo?.displayName || category || '');
+            const filtered = all.filter(p => {
+              const c = norm(p.category);
+              return c === target || c.includes(target) || target.includes(c);
+            });
+            if (filtered.length > 0) list = filtered;
+          } catch {}
+        }
+
+        setProducts(list || []);
       } catch (err) {
         console.error("❌ Error fetching products:", err);
         setProducts([]);

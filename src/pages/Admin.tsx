@@ -166,7 +166,7 @@ const Admin = () => {
       return;
     }
     try {
-      const res = await fetch(`https://api.kmpyrotech.com/api/orders/update-status/${orderId}`, {
+      const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/orders/update-status/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transportName, lrNumber }),
@@ -202,7 +202,7 @@ const Admin = () => {
     try {
       // Add cache-busting parameter to ensure fresh data
       const timestamp = Date.now();
-      const url = `https://api.kmpyrotech.com/api/categories/public?t=${timestamp}`;
+      const url = `https://cracker-backend-rvta.onrender.com/api/categories/public?t=${timestamp}`;
       
       // Log the request for debugging
       console.log('Fetching categories from:', url);
@@ -211,7 +211,7 @@ const Admin = () => {
       
       // Test API accessibility first
       try {
-        const testRes = await fetch('https://api.kmpyrotech.com/api/health', { 
+        const testRes = await fetch('https://cracker-backend-rvta.onrender.com/api/health', { 
           mode: 'cors',
           credentials: 'omit'
         });
@@ -222,7 +222,7 @@ const Admin = () => {
       
       // Test a different endpoint to see if it's a general CORS issue
       try {
-        const productsRes = await fetch('https://api.kmpyrotech.com/api/products', { 
+        const productsRes = await fetch('https://cracker-backend-rvta.onrender.com/api/products', { 
           mode: 'cors',
           credentials: 'omit'
         });
@@ -233,7 +233,7 @@ const Admin = () => {
       
       // Test basic CORS with minimal options
       try {
-        const corsTestRes = await fetch('https://api.kmpyrotech.com/api/categories/public', { 
+        const corsTestRes = await fetch('https://cracker-backend-rvta.onrender.com/api/categories/public', { 
           method: 'GET',
           mode: 'cors'
         });
@@ -244,7 +244,7 @@ const Admin = () => {
       
       // Test with absolutely minimal options
       try {
-        const minimalRes = await fetch('https://api.kmpyrotech.com/api/categories/public');
+        const minimalRes = await fetch('https://cracker-backend-rvta.onrender.com/api/categories/public');
         console.log('Minimal fetch test status:', minimalRes.status);
         
         // Test the actual response content
@@ -287,7 +287,7 @@ const Admin = () => {
         if (res.status === 400 || res.status === 404) {
           console.log('Trying fallback categories endpoint...');
           try {
-            const fallbackRes = await fetch(`https://api.kmpyrotech.com/api/categories?t=${timestamp}`, {
+            const fallbackRes = await fetch(`https://cracker-backend-rvta.onrender.com/api/categories?t=${timestamp}`, {
               mode: 'cors',
               credentials: 'omit'
             });
@@ -334,7 +334,7 @@ const Admin = () => {
         if (res.status === 400 || res.status === 404) {
           console.log('Trying categories endpoint without query parameters...');
           try {
-            const simpleRes = await fetch('https://api.kmpyrotech.com/api/categories', {
+            const simpleRes = await fetch('https://cracker-backend-rvta.onrender.com/api/categories', {
               mode: 'cors',
               credentials: 'omit'
             });
@@ -481,7 +481,7 @@ const Admin = () => {
     try {
       // Add cache-busting parameter to ensure fresh data
       const timestamp = Date.now();
-      const res = await fetch(`https://api.kmpyrotech.com/api/categories/detailed?t=${timestamp}`);
+      const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/categories/detailed?t=${timestamp}`);
       if (!res.ok) {
         return;
       }
@@ -563,7 +563,7 @@ const Admin = () => {
       console.log('📤 Sending category data to API:', categoryData);
       console.log('🔗 Image URL being sent:', iconUrl);
       
-      const res = await fetch('https://api.kmpyrotech.com/api/categories', {
+      const res = await fetch('https://cracker-backend-rvta.onrender.com/api/categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -596,7 +596,7 @@ const Admin = () => {
       setTimeout(async () => {
         try {
           console.log('🔍 Testing: Fetching categories to check if iconUrl was saved...');
-          const testRes = await fetch('https://api.kmpyrotech.com/api/categories/detailed');
+          const testRes = await fetch('https://cracker-backend-rvta.onrender.com/api/categories/detailed');
           const testData = await testRes.json();
           console.log('🔍 Test: Categories after creation:', testData);
           
@@ -631,7 +631,7 @@ const Admin = () => {
 
     setIsDeletingCategory(true);
     try {
-      const res = await fetch(`https://api.kmpyrotech.com/api/categories/${encodeURIComponent(categoryName)}`, {
+      const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/categories/${encodeURIComponent(categoryName)}`, {
         method: 'DELETE',
       });
       if (!res.ok) {
@@ -726,7 +726,7 @@ const Admin = () => {
         }
       }
       
-      const res = await fetch(`https://api.kmpyrotech.com/api/categories/${encodeURIComponent(editingCategory.name)}`, {
+      const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/categories/${encodeURIComponent(editingCategory.name)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -794,7 +794,7 @@ const Admin = () => {
       if (searchDate.trim()) queryParams.append("date", searchDate);
       if (searchOrderId.trim()) queryParams.append("orderId", searchOrderId);
 
-      const res = await fetch(`https://api.kmpyrotech.com/api/orders?${queryParams.toString()}`);
+      const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/orders?${queryParams.toString()}`);
       const data = await res.json();
 
       if (res.ok) {
@@ -861,7 +861,7 @@ const Admin = () => {
 
   const fetchAnalytics = async (date = "") => {
     try {
-      let url = "https://api.kmpyrotech.com/api/analytics";
+      let url = "https://cracker-backend-rvta.onrender.com/api/analytics";
       if (date) url += `?date=${date}`;
       const res = await fetch(url);
       const data = await res.json();
@@ -882,7 +882,7 @@ const Admin = () => {
       console.log('🔍 Fetching products for category:', category);
       // Add cache busting parameter
       const timestamp = Date.now();
-      const url = `https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(category)}?t=${timestamp}`;
+      const url = `https://cracker-backend-rvta.onrender.com/api/products/category/${encodeURIComponent(category)}?t=${timestamp}`;
       console.log('🔍 Requesting URL:', url);
       
              const res = await fetch(url);
@@ -924,7 +924,7 @@ const Admin = () => {
       const counts = {};
       for (const cat of categories) {
         try {
-          const res = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(cat.name)}`);
+          const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/products/category/${encodeURIComponent(cat.name)}`);
           const data = await res.json();
           counts[cat.name] = data.length;
         } catch (err) {
@@ -942,7 +942,7 @@ const Admin = () => {
   const handleDeleteProduct = async (productId) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
-      const res = await fetch(`https://api.kmpyrotech.com/api/products/${productId}`, {
+      const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/products/${productId}`, {
         method: "DELETE",
       });
       if (res.ok) {

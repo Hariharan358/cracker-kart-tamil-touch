@@ -10,7 +10,7 @@ export interface Product {
 }
 
 export const getProductsByCategory = async (category: string): Promise<Product[]> => {
-  const res = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(category)}`);
+  const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/products/category/${encodeURIComponent(category)}`);
   if (!res.ok) {
     throw new Error(`Failed to fetch products for category: ${category}`);
   }
@@ -20,7 +20,7 @@ export const getProductsByCategory = async (category: string): Promise<Product[]
 };
 
 export const getAllProducts = async (): Promise<Product[]> => {
-  const res = await fetch(`https://api.kmpyrotech.com/api/products/all`, { cache: 'no-store' });
+  const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/products/all`, { cache: 'no-store' });
   if (!res.ok) {
     throw new Error('Failed to fetch all products');
   }

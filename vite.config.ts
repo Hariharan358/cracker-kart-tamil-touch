@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 5173, // different from backend to avoid conflicts
     proxy: {
       "/api": {
-        target: "https://api.kmpyrotech.com",
+        target: "https://cracker-backend-rvta.onrender.com",
         changeOrigin: true,
         secure: true,
         rewrite: (p) => p.replace(/^\/api/, ""),

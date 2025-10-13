@@ -105,7 +105,7 @@ export const useFCM = () => {
         userId = `customer_${customerMobile}`;
       }
       
-  const response = await fetch('https://api.kmpyrotech.com/api/notifications/register-token', {
+  const response = await fetch('https://cracker-backend-rvta.onrender.com/api/notifications/register-token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

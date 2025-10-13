@@ -111,7 +111,7 @@ const Checkout = () => {
 
       let response: Response | null = null;
       try {
-        response = await fetchWithTimeout('https://api.kmpyrotech.com/api/orders/place', {
+        response = await fetchWithTimeout('https://cracker-backend-rvta.onrender.com/api/orders/place', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -122,7 +122,7 @@ const Checkout = () => {
       } catch (networkErr) {
         console.warn('Primary endpoint network error, retrying fallback /api/orders', networkErr);
         // Retry fallback immediately if network fails (e.g., 524/blocked by proxy)
-        response = await fetchWithTimeout('https://api.kmpyrotech.com/api/orders', {
+        response = await fetchWithTimeout('https://cracker-backend-rvta.onrender.com/api/orders', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ const Checkout = () => {
       // If /place is not found on the server, try fallback /api/orders
       if (!response.ok && response.status === 404) {
         console.log('Primary endpoint 404, retrying fallback /api/orders');
-        response = await fetchWithTimeout('https://api.kmpyrotech.com/api/orders', {
+        response = await fetchWithTimeout('https://cracker-backend-rvta.onrender.com/api/orders', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -216,7 +216,7 @@ const Checkout = () => {
     setDownloadError("");
     
     try {
-      const response = await fetch(`https://api.kmpyrotech.com/api/orders/${orderId}/invoice`);
+      const response = await fetch(`https://cracker-backend-rvta.onrender.com/api/orders/${orderId}/invoice`);
       
       if (!response.ok) {
         throw new Error('Failed to download invoice');

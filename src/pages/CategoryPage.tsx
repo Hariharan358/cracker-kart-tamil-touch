@@ -41,7 +41,7 @@ const CategoryPage = () => {
     const fetchCategoryInfo = async () => {
       try {
         setLoadingCategory(true);
-        const res = await axios.get('https://api.kmpyrotech.com/api/categories/public');
+        const res = await axios.get('https://cracker-backend-rvta.onrender.com/api/categories/public');
         const categories = res.data;
         
         // Find the category by name
@@ -83,7 +83,7 @@ const CategoryPage = () => {
         setLoading(true);
         const timestamp = Date.now();
         const tryFetch = async (key: string) => {
-          const r = await axios.get(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(key)}?t=${timestamp}`);
+          const r = await axios.get(`https://cracker-backend-rvta.onrender.com/api/products/category/${encodeURIComponent(key)}?t=${timestamp}`);
           return Array.isArray(r.data) ? r.data : [];
         };
 
@@ -103,7 +103,7 @@ const CategoryPage = () => {
 
         if ((!list || list.length === 0)) {
           try {
-            const catRes = await axios.get('https://api.kmpyrotech.com/api/categories/public');
+            const catRes = await axios.get('https://cracker-backend-rvta.onrender.com/api/categories/public');
             const cats: any[] = Array.isArray(catRes.data) ? catRes.data : [];
             const targetDisplay = (categoryInfo?.displayName_en || categoryInfo?.displayName || category) || '';
             const normalized = (s: string) => String(s || '').trim().toUpperCase().replace(/[^A-Z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -120,7 +120,7 @@ const CategoryPage = () => {
         // 4) Last-resort: fetch all products and fuzzy-filter by category name similarity
         if ((!list || list.length === 0)) {
           try {
-            const allRes = await axios.get(`https://api.kmpyrotech.com/api/products?t=${timestamp}`);
+            const allRes = await axios.get(`https://cracker-backend-rvta.onrender.com/api/products?t=${timestamp}`);
             const all: any[] = Array.isArray(allRes.data) ? allRes.data : [];
             const norm = (s: string) => String(s || '').trim().toUpperCase().replace(/[^A-Z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
             const target = norm(categoryInfo?.displayName_en || categoryInfo?.displayName || category || '');

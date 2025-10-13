@@ -40,7 +40,7 @@ export const CategoryProducts = () => {
     const fetchCategoryInfo = async () => {
       try {
         setLoadingCategory(true);
-        const res = await axios.get('https://api.kmpyrotech.com/api/categories/public');
+        const res = await axios.get('https://cracker-backend-rvta.onrender.com/api/categories/public');
         const categories = res.data;
         
         // Find the category by name
@@ -79,7 +79,7 @@ export const CategoryProducts = () => {
     const fetchCategoryProducts = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(category!)}?t=${Date.now()}`);
+        const res = await axios.get(`https://cracker-backend-rvta.onrender.com/api/products/category/${encodeURIComponent(category!)}?t=${Date.now()}`);
         setProducts(res.data);
       } catch (err) {
         console.error("❌ Error fetching products:", err);

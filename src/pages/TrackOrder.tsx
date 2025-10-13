@@ -19,7 +19,7 @@ const TrackOrder = () => {
     
     setLoading(true);
     try {
-      const response = await fetch(`https://api.kmpyrotech.com/api/orders/track?orderId=${encodeURIComponent(orderId)}&mobile=${encodeURIComponent(mobile)}`);
+      const response = await fetch(`https://cracker-backend-rvta.onrender.com/api/orders/track?orderId=${encodeURIComponent(orderId)}&mobile=${encodeURIComponent(mobile)}`);
       const data = await response.json();
       setOrderStatus(data);
     } catch (error) {

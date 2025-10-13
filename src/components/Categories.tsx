@@ -62,7 +62,7 @@ export const Categories = () => {
     try {
       setLoading(true);
       console.log('🔄 Fetching categories...');
-      const res = await fetch('https://api.kmpyrotech.com/api/categories/public');
+      const res = await fetch('https://cracker-backend-rvta.onrender.com/api/categories/public');
       const data = await res.json();
       
       console.log('📋 Categories response:', data);
@@ -139,7 +139,7 @@ export const Categories = () => {
       
       // Add cache busting parameter
       const timestamp = Date.now();
-      const res = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(categoryName)}?t=${timestamp}`, {
+      const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/products/category/${encodeURIComponent(categoryName)}?t=${timestamp}`, {
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',

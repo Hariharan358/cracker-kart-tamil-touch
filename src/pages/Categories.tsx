@@ -33,7 +33,7 @@ const Categories = () => {
       
       // Add cache-busting parameter to ensure fresh data
       const timestamp = Date.now();
-      const res = await fetch(`https://api.kmpyrotech.com/api/categories/detailed?t=${timestamp}`);
+      const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/categories/detailed?t=${timestamp}`);
       
       if (!res.ok) {
         throw new Error(`Failed to fetch categories: ${res.status}`);

@@ -1005,7 +1005,7 @@ const Admin = () => {
 
     setIsAddingProduct(true);
     try {
-  const res = await fetch("https://api.kmpyrotech.com/api/products", {
+  const res = await fetch("https://cracker-backend-rvta.onrender.com/api/products", {
         method: "POST",
         body: formData,
       });
@@ -1033,7 +1033,7 @@ const Admin = () => {
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      const res = await fetch(`https://api.kmpyrotech.com/api/orders/update-status/${orderId}`, {
+      const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/orders/update-status/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -1064,7 +1064,7 @@ const Admin = () => {
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm("Are you sure you want to delete/cancel this order?")) return;
     try {
-      const res = await fetch(`https://api.kmpyrotech.com/api/orders/cancel/${orderId}`, {
+      const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/orders/cancel/${orderId}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -1154,7 +1154,7 @@ const Admin = () => {
     if (editForm.imageUrl) formData.append("imageUrl", editForm.imageUrl);
     if (editForm.youtube_url) formData.append("youtube_url", editForm.youtube_url);
     try {
-      const res = await fetch(`https://api.kmpyrotech.com/api/products/${editProduct._id || editProduct.id}`, {
+      const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/products/${editProduct._id || editProduct.id}`, {
         method: "PUT",
         body: formData,
       });
@@ -1207,7 +1207,7 @@ const Admin = () => {
     }
     setIsApplyingDiscount(true);
     try {
-  const res = await fetch("https://api.kmpyrotech.com/api/products/apply-discount", {
+  const res = await fetch("https://cracker-backend-rvta.onrender.com/api/products/apply-discount", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ discount: Number(discount) }),
@@ -1236,7 +1236,7 @@ const Admin = () => {
     }
     setIsSendingNotification(true);
     try {
-  const res = await fetch("https://api.kmpyrotech.com/api/notifications/send-to-all", {
+  const res = await fetch("https://cracker-backend-rvta.onrender.com/api/notifications/send-to-all", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(notificationForm),
@@ -1258,7 +1258,7 @@ const Admin = () => {
   const handleVerifyPayment = async (orderId, verified) => {
     setIsVerifyingPayment(true);
     try {
-      const response = await fetch(`https://api.kmpyrotech.com/api/orders/verify-payment/${orderId}`, {
+      const response = await fetch(`https://cracker-backend-rvta.onrender.com/api/orders/verify-payment/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ verified, verifiedBy: "admin" }),
@@ -1381,7 +1381,7 @@ const Admin = () => {
                                   const token = localStorage.getItem('adminToken') || '';
                                   const headers: any = { 'Content-Type': 'application/json' };
                                   if (token) headers['Authorization'] = `Bearer ${token}`;
-                                  const res = await fetch('https://api.kmpyrotech.com/api/products/reorder', {
+                                  const res = await fetch('https://cracker-backend-rvta.onrender.com/api/products/reorder', {
                                     method: 'POST',
                                     headers,
                                     body: JSON.stringify({ category: productManagementCategory, order: payload })
@@ -1587,7 +1587,7 @@ const Admin = () => {
                                 const token = localStorage.getItem('adminToken') || '';
                                 const headers: any = { 'Content-Type': 'application/json' };
                                 if (token) headers['Authorization'] = `Bearer ${token}`;
-                                const res = await fetch('https://api.kmpyrotech.com/api/categories/reorder', {
+                                const res = await fetch('https://cracker-backend-rvta.onrender.com/api/categories/reorder', {
                                   method: 'POST',
                                   headers,
                                   body: JSON.stringify({ order: payload })
@@ -1638,7 +1638,7 @@ const Admin = () => {
                         onClick={() => {
                           // Force refresh with cache-busting
                           const timestamp = Date.now();
-                          fetch(`https://api.kmpyrotech.com/api/categories/public?t=${timestamp}&force=1`, {
+                          fetch(`https://cracker-backend-rvta.onrender.com/api/categories/public?t=${timestamp}&force=1`, {
                             // No custom headers to avoid CORS issues
                           })
                             .then(res => res.json())

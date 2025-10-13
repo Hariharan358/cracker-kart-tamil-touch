@@ -66,7 +66,7 @@ const Index = () => {
         }
 
         const ts = Date.now();
-        const data = await fetchJsonWithRetry(`https://api.kmpyrotech.com/api/categories/detailed?t=${Date.now()}`, 1);
+        const data = await fetchJsonWithRetry(`https://cracker-backend-rvta.onrender.com/api/categories/detailed?t=${Date.now()}`, 1);
         console.log('🔍 Raw categories data from API:', data);
         if (Array.isArray(data) && data.length > 0) {
           const mapped = data.map((c: any) => ({
@@ -132,7 +132,7 @@ const Index = () => {
         
         // Add cache busting parameter
         const timestamp = Date.now();
-        const res = await fetch(`https://api.kmpyrotech.com/api/products/home?t=${timestamp}`);
+        const res = await fetch(`https://cracker-backend-rvta.onrender.com/api/products/home?t=${timestamp}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         
@@ -181,7 +181,7 @@ const Index = () => {
         // Try explicit categories first
         let fountainData: any[] = [];
         try {
-          const fountainRes = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent('FOUNTAIN_ITEMS')}?t=${timestamp}`);
+          const fountainRes = await fetch(`https://cracker-backend-rvta.onrender.com/api/products/category/${encodeURIComponent('FOUNTAIN_ITEMS')}?t=${timestamp}`);
           if (fountainRes.ok) {
             fountainData = await fountainRes.json();
           }
@@ -197,7 +197,7 @@ const Index = () => {
             'COLOUR SMOKE FOUNTAIN'
           ];
           const fountainResponses = await Promise.allSettled(
-            fountainCandidates.map(c => fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(c)}?t=${timestamp}`))
+            fountainCandidates.map(c => fetch(`https://cracker-backend-rvta.onrender.com/api/products/category/${encodeURIComponent(c)}?t=${timestamp}`))
           );
           const fountainJsons = await Promise.all(
             fountainResponses.map(async r => (r.status === 'fulfilled' && r.value.ok) ? r.value.json() : [])
@@ -212,7 +212,7 @@ const Index = () => {
         // Now fancy items
         let fancyData: any[] = [];
         try {
-          const fancyRes = await fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent('NEW_FANCY_ITEM')}?t=${timestamp}`);
+          const fancyRes = await fetch(`https://cracker-backend-rvta.onrender.com/api/products/category/${encodeURIComponent('NEW_FANCY_ITEM')}?t=${timestamp}`);
           if (fancyRes.ok) {
             fancyData = await fancyRes.json();
           }
@@ -226,7 +226,7 @@ const Index = () => {
             'MINI AERIAL CHOTTA FACNY'
           ];
           const fancyResponses = await Promise.allSettled(
-            fancyCandidates.map(c => fetch(`https://api.kmpyrotech.com/api/products/category/${encodeURIComponent(c)}?t=${timestamp}`))
+            fancyCandidates.map(c => fetch(`https://cracker-backend-rvta.onrender.com/api/products/category/${encodeURIComponent(c)}?t=${timestamp}`))
           );
           const fancyJsons = await Promise.all(
             fancyResponses.map(async r => (r.status === 'fulfilled' && r.value.ok) ? r.value.json() : [])
